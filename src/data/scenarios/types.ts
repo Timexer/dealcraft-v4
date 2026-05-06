@@ -83,7 +83,7 @@ export interface DialogueChoice {
   text: string;
   type: 'diagnostic' | 'aggressive_anchor' | 'face_saving' | 'concession' | 'silence' | 'investigative' | 'threat' | 'empathy' | 'walk_away' | 'package_offer';
   nextNodeId: string;
-  effects: StateEffect[];
+  effects: StateEffect;
   requirement?: { type: 'info_discovered'; factId: string } | { type: 'min_trust'; value: number } | { type: 'max_anger'; value: number };
   disabledReason?: string;
 }
@@ -94,7 +94,7 @@ export interface DialogueNode {
   text: string;
   choices?: DialogueChoice[];
   isAuto?: boolean;
-  effects?: StateEffect[];
+  effects?: StateEffect;
   nextNodeId?: string;
 }
 

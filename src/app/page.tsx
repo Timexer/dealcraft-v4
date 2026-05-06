@@ -9,6 +9,7 @@ import { Investigation } from '@/components/game/Investigation';
 import { NegotiationTable } from '@/components/game/NegotiationTable';
 import { Postmortem } from '@/components/game/Postmortem';
 import { CareerProgression } from '@/components/game/CareerProgression';
+import { GameHeader } from '@/components/game/GameHeader';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeToggle } from '@/components/game/ThemeToggle';
 
@@ -40,9 +41,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <header className="fixed top-0 right-0 z-50 p-3">
+      <GameHeader />
+      <div className="fixed top-2 right-2 z-50">
         <ThemeToggle />
-      </header>
+      </div>
       <main className="flex-1 flex flex-col">
         <AnimatePresence mode="wait">
           <motion.div
@@ -57,8 +59,8 @@ export default function Home() {
           </motion.div>
         </AnimatePresence>
       </main>
-      <footer className="mt-auto border-t border-border/50 bg-background/80 backdrop-blur-sm py-3 px-4 text-center text-xs text-muted-foreground">
-        Dealcraft: Negotiation Career Simulator — Season 1
+      <footer className="mt-auto border-t border-border/50 bg-background/80 backdrop-blur-sm py-2.5 px-4 text-center text-[11px] text-muted-foreground/60">
+        Dealcraft — Negotiation Career Simulator · Season 1 · 30 Cases
       </footer>
     </div>
   );

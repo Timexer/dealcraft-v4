@@ -2,6 +2,24 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { GamePhase, NegotiationState, PlayerStats, ReputationScores, CaseResult } from '@/data/scenarios/types';
 
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlockedAt: number; // timestamp
+}
+
+export interface GameNotification {
+  id: string;
+  type: 'achievement' | 'tier_up' | 'reputation_change' | 'info';
+  title: string;
+  message: string;
+  icon: string;
+  timestamp: number;
+  read: boolean;
+}
+
 export interface GameState {
   // Game phase
   phase: GamePhase;
@@ -66,6 +84,16 @@ export interface GameState {
 
   // Available cases (unlocked based on tier)
   unlockedCases: string[];
+
+  // Achievements
+  achievements: Achievement[];
+  unlockAchievement: (achievement: Omit<Achievement, 'unlockedAt'>) => void;
+
+  // Notifications
+  notifications: GameNotification[];
+  addNotification: (notification: Omit<GameNotification, 'id' | 'timestamp' | 'read'>) => void;
+  markNotificationRead: (id: string) => void;
+  unreadNotificationCount: () => number;
 }
 
 const defaultStats: PlayerStats = {
@@ -218,12 +246,74 @@ export const useGameStore = create<GameState>()(
           const newResults = [...s.caseResults, result];
           const newCasesCompleted = newResults.length;
           const newTotalScore = s.totalScore + result.finalScore;
+          const prevTier = s.careerTier;
           const newTier = newCasesCompleted < 3 ? 1 : newCasesCompleted < 8 ? 2 : newCasesCompleted < 15 ? 3 : newCasesCompleted < 22 ? 4 : 5;
+          
+          // Check for tier up
+          const newNotifications = [...s.notifications];
+          if (newTier > prevTier) {
+            const tierNames: Record<number, string> = { 1: 'Junior Associate', 2: 'Deal Associate', 3: 'Senior Negotiator', 4: 'Crisis Partner', 5: 'Master Negotiator' };
+            newNotifications.unshift({
+              id: `notif-tier-${Date.now()}`,
+              type: 'tier_up',
+              title: '⬆️ Career Tier Up!',
+              message: `You've been promoted to ${tierNames[newTier]}!`,
+              icon: '📈',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Check for first case achievement
+          const newAchievements = [...s.achievements];
+          if (newCasesCompleted === 1 && !newAchievements.find(a => a.id === 'first_case')) {
+            newAchievements.push({ id: 'first_case', title: 'First Case Closed', description: 'Complete your first negotiation case', icon: '📋', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-first-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'First Case Closed',
+              icon: '📋',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Master deal achievement
+          if (result.outcome === 'master' && !newAchievements.find(a => a.id === 'first_master')) {
+            newAchievements.push({ id: 'first_master', title: 'Master Negotiator', description: 'Achieve a master deal outcome', icon: '👑', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-master-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Master Negotiator - You achieved a master deal!',
+              icon: '👑',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // 5 cases achievement
+          if (newCasesCompleted === 5 && !newAchievements.find(a => a.id === 'five_cases')) {
+            newAchievements.push({ id: 'five_cases', title: 'Rising Star', description: 'Complete 5 negotiation cases', icon: '⭐', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-five-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Rising Star - 5 cases completed!',
+              icon: '⭐',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
           return {
             caseResults: newResults,
             casesCompleted: newCasesCompleted,
             totalScore: newTotalScore,
             careerTier: newTier,
+            achievements: newAchievements,
+            notifications: newNotifications,
           };
         }),
 
@@ -291,6 +381,41 @@ export const useGameStore = create<GameState>()(
         }),
 
       unlockedCases: ['case-01', 'case-02', 'case-03'],
+
+      achievements: [],
+      unlockAchievement: (achievement) =>
+        set((s) => {
+          if (s.achievements.find(a => a.id === achievement.id)) return s;
+          const newAchievement = { ...achievement, unlockedAt: Date.now() };
+          return {
+            achievements: [...s.achievements, newAchievement],
+            notifications: [{
+              id: `notif-${Date.now()}`,
+              type: 'achievement' as const,
+              title: '🏆 Achievement Unlocked!',
+              message: achievement.title,
+              icon: achievement.icon,
+              timestamp: Date.now(),
+              read: false,
+            }, ...s.notifications],
+          };
+        }),
+
+      notifications: [],
+      addNotification: (notification) =>
+        set((s) => ({
+          notifications: [{
+            ...notification,
+            id: `notif-${Date.now()}`,
+            timestamp: Date.now(),
+            read: false,
+          }, ...s.notifications],
+        })),
+      markNotificationRead: (id) =>
+        set((s) => ({
+          notifications: s.notifications.map(n => n.id === id ? { ...n, read: true } : n),
+        })),
+      unreadNotificationCount: () => get().notifications.filter(n => !n.read).length,
     }),
     {
       name: 'dealcraft-game-state',
@@ -304,6 +429,8 @@ export const useGameStore = create<GameState>()(
         caseResults: state.caseResults,
         unlockedCases: state.unlockedCases,
         phase: state.phase,
+        achievements: state.achievements,
+        notifications: state.notifications.slice(0, 50), // Keep last 50 notifications
       }),
     }
   )

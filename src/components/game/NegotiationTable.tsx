@@ -77,38 +77,32 @@ export function NegotiationTable() {
   useEffect(() => {
     if (!currentNode || !currentNode.effects) return;
 
+    const eff = currentNode.effects;
     const effects: Record<string, number> = {};
-    for (const eff of currentNode.effects) {
-      if (eff.trust) effects.trust = eff.trust;
-      if (eff.anger) effects.anger = eff.anger;
-      if (eff.patience) effects.patience = eff.patience;
-      if (eff.valueClaimed) effects.valueClaimed = eff.valueClaimed;
-      if (eff.valueCreated) effects.valueCreated = eff.valueCreated;
-      if (eff.relationshipImpact) effects.relationshipImpact = eff.relationshipImpact;
-      if (eff.ethicalImpact) effects.ethicalImpact = eff.ethicalImpact;
-      if (eff.clientSatisfaction) effects.clientSatisfaction = eff.clientSatisfaction;
-      if (eff.counterpartySatisfaction) effects.counterpartySatisfaction = eff.counterpartySatisfaction;
-    }
+    if (eff.trust) effects.trust = eff.trust;
+    if (eff.anger) effects.anger = eff.anger;
+    if (eff.patience) effects.patience = eff.patience;
+    if (eff.valueClaimed) effects.valueClaimed = eff.valueClaimed;
+    if (eff.valueCreated) effects.valueCreated = eff.valueCreated;
+    if (eff.relationshipImpact) effects.relationshipImpact = eff.relationshipImpact;
+    if (eff.ethicalImpact) effects.ethicalImpact = eff.ethicalImpact;
+    if (eff.clientSatisfaction) effects.clientSatisfaction = eff.clientSatisfaction;
+    if (eff.counterpartySatisfaction) effects.counterpartySatisfaction = eff.counterpartySatisfaction;
 
     if (Object.keys(effects).length > 0) {
       useGameStore.getState().applyEffects(effects);
     }
 
-    const infoRevealed = currentNode.effects
-      ?.filter(e => e.informationRevealed)
-      .flatMap(e => e.informationRevealed!);
-    if (infoRevealed && infoRevealed.length > 0) {
+    if (eff.informationRevealed && eff.informationRevealed.length > 0) {
       updateNegotiation({
-        informationRevealed: [...new Set([...useGameStore.getState().negotiation.informationRevealed, ...infoRevealed])],
+        informationRevealed: [...new Set([...useGameStore.getState().negotiation.informationRevealed, ...eff.informationRevealed])],
       });
     }
 
-    for (const eff of currentNode.effects || []) {
-      if (eff.concessionMade) {
-        updateNegotiation({
-          concessionsGiven: [...useGameStore.getState().negotiation.concessionsGiven, eff.concessionMade],
-        });
-      }
+    if (eff.concessionMade) {
+      updateNegotiation({
+        concessionsGiven: [...useGameStore.getState().negotiation.concessionsGiven, eff.concessionMade],
+      });
     }
   // We intentionally only depend on the node ID, not the full negotiation state
   }, [currentNode?.id, updateNegotiation]);
@@ -165,22 +159,20 @@ export function NegotiationTable() {
     }
 
     // Apply choice effects
+    const eff = choice.effects;
     const effects: Record<string, number> = {};
-    let infoRevealed: string[] = [];
+    if (eff.trust) effects.trust = eff.trust;
+    if (eff.anger) effects.anger = eff.anger;
+    if (eff.patience) effects.patience = eff.patience;
+    if (eff.valueClaimed) effects.valueClaimed = eff.valueClaimed;
+    if (eff.valueCreated) effects.valueCreated = eff.valueCreated;
+    if (eff.relationshipImpact) effects.relationshipImpact = eff.relationshipImpact;
+    if (eff.ethicalImpact) effects.ethicalImpact = eff.ethicalImpact;
+    if (eff.clientSatisfaction) effects.clientSatisfaction = eff.clientSatisfaction;
+    if (eff.counterpartySatisfaction) effects.counterpartySatisfaction = eff.counterpartySatisfaction;
+    if (eff.reputationImpact) effects.reputationImpact = eff.reputationImpact;
 
-    for (const eff of choice.effects) {
-      if (eff.trust) effects.trust = eff.trust;
-      if (eff.anger) effects.anger = eff.anger;
-      if (eff.patience) effects.patience = eff.patience;
-      if (eff.valueClaimed) effects.valueClaimed = eff.valueClaimed;
-      if (eff.valueCreated) effects.valueCreated = eff.valueCreated;
-      if (eff.relationshipImpact) effects.relationshipImpact = eff.relationshipImpact;
-      if (eff.ethicalImpact) effects.ethicalImpact = eff.ethicalImpact;
-      if (eff.clientSatisfaction) effects.clientSatisfaction = eff.clientSatisfaction;
-      if (eff.counterpartySatisfaction) effects.counterpartySatisfaction = eff.counterpartySatisfaction;
-      if (eff.reputationImpact) effects.reputationImpact = eff.reputationImpact;
-      if (eff.informationRevealed) infoRevealed = [...infoRevealed, ...eff.informationRevealed];
-    }
+    const infoRevealed = eff.informationRevealed || [];
 
     makeChoice(choice.id, effects, infoRevealed.length > 0 ? infoRevealed : undefined);
 
