@@ -14,13 +14,16 @@ import {
   BarChart3,
   Home,
   ChevronLeft,
+  BookOpen,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { NegotiationGlossary } from '@/components/game/NegotiationGlossary';
 
 export function GameHeader() {
   const { playerName, careerTier, casesCompleted, totalScore, reputation, phase, setPhase, currentScenarioId } = useGameStore();
   const [showMiniStats, setShowMiniStats] = useState(false);
+  const [showGlossary, setShowGlossary] = useState(false);
   const repType = getReputationType(reputation);
   const tierName = TIER_NAMES[careerTier];
 
@@ -83,6 +86,16 @@ export function GameHeader() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => setShowGlossary(true)}
+            title="Negotiation Glossary"
+          >
+            <BookOpen className="h-3.5 w-3.5 text-amber-500" />
+            <span className="hidden lg:inline">Glossary</span>
+          </Button>
           <NotificationPanel />
           <Button
             variant="ghost"
@@ -144,6 +157,9 @@ export function GameHeader() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Negotiation Glossary Dialog */}
+      <NegotiationGlossary open={showGlossary} onOpenChange={setShowGlossary} />
     </header>
   );
 }

@@ -61,18 +61,18 @@ export default function Home() {
           </motion.div>
         </AnimatePresence>
       </main>
-      <footer className="mt-auto bg-background/80 backdrop-blur-sm py-3 px-4 text-center">
-        <div className="h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent mb-3" />
+      <footer className="mt-auto bg-background/80 backdrop-blur-sm py-3 px-4 text-center border-t border-border/30">
+        <div className="h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent mb-3" />
         <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-[11px] text-muted-foreground/60">
-          <span className="font-medium text-muted-foreground/80">DEALCRAFT</span>
-          <span className="hidden sm:inline">·</span>
+          <span className="font-semibold tracking-wider text-amber-500/80">DEALCRAFT</span>
+          <span className="hidden sm:inline text-border/50">·</span>
           <span>Negotiation Career Simulator</span>
-          <span className="hidden sm:inline">·</span>
+          <span className="hidden sm:inline text-border/50">·</span>
           <span>Season 1</span>
-          <span className="hidden sm:inline">·</span>
-          <span>v1.0</span>
-          <span className="hidden sm:inline">·</span>
-          <span>30 Cases</span>
+          <span className="hidden sm:inline text-border/50">·</span>
+          <span>v2.0</span>
+          <span className="hidden sm:inline text-border/50">·</span>
+          <span>30 Cases · 8 Endings</span>
         </div>
       </footer>
       <TutorialOverlay />

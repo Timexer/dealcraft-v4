@@ -10,9 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award } from 'lucide-react';
+import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AchievementGallery } from './AchievementGallery';
+import { Input } from '@/components/ui/input';
 
 export function Dashboard() {
   const {
@@ -29,10 +30,27 @@ export function Dashboard() {
   // Achievement gallery dialog state
   const [showAchievements, setShowAchievements] = useState(false);
 
+  // Search & filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+
   // Available cases for current tier (excluding completed ones)
   const availableCases = allScenarios.filter(
     s => s.tier <= careerTier && !caseResults.some(r => r.scenarioId === s.id)
   );
+
+  // Filtered cases based on search and category
+  const filteredCases = availableCases.filter(s => {
+    const matchesSearch = !searchQuery || 
+      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.subtitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.client.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = filterCategory === 'all' || s.category === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Get unique categories from available cases
+  const availableCategories = [...new Set(availableCases.map(s => s.category))];
 
   const completedCases = caseResults.length;
 
@@ -147,13 +165,64 @@ export function Dashboard() {
               <Star className="h-5 w-5 text-amber-500" />
               Available Cases
               <span className="ml-1 text-xs font-normal text-muted-foreground px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-                {availableCases.length} available
+                {filteredCases.length} of {availableCases.length} available
               </span>
             </h2>
           </div>
 
+          {/* Search & Filter Bar */}
+          {availableCases.length > 0 && (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search cases by title, subtitle, or client..."
+                  className="pl-9 bg-card/50 border-border/50 h-9 text-sm focus:border-amber-500/50 focus:ring-amber-500/20"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              {availableCategories.length > 1 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <button
+                    onClick={() => setFilterCategory('all')}
+                    className={`text-[10px] px-2 py-1 rounded-full border transition-all ${
+                      filterCategory === 'all'
+                        ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                        : 'bg-card/50 text-muted-foreground border-border/30 hover:border-amber-500/20'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {availableCategories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setFilterCategory(cat)}
+                      className={`text-[10px] px-2 py-1 rounded-full border transition-all ${
+                        filterCategory === cat
+                          ? CATEGORY_COLORS[cat]
+                          : 'bg-card/50 text-muted-foreground border-border/30 hover:border-amber-500/20'
+                      }`}
+                    >
+                      {CATEGORY_LABELS[cat]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {availableCases.map((scenario, i) => (
+            {filteredCases.map((scenario, i) => (
               <motion.div
                 key={scenario.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -161,7 +230,7 @@ export function Dashboard() {
                 transition={{ delay: i * 0.05 }}
               >
                 <Card
-                  className="game-card cursor-pointer group hover:scale-[1.01] hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200"
+                  className="game-card card-hover-lift cursor-pointer group hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200"
                   onClick={() => handleSelectCase(scenario.id)}
                 >
                   <CardHeader className="pb-3">
@@ -226,6 +295,17 @@ export function Dashboard() {
               </motion.div>
             ))}
           </div>
+
+          {filteredCases.length === 0 && availableCases.length > 0 && (
+            <Card className="glass-card">
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground">No cases match your search. Try a different query or category.</p>
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => { setSearchQuery(''); setFilterCategory('all'); }}>
+                  Clear Filters
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {availableCases.length === 0 && (
             <Card className="glass-card">

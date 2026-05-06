@@ -149,8 +149,8 @@ export function TitleScreen() {
           transition={{ duration: 0.5, delay: 1.0 }}
           className="flex flex-wrap justify-center gap-2 pt-4"
         >
-          {['30 Cases', '5 Tiers', 'Career Mode', 'Postmortem Analysis', 'Reputation System'].map((badge) => (
-            <span key={badge} className="glass-card px-3 py-1.5 rounded-full text-xs text-muted-foreground/80 hover:text-amber-400 transition-colors duration-200">
+          {['30 Cases', '5 Tiers', 'Career Mode', 'Postmortem Analysis', 'Reputation System', 'Glossary', 'AI Advisor', 'Bias Traps'].map((badge) => (
+            <span key={badge} className="glass-card px-3 py-1.5 rounded-full text-xs text-muted-foreground/80 hover:text-amber-400 transition-colors duration-200 card-hover-lift cursor-default">
               {badge}
             </span>
           ))}

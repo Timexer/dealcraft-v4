@@ -790,6 +790,19 @@ export const useGameStore = create<GameState>()(
         achievements: state.achievements,
         notifications: state.notifications.slice(0, 50), // Keep last 50 notifications
         tutorialCompleted: state.tutorialCompleted,
+        // Persist active game state so page refresh doesn't lose progress
+        currentScenarioId: state.currentScenarioId,
+        caseAccepted: state.caseAccepted,
+        isReplay: state.isReplay,
+        batnaEstimate: state.batnaEstimate,
+        reservationEstimate: state.reservationEstimate,
+        openingStrategy: state.openingStrategy,
+        assumptions: state.assumptions,
+        investigationPoints: state.investigationPoints,
+        maxInvestigationPoints: state.maxInvestigationPoints,
+        discoveredFacts: state.discoveredFacts,
+        investigationHistory: state.investigationHistory,
+        negotiation: state.negotiation,
       }),
     }
   )

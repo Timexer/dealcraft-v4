@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BiasTrapAlertContainer } from '@/components/game/BiasTrapAlert';
+import { InGameAdvisor } from '@/components/game/InGameAdvisor';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart,
@@ -121,11 +122,11 @@ export function NegotiationTable() {
     }
   }, [currentNode?.id, scenario, triggerBiasTrap]);
 
-  // Apply node effects when entering a new node
+  // Apply node effects when entering a new node (defensive: ensure effects is always an object)
   useEffect(() => {
     if (!currentNode || !currentNode.effects) return;
 
-    const eff = currentNode.effects;
+    const eff = currentNode.effects || {};
     const effects: Record<string, number> = {};
     if (eff.trust) effects.trust = eff.trust;
     if (eff.anger) effects.anger = eff.anger;
@@ -206,8 +207,8 @@ export function NegotiationTable() {
       if (choice.requirement.type === 'max_anger' && neg.anger > choice.requirement.value) return;
     }
 
-    // Apply choice effects
-    const eff = choice.effects;
+    // Apply choice effects (defensive: ensure effects is always an object)
+    const eff = choice.effects || {};
     const effects: Record<string, number> = {};
     if (eff.trust) effects.trust = eff.trust;
     if (eff.anger) effects.anger = eff.anger;
@@ -220,7 +221,7 @@ export function NegotiationTable() {
     if (eff.counterpartySatisfaction) effects.counterpartySatisfaction = eff.counterpartySatisfaction;
     if (eff.reputationImpact) effects.reputationImpact = eff.reputationImpact;
 
-    const infoRevealed = eff.informationRevealed || [];
+    const infoRevealed = Array.isArray(eff.informationRevealed) ? eff.informationRevealed : [];
 
     makeChoice(choice.id, effects, infoRevealed.length > 0 ? infoRevealed : undefined);
 
@@ -373,7 +374,7 @@ export function NegotiationTable() {
   const emotion = getEmotionIndicator(negotiation.trust, negotiation.anger);
 
   const speakerStyles: Record<string, string> = {
-    narrator: 'italic text-muted-foreground bg-muted/20 border-l-2 border-muted-foreground/30',
+    narrator: 'narrator-text text-muted-foreground bg-muted/20',
     counterparty: 'text-foreground bg-card/50 border-l-2 border-cyan-500/40 shadow-sm shadow-cyan-500/5',
     client: 'text-foreground bg-amber-500/10 border-l-2 border-amber-500/40 shadow-sm shadow-amber-500/5',
     advisor: 'text-amber-200 bg-amber-500/10 border-l-2 border-amber-400/50 shadow-sm shadow-amber-400/5',
@@ -501,7 +502,7 @@ export function NegotiationTable() {
                                 whileTap={!disabled ? { scale: 0.985 } : {}}
                                 onClick={() => !disabled && handleChoiceClick(choice)}
                                 disabled={disabled}
-                                className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center gap-3 ${
+                                className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center gap-3 choice-hover-trail ${
                                   disabled
                                     ? 'opacity-40 cursor-not-allowed bg-muted/20 border-border/20'
                                     : `${style.color} cursor-pointer hover:border-amber-500/30`
@@ -710,6 +711,13 @@ export function NegotiationTable() {
       <BiasTrapAlertContainer
         activeAlerts={activeBiasAlerts}
         onDismiss={dismissBiasAlert}
+      />
+
+      {/* In-Game Advisor */}
+      <InGameAdvisor
+        negotiation={negotiation}
+        discoveredFacts={discoveredFacts}
+        scenarioCategory={scenario.category}
       />
 
       {/* Mobile Sidebar Toggle */}
