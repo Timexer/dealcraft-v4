@@ -325,7 +325,7 @@ export const case09: Scenario = {
           id: 'choice_leave',
           text: '[Walk away from the negotiation]',
           type: 'walk_away',
-          nextNodeId: 'ending_no_deal',
+          nextNodeId: 'ending_no_deal_bad',
           effects: { trust: -10, relationshipImpact: -15 },
         },
       ],
@@ -419,7 +419,7 @@ export const case09: Scenario = {
       isAuto: true,
     },
     {
-      id: 'ending_no_deal',
+      id: 'ending_no_deal_bad',
       speaker: 'narrator',
       text: '❌ NO DEAL: Walked away. Alternate supplier takes 120+ days. Project severely delayed. Client penalties pile up.',
       isAuto: true,
@@ -451,7 +451,7 @@ export const case09: Scenario = {
       longTermConsequence: 'Still paying for unnecessary freight costs. Margins remain tight. No long-term partnership established.',
     },
     {
-      id: 'ending_no_deal',
+      id: 'ending_no_deal_bad',
       type: 'no_deal_bad',
       title: 'Project Delayed',
       description: 'Walking away was the worst option. No alternative supplier can meet the timeline.',
@@ -466,6 +466,7 @@ export const case09: Scenario = {
     lesson: 'A deadline problem may be a logistics problem in disguise. Always ask what you\'re really paying for before negotiating the number.',
     bestPossibleDeal: 'Client logistics → 35-day delivery + no premium + reduced price + preferred supplier status for 3 years.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'bias_anchor',

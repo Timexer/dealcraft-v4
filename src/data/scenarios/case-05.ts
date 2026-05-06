@@ -154,6 +154,7 @@ export const case05: Scenario = {
           type: 'diagnostic',
           nextNodeId: 'marco_passion',
           effects: { trust: 10, anger: -5 },
+          technique: 'calibrated_q',
         },
         {
           id: 'choice_acknowledge_value',
@@ -168,6 +169,7 @@ export const case05: Scenario = {
           type: 'package_offer',
           nextNodeId: 'marco_curious',
           effects: { trust: 10, valueCreated: 5 },
+          technique: 'calibrated_q',
         },
       ],
     },
@@ -203,6 +205,7 @@ export const case05: Scenario = {
           type: 'investigative',
           nextNodeId: 'marco_opens_up',
           effects: { trust: 10, valueCreated: 10 },
+          technique: 'mirror',
         },
         {
           id: 'choice_sustainability',
@@ -310,6 +313,7 @@ export const case05: Scenario = {
           type: 'package_offer',
           nextNodeId: 'marco_surprised',
           effects: { trust: 20, anger: -15, valueCreated: 20 },
+          technique: 'accusation_audit',
         },
         {
           id: 'choice_understand_why_8',
@@ -317,6 +321,7 @@ export const case05: Scenario = {
           type: 'face_saving',
           nextNodeId: 'marco_thinking',
           effects: { trust: 20, valueCreated: 20, valueClaimed: 5 },
+          technique: 'intent_impact',
         },
         {
           id: 'choice_sympathy',
@@ -324,6 +329,7 @@ export const case05: Scenario = {
           type: 'empathy',
           nextNodeId: 'marco_grateful',
           effects: { trust: 20, anger: -20, valueCreated: 10 },
+          technique: 'tactical_empathy',
         },
       ],
     },
@@ -381,6 +387,7 @@ export const case05: Scenario = {
           type: 'package_offer',
           nextNodeId: 'marco_moved',
           effects: { trust: 20, valueCreated: 20, valueClaimed: 10, relationshipImpact: 15 },
+          technique: 'that_right',
         },
         {
           id: 'choice_partnership_frame',
@@ -580,6 +587,13 @@ export const case05: Scenario = {
           nextNodeId: 'ending_bad_deal',
           effects: { trust: -20, anger: 15, relationshipImpact: -20 },
         },
+        {
+          id: 'choice_force_equity',
+          text: '"We\'re offering 2%. That\'s our final position. Take it or leave it."',
+          type: 'aggressive_anchor',
+          nextNodeId: 'ending_hard_bargain',
+          effects: { trust: -15, anger: 10, valueClaimed: 10, relationshipImpact: -15 },
+        },
       ],
     },
     {
@@ -662,6 +676,7 @@ export const case05: Scenario = {
     lesson: 'Prestige, identity, and control can outweigh cash. Assuming money is the only currency in a negotiation blinds you to the most valuable trades you can make.',
     bestPossibleDeal: '2.5% equity + "Founding Culinary Advisor" title + recipe/brand veto + chef-defined quality charter + sustainability campaign + milestone bonuses = a transformative partnership where GreenFork keeps its cap table and Bellini gets a legacy.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'money_only_currency',

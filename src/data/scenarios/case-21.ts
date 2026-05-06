@@ -589,6 +589,7 @@ export const case21: Scenario = {
     lesson: 'In highly public negotiations, political victories are a valid currency. Give your counterpart something they can parade as a win.',
     bestPossibleDeal: '2% wage + break room modernization + new uniforms + scheduling committee + public signing ceremony = workers get more value than 4% alone, Frank gets his legacy, Rail Corp avoids the strike.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'escalation_anger',

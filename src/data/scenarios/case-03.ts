@@ -153,6 +153,7 @@ export const case03: Scenario = {
           type: 'diagnostic',
           nextNodeId: 'james_breakdown',
           effects: { trust: 10, anger: -5 },
+          technique: 'calibrated_q',
         },
         {
           id: 'choice_acknowledge_value',
@@ -160,6 +161,7 @@ export const case03: Scenario = {
           type: 'empathy',
           nextNodeId: 'james_breakdown',
           effects: { trust: 15, anger: -5 },
+          technique: 'label',
         },
         {
           id: 'choice_counter_market',
@@ -189,6 +191,7 @@ export const case03: Scenario = {
           type: 'face_saving',
           nextNodeId: 'james_opens_up',
           effects: { trust: 10, anger: -10, valueCreated: 5 },
+          technique: 'calibrated_q',
         },
       ],
     },
@@ -236,7 +239,7 @@ export const case03: Scenario = {
           id: 'choice_base_first',
           text: '"Let\'s start with getting the base closer to market. Even €56K would show good faith."',
           type: 'concession',
-          nextNodeId: 'james_considers_base',
+          nextNodeId: 'james_base_ceiling',
           effects: { trust: 5, valueClaimed: 5 },
         },
       ],
@@ -250,8 +253,9 @@ export const case03: Scenario = {
           id: 'choice_explore_all',
           text: '"Let\'s explore all of those. If we can\'t move the base much, let\'s build a package that makes the total compensation compelling."',
           type: 'package_offer',
-          nextNodeId: 'james_open_book',
+          nextNodeId: 'james_opens_up',
           effects: { trust: 15, valueCreated: 15 },
+          technique: 'that_right',
         },
         {
           id: 'choice_push_base_anyway',
@@ -273,6 +277,7 @@ export const case03: Scenario = {
           type: 'package_offer',
           nextNodeId: 'james_considers_review',
           effects: { trust: 10, valueCreated: 15, valueClaimed: 5 },
+          technique: 'loss_aversion',
         },
         {
           id: 'choice_career_matters',
@@ -581,6 +586,7 @@ export const case03: Scenario = {
     lesson: 'Negotiate the package, not the headline number. Salary and brand name distract from total package value — the vividness of the base salary number can blind you to more valuable concessions.',
     bestPossibleDeal: '€56K base + €7K signing bonus + 2 remote days/week + €2K/year certification budget + 6-month promotion review = €65K+ first-year total value with accelerated career growth.',
   },
+  counterpartyStyle: 'accommodator',
   biasTraps: [
     {
       id: 'vividness_salary',

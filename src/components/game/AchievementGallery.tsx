@@ -206,8 +206,8 @@ export function AchievementGallery() {
 
                   {/* Description */}
                   <p
-                    className={`text-[10px] sm:text-xs leading-snug ${
-                      isUnlocked ? 'text-amber-100/70' : 'text-muted-foreground/50'
+                    className={`text-[11px] sm:text-xs leading-snug ${
+                      isUnlocked ? 'text-amber-100' : 'text-muted-foreground'
                     }`}
                   >
                     {isUnlocked ? def.description : def.hint}
@@ -215,7 +215,7 @@ export function AchievementGallery() {
 
                   {/* Unlock date */}
                   {isUnlocked && unlocked.unlockedAt && (
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground/60 mt-2">
+                    <p className="text-[11px] sm:text-[11px] text-muted-foreground mt-2">
                       Unlocked {formatDate(unlocked.unlockedAt)}
                     </p>
                   )}

@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { BiasTrapAlertContainer } from '@/components/game/BiasTrapAlert';
 import { InGameAdvisor } from '@/components/game/InGameAdvisor';
 import { ChoiceHintBadge } from '@/components/game/KeyboardShortcuts';
+import { TechniqueBadge } from '@/components/game/TechniqueBadge';
 import { useSound } from '@/hooks/use-sound';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -28,6 +29,9 @@ import {
   ChevronRight,
   ShieldAlert,
   GitBranch,
+  Clock,
+  Compass,
+  Activity,
 } from 'lucide-react';
 
 interface DialogueEntry {
@@ -47,6 +51,8 @@ export function NegotiationTable() {
     negotiation, updateNegotiation, makeChoice, addCaseResult, replayCaseResult,
     discoveredFacts, addStats, addReputation, isReplay,
     challengeMode, challengeTimer, setChallengeTimer,
+    negotiationStartTime, setNegotiationStartTime,
+    techniquesUsed, addTechniqueUsed,
   } = useGameStore();
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
@@ -127,12 +133,38 @@ export function NegotiationTable() {
   const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
   const currentNodeIdRef = useRef<string | null>(currentNode?.id || null);
   const speedTimerStartedRef = useRef<boolean>(false);
+  const appliedEffectsRef = useRef<Set<string>>(new Set());
+  const isProcessingChoiceRef = useRef<boolean>(false);
 
   // Sound effects
   const { playClick, playSuccess, playWarning, playNegotiation } = useSound();
 
   // Mobile metrics panel state (toggled by swipe or button)
   const [mobileMetricsOpen, setMobileMetricsOpen] = useState(false);
+
+  // Negotiation Timer
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const timerStartedRef = useRef<boolean>(false);
+
+  // Start negotiation timer when component mounts
+  useEffect(() => {
+    if (!negotiationStartTime) {
+      setNegotiationStartTime(Date.now());
+    }
+  }, [negotiationStartTime, setNegotiationStartTime]);
+
+  // Tick the timer every second
+  useEffect(() => {
+    const startTime = negotiationStartTime || Date.now();
+    if (!timerStartedRef.current) {
+      timerStartedRef.current = true;
+      setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
+    }
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [negotiationStartTime]);
 
   // Haptic feedback helper
   const hapticFeedback = useCallback((pattern: number | number[] = 10) => {
@@ -150,7 +182,12 @@ export function NegotiationTable() {
 
   // Speed mode timer
   useEffect(() => {
-    if (challengeMode !== 'speed' || isEndingNode) return;
+    if (challengeMode !== 'speed') {
+      // BUG FIX: Reset speed timer ref when not in speed mode
+      speedTimerStartedRef.current = false;
+      return;
+    }
+    if (isEndingNode) return;
     if (!speedTimerStartedRef.current && currentNode) {
       speedTimerStartedRef.current = true;
       setChallengeTimer(90);
@@ -194,6 +231,11 @@ export function NegotiationTable() {
   }, []);
 
   const advanceToNode = useCallback((nodeId: string) => {
+    // Clear any pending auto-advance timer to prevent double-advance
+    if (autoAdvanceRef.current) {
+      clearTimeout(autoAdvanceRef.current);
+      autoAdvanceRef.current = null;
+    }
     if (!scenario) return;
     const nextNode = scenario.dialogueTree.find(n => n.id === nodeId);
     if (nextNode) {
@@ -231,6 +273,9 @@ export function NegotiationTable() {
   // Apply node effects when entering a new node
   useEffect(() => {
     if (!currentNode || !currentNode.effects) return;
+    // BUG FIX: Prevent re-applying effects on page refresh by tracking which nodes have been processed
+    if (appliedEffectsRef.current.has(currentNode.id)) return;
+    appliedEffectsRef.current.add(currentNode.id);
 
     const eff = currentNode.effects || {};
     const effects: Record<string, number> = {};
@@ -249,17 +294,24 @@ export function NegotiationTable() {
     }
 
     if (eff.informationRevealed && eff.informationRevealed.length > 0) {
-      updateNegotiation({
-        informationRevealed: [...new Set([...useGameStore.getState().negotiation.informationRevealed, ...eff.informationRevealed])],
-      });
+      // BUG FIX: Use set callback to ensure latest state is read, preventing data loss
+      useGameStore.setState((s) => ({
+        negotiation: {
+          ...s.negotiation,
+          informationRevealed: [...new Set([...s.negotiation.informationRevealed, ...eff.informationRevealed!])],
+        },
+      }));
     }
 
     if (eff.concessionMade) {
-      updateNegotiation({
-        concessionsGiven: [...useGameStore.getState().negotiation.concessionsGiven, eff.concessionMade],
-      });
+      useGameStore.setState((s) => ({
+        negotiation: {
+          ...s.negotiation,
+          concessionsGiven: [...s.negotiation.concessionsGiven, eff.concessionMade!],
+        },
+      }));
     }
-  }, [currentNode?.id, updateNegotiation]);
+  }, [currentNode?.id]);
 
   // Typing animation & auto-advance
   useEffect(() => {
@@ -298,6 +350,10 @@ export function NegotiationTable() {
   }, [dialogueHistory.length, isTyping]);
 
   const handleChoiceClick = useCallback((choice: DialogueChoice) => {
+    // BUG FIX: Prevent double-application from rapid clicks or keyboard shortcuts
+    if (isProcessingChoiceRef.current) return;
+    isProcessingChoiceRef.current = true;
+
     const neg = useGameStore.getState().negotiation;
     const facts = useGameStore.getState().discoveredFacts;
 
@@ -314,6 +370,11 @@ export function NegotiationTable() {
     // Play click sound + haptic feedback
     playClick();
     hapticFeedback(10);
+
+    // Track technique if tagged
+    if (choice.technique && choice.technique !== 'none') {
+      addTechniqueUsed(choice.technique);
+    }
 
     // Apply choice effects
     const eff = choice.effects || {};
@@ -380,9 +441,14 @@ export function NegotiationTable() {
 
     // Advance to next node
     if (choice.nextNodeId) {
-      setTimeout(() => advanceToNode(choice.nextNodeId), 300);
+      setTimeout(() => {
+        advanceToNode(choice.nextNodeId);
+        isProcessingChoiceRef.current = false;
+      }, 300);
+    } else {
+      isProcessingChoiceRef.current = false;
     }
-  }, [advanceToNode, makeChoice, scenario, triggerBiasTrap, playClick]);
+  }, [advanceToNode, makeChoice, scenario, triggerBiasTrap, playClick, addTechniqueUsed]);
 
   const isChoiceDisabledByChallenge = (choice: DialogueChoice, choiceIndex: number): { disabled: boolean; reason: string } => {
     // Limited Choices mode: disable even-indexed choices (0-indexed: indices 1, 3, 5...)
@@ -481,22 +547,24 @@ export function NegotiationTable() {
       hiddenFactsFound: negotiation.informationRevealed,
       postmortemRead: false,
       transcript,
+      elapsedTime: elapsedSeconds,
     };
 
     if (isReplay) {
       replayCaseResult(caseResult);
     } else {
       addCaseResult(caseResult);
+
+      // BUG FIX: Only apply reputation and stats on first play, not on replay
+      // (replayCaseResult already handles score adjustments)
+      const repDelta = calculateReputationDelta(scenario, endingType);
+      addReputation(repDelta);
+
+      const totalInfo = scenario.investigationActions.reduce((sum, a) => sum + a.reveals.length, 0);
+      const infoFound = negotiation.informationRevealed.length + discoveredFacts.length;
+      const statsDelta = calculateStatsDelta(scenario, endingType, infoFound, totalInfo);
+      addStats(statsDelta);
     }
-
-    // Apply reputation and stats
-    const repDelta = calculateReputationDelta(scenario, endingType);
-    addReputation(repDelta);
-
-    const totalInfo = scenario.investigationActions.reduce((sum, a) => sum + a.reveals.length, 0);
-    const infoFound = negotiation.informationRevealed.length + discoveredFacts.length;
-    const statsDelta = calculateStatsDelta(scenario, endingType, infoFound, totalInfo);
-    addStats(statsDelta);
 
     // Store ending info for postmortem
     updateNegotiation({ endingTriggered: endingType });
@@ -626,6 +694,52 @@ export function NegotiationTable() {
     return timeline;
   }, [scenario, dialogueHistory]);
 
+  // Negotiation Health Score: combines trust, anger, patience into 0-100
+  const negotiationHealth = useMemo(() => {
+    return Math.round(
+      negotiation.trust * 0.4 +
+      (100 - negotiation.anger) * 0.35 +
+      negotiation.patience * 0.25
+    );
+  }, [negotiation.trust, negotiation.anger, negotiation.patience]);
+
+  const healthStatus = negotiationHealth >= 70
+    ? { label: 'Thriving', color: 'text-emerald-400', bgColor: 'bg-emerald-500', ringColor: 'ring-emerald-500/30' }
+    : negotiationHealth >= 40
+      ? { label: 'Cautious', color: 'text-amber-400', bgColor: 'bg-amber-500', ringColor: 'ring-amber-500/30' }
+      : { label: 'Dangerous', color: 'text-red-400', bgColor: 'bg-red-500', ringColor: 'ring-red-500/30' };
+
+  // Ending Prediction
+  const predictedEnding = useMemo(() => {
+    if (!scenario) return null;
+    if (negotiation.choicesMade.length === 0) return null;
+    return getEndingFromNegotiation(scenario, {
+      ...negotiation,
+      currentDialogueNodeId: currentNode?.id || negotiation.currentDialogueNodeId,
+    });
+  }, [scenario, negotiation, currentNode?.id]);
+
+  const endingPredictionInfo = useMemo(() => {
+    if (!predictedEnding) return null;
+    const PREDICTION_STYLES: Record<string, { icon: string; label: string; color: string; bgColor: string }> = {
+      master: { icon: '👑', label: 'Master Deal', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10' },
+      cooperative: { icon: '🤝', label: 'Cooperative', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10' },
+      hard_bargain: { icon: '💪', label: 'Hard Bargain', color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
+      bad_deal: { icon: '📉', label: 'Bad Deal', color: 'text-red-400', bgColor: 'bg-red-500/10' },
+      strategic_no_deal: { icon: '🚶', label: 'Strategic No Deal', color: 'text-cyan-400', bgColor: 'bg-cyan-500/10' },
+      ethical_failure: { icon: '⚖️', label: 'Ethical Failure', color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
+      no_deal_bad: { icon: '💥', label: 'No Deal (Bad)', color: 'text-red-500', bgColor: 'bg-red-500/10' },
+    };
+    return PREDICTION_STYLES[predictedEnding] || { icon: '❓', label: predictedEnding, color: 'text-muted-foreground', bgColor: 'bg-muted/10' };
+  }, [predictedEnding]);
+
+  // Format elapsed time as MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   if (!scenario) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -648,7 +762,20 @@ export function NegotiationTable() {
     return { emoji: '😐', label: 'Guarded' };
   };
 
+  // Mood Spectrum: determines negotiation mood based on trust and anger
+  const getMoodSpectrum = (trust: number, anger: number): { emoji: string; label: string; color: string; position: number } => {
+    if (anger >= 80) return { emoji: '🤬', label: 'Hostile', color: 'text-red-500', position: 5 };
+    if (trust >= 20 && anger >= 60) return { emoji: '😰', label: 'Tense', color: 'text-orange-500', position: 20 };
+    if (trust <= 20 && anger <= 40) return { emoji: '🤨', label: 'Distrustful', color: 'text-violet-500', position: 30 };
+    if (trust >= 30 && anger <= 60) return { emoji: '😐', label: 'Cautious', color: 'text-amber-500', position: 50 };
+    if (trust >= 50 && anger <= 40) return { emoji: '🙂', label: 'Cooperative', color: 'text-cyan-500', position: 72 };
+    if (trust >= 70 && anger <= 20) return { emoji: '😊', label: 'Harmonious', color: 'text-emerald-500', position: 92 };
+    // Default fallback: cautious
+    return { emoji: '😐', label: 'Cautious', color: 'text-amber-500', position: 50 };
+  };
+
   const emotion = getEmotionIndicator(negotiation.trust, negotiation.anger);
+  const mood = getMoodSpectrum(negotiation.trust, negotiation.anger);
 
   const speakerStyles: Record<string, string> = {
     narrator: 'narrator-text text-muted-foreground bg-muted/20',
@@ -671,6 +798,19 @@ export function NegotiationTable() {
 
       {/* Mobile Trust/Anger Mini-Bars - always visible on mobile */}
       <div className="lg:hidden border-b border-border/30 bg-card/20 backdrop-blur-sm px-4 py-1.5 space-y-1">
+        {/* Mobile Health Meter */}
+        <div className="flex items-center gap-2">
+          <Activity className={`h-3 w-3 shrink-0 ${healthStatus.color}`} />
+          <div className="flex-1 h-2 rounded-full bg-muted/50 overflow-hidden">
+            <motion.div
+              className={`h-full rounded-full ${healthStatus.bgColor}`}
+              animate={{ width: `${negotiationHealth}%` }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            />
+          </div>
+          <span className={`text-[11px] font-bold tabular-nums ${healthStatus.color} w-5 text-right`}>{negotiationHealth}</span>
+          <span className={`text-[11px] font-semibold ${healthStatus.color}`}>{healthStatus.label}</span>
+        </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 flex-1">
             <Heart className="h-3 w-3 text-emerald-400 shrink-0" />
@@ -680,7 +820,7 @@ export function NegotiationTable() {
                 style={{ width: `${negotiation.trust}%` }}
               />
             </div>
-            <span className="text-[10px] font-bold tabular-nums text-muted-foreground w-5 text-right">{negotiation.trust}</span>
+            <span className="text-[11px] font-bold tabular-nums text-muted-foreground w-5 text-right">{negotiation.trust}</span>
           </div>
           <div className="flex items-center gap-1.5 flex-1">
             <Flame className="h-3 w-3 text-red-400 shrink-0" />
@@ -690,7 +830,7 @@ export function NegotiationTable() {
                 style={{ width: `${negotiation.anger}%` }}
               />
             </div>
-            <span className="text-[10px] font-bold tabular-nums text-muted-foreground w-5 text-right">{negotiation.anger}</span>
+            <span className="text-[11px] font-bold tabular-nums text-muted-foreground w-5 text-right">{negotiation.anger}</span>
           </div>
         </div>
         {/* Mobile Phase Progress Bar */}
@@ -704,7 +844,7 @@ export function NegotiationTable() {
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <span className="text-[9px] font-bold text-amber-400 shrink-0 tabular-nums">{currentPhase}</span>
+          <span className="text-[11px] font-bold text-amber-400 shrink-0 tabular-nums">{currentPhase}</span>
         </div>
       </div>
 
@@ -716,9 +856,35 @@ export function NegotiationTable() {
             <div>
               <h2 className="text-sm font-semibold">{title}</h2>
               <p className="text-xs text-muted-foreground">vs. {counterparty.name}, {counterparty.role}</p>
+              {scenario.counterpartyStyle && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0 rounded-full border cursor-help mt-0.5 whitespace-nowrap
+                        bg-amber-500/10 text-amber-400 border-amber-500/20">
+                        <span>{scenario.counterpartyStyle === 'analyst' ? '📊' : scenario.counterpartyStyle === 'accommodator' ? '🤗' : '💪'}</span>
+                        <span className="font-medium capitalize">{scenario.counterpartyStyle}</span>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[250px]">
+                      <p className="font-semibold text-xs mb-1">{scenario.counterpartyStyle === 'analyst' ? '📊 Analyst Style' : scenario.counterpartyStyle === 'accommodator' ? '🤗 Accommodator Style' : '💪 Assertive Style'}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {scenario.counterpartyStyle === 'analyst' && 'Prefer data and logic. Give them time to think. Don\'t push emotionally.'}
+                        {scenario.counterpartyStyle === 'accommodator' && 'Value relationship. Build rapport first. Be careful — they say yes to please, not to agree.'}
+                        {scenario.counterpartyStyle === 'assertive' && 'Want to be heard. Listen first, then speak. Use calibrated questions to redirect.'}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {/* Negotiation Timer (always visible) */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border bg-card/50 border-border/30 text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              <span className="text-xs font-bold tabular-nums">{formatTime(elapsedSeconds)}</span>
+            </div>
             {/* Speed Mode Timer */}
             {challengeMode === 'speed' && (
               <motion.div
@@ -740,7 +906,7 @@ export function NegotiationTable() {
             )}
             {/* Challenge Mode Badge */}
             {challengeMode !== 'none' && (
-              <Badge variant="outline" className="text-[10px] px-2 py-0 bg-amber-500/10 text-amber-400 border-amber-500/25">
+              <Badge variant="outline" className="text-[11px] px-2 py-0 bg-amber-500/10 text-amber-400 border-amber-500/25">
                 {challengeMode === 'speed' && '\u26A1 Speed Run'}
                 {challengeMode === 'limited_choices' && '\uD83D\uDD12 Limited Choices'}
                 {challengeMode === 'ethics_lock' && '\u2696\uFE0F Ethics Lock'}
@@ -748,7 +914,7 @@ export function NegotiationTable() {
             )}
             <div className="flex items-center gap-1.5">
               <span className="text-xl">{emotion.emoji}</span>
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant="outline" className="text-[11px]">
                 {emotion.label}
               </Badge>
             </div>
@@ -763,12 +929,12 @@ export function NegotiationTable() {
               const phaseIndex = PHASES.indexOf(phase);
               const isPast = progressPercent > (phaseIndex + 1) * 25;
               return (
-                <span key={phase} className={`text-[9px] font-medium transition-all duration-500 ${
+                <span key={phase} className={`text-[11px] font-medium transition-all duration-500 ${
                   isActive
                     ? 'text-amber-400 font-bold'
                     : isPast
-                      ? 'text-amber-500/50'
-                      : 'text-muted-foreground/40'
+                      ? 'text-amber-500'
+                      : 'text-muted-foreground'
                 }`}>
                   {isActive && (
                     <motion.span
@@ -807,8 +973,8 @@ export function NegotiationTable() {
             )}
           </div>
           <div className="flex items-center justify-between mt-1">
-            <span className="text-[8px] text-muted-foreground/40">{dialogueProgress.current} of {dialogueProgress.total} nodes</span>
-            <span className="text-[8px] text-muted-foreground/40">{Math.round(progressPercent)}%</span>
+            <span className="text-[11px] text-muted-foreground">{dialogueProgress.current} of {dialogueProgress.total} nodes</span>
+            <span className="text-[11px] text-muted-foreground">{Math.round(progressPercent)}%</span>
           </div>
         </div>
       </div>
@@ -916,21 +1082,78 @@ export function NegotiationTable() {
                               >
                                 <span className="text-lg shrink-0">{challengeCheck.disabled ? (challengeMode === 'limited_choices' ? '\uD83D\uDD12' : '\u2696\uFE0F') : style.icon}</span>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium">{choice.text}</p>
-                                  <p className="text-[10px] opacity-70 mt-0.5">{challengeCheck.disabled ? challengeCheck.reason : style.label}</p>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <p className="text-sm font-medium">{choice.text}</p>
+                                    {choice.technique && choice.technique !== 'none' && (
+                                      <TechniqueBadge technique={choice.technique} compact />
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] opacity-70 mt-0.5">{challengeCheck.disabled ? challengeCheck.reason : style.label}</p>
                                 </div>
                                 <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
                               </motion.button>
                             </TooltipTrigger>
-                            {disabled && (
-                              <TooltipContent side="top" className="max-w-xs">
+                            <TooltipContent side="top" className="max-w-xs">
+                              {disabled ? (
                                 <p className="text-xs">{getDisabledReason(choice, choiceIndex)}</p>
-                              </TooltipContent>
-                            )}
+                              ) : choice.effects ? (
+                                <div className="space-y-1">
+                                  <p className="text-xs font-semibold mb-1">Expected Impact</p>
+                                  <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px]">
+                                    {choice.effects.trust && choice.effects.trust !== 0 && (
+                                      <span className={choice.effects.trust > 0 ? 'text-emerald-400' : 'text-red-400'}>
+                                        {choice.effects.trust > 0 ? '↑' : '↓'} Trust
+                                      </span>
+                                    )}
+                                    {choice.effects.anger && choice.effects.anger !== 0 && (
+                                      <span className={choice.effects.anger > 0 ? 'text-red-400' : 'text-emerald-400'}>
+                                        {choice.effects.anger > 0 ? '↑' : '↓'} Anger
+                                      </span>
+                                    )}
+                                    {(choice.effects.valueClaimed && choice.effects.valueClaimed > 0) && (
+                                      <span className="text-amber-400">↑ Value</span>
+                                    )}
+                                    {(choice.effects.valueCreated && choice.effects.valueCreated > 0) && (
+                                      <span className="text-amber-400">↑ Value</span>
+                                    )}
+                                    {(choice.effects.ethicalImpact && choice.effects.ethicalImpact < 0) && (
+                                      <span className="text-red-400">↓ Ethics</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground">No significant impact</p>
+                              )}
+                            </TooltipContent>
                           </Tooltip>
                         );
                       })}
                     </TooltipProvider>
+                    {/* BUG FIX: Fallback when all choices are disabled (soft-lock prevention) */}
+                    {currentNode.choices && currentNode.choices.every((c, i) => isChoiceDisabled(c, i)) && (
+                      <div className="mt-3 p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-center">
+                        <p className="text-xs text-amber-400 mb-2">All options are currently locked. You can continue without choosing.</p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-amber-500/30 text-amber-400 hover:bg-amber-500/20"
+                          onClick={() => {
+                            // Find the first non-disabled choice's nextNodeId as fallback,
+                            // or advance to the first ending node if no choice is available
+                            const firstChoice = currentNode.choices?.[0];
+                            if (firstChoice?.nextNodeId) {
+                              advanceToNode(firstChoice.nextNodeId);
+                            } else {
+                              // Fallback: go to first ending
+                              const endingNode = scenario?.dialogueTree.find(n => n.id.startsWith('ending_'));
+                              if (endingNode) advanceToNode(endingNode.id);
+                            }
+                          }}
+                        >
+                          Continue Anyway →
+                        </Button>
+                      </div>
+                    )}
                   </motion.div>
                 )}
 
@@ -958,7 +1181,7 @@ export function NegotiationTable() {
                         <Button
                           onClick={handleViewResults}
                           size="lg"
-                          className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold gap-2 text-base px-8 h-12 premium-button"
+                          className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold gap-2 text-base px-8 h-12 premium-button relative z-30"
                         >
                           View Results
                           <TrendingUp className="h-5 w-5" />
@@ -975,6 +1198,83 @@ export function NegotiationTable() {
         {/* Right Sidebar - Desktop only */}
         <div className="hidden lg:block w-72 border-l border-border/50 bg-card/20 backdrop-blur-sm p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-120px)]">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Live Metrics</h3>
+
+          {/* Negotiation Health Meter */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs flex items-center gap-1.5">
+                <Activity className="h-3.5 w-3.5" />
+                Health
+              </span>
+              <span className={`text-xs font-bold ${healthStatus.color}`}>{negotiationHealth} — {healthStatus.label}</span>
+            </div>
+            <div className="relative h-3 rounded-full bg-muted/50 overflow-hidden">
+              <motion.div
+                className={`h-full rounded-full ${healthStatus.bgColor}`}
+                animate={{ width: `${negotiationHealth}%` }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+              />
+              {/* Threshold markers */}
+              <div className="absolute top-0 bottom-0 left-[40%] w-px bg-amber-500/30 z-10" />
+              <div className="absolute top-0 bottom-0 left-[70%] w-px bg-emerald-500/30 z-10" />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <span className="text-red-400">Dangerous</span>
+              <span className="text-amber-400">Cautious</span>
+              <span className="text-emerald-400">Thriving</span>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Outcome Forecast */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs flex items-center gap-1.5">
+                <Compass className="h-3.5 w-3.5" />
+                Outcome Forecast
+              </span>
+            </div>
+            <div className={`p-2 rounded-lg border border-border/30 ${endingPredictionInfo?.bgColor || 'bg-muted/10'}`}>
+              {endingPredictionInfo ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{endingPredictionInfo.icon}</span>
+                  <span className={`text-xs font-medium ${endingPredictionInfo.color}`}>{endingPredictionInfo.label}</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">?</span>
+                  <span className="text-xs text-muted-foreground italic">Make a choice to see forecast...</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Mood Spectrum Indicator */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Mood Spectrum</span>
+              <span className={`text-[11px] font-semibold ${mood.color}`}>{mood.label}</span>
+            </div>
+            <div className="mood-spectrum" style={{ width: '100%' }}>
+              <motion.div
+                className="mood-indicator"
+                animate={{ left: `${mood.position}%`, scale: [0.8, 1.1, 1] }}
+                transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
+                key={mood.label}
+              >
+                <span className="text-[11px] leading-none">{mood.emoji}</span>
+              </motion.div>
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>Hostile</span>
+              <span>Harmonious</span>
+            </div>
+          </div>
+
+          <Separator />
 
           {/* Trust Meter */}
           <div className="space-y-1.5">
@@ -1048,11 +1348,11 @@ export function NegotiationTable() {
               Object.entries(negotiation.issuesResolved).map(([issue, value]) => (
                 <div key={issue} className="flex items-center gap-2">
                   <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                  <span className="text-[10px] text-muted-foreground">{issue}: {value}</span>
+                  <span className="text-[11px] text-muted-foreground">{issue}: {value}</span>
                 </div>
               ))
             ) : (
-              <p className="text-[10px] text-muted-foreground">No issues resolved yet</p>
+              <p className="text-[11px] text-muted-foreground">No issues resolved yet</p>
             )}
           </div>
 
@@ -1066,13 +1366,13 @@ export function NegotiationTable() {
             </h4>
             <div className="flex flex-wrap gap-1.5">
               {[...discoveredFacts, ...negotiation.informationRevealed].map((fact) => (
-                <Badge key={fact} variant="outline" className="text-[9px] px-1.5 py-0 bg-violet-500/10 text-violet-300 border-violet-500/20">
+                <Badge key={fact} variant="outline" className="text-[11px] px-1.5 py-0 bg-violet-500/10 text-violet-300 border-violet-500/20">
                   <Eye className="h-2.5 w-2.5 mr-1" />
                   {fact.replace(/_/g, ' ')}
                 </Badge>
               ))}
               {[...discoveredFacts, ...negotiation.informationRevealed].length === 0 && (
-                <p className="text-[10px] text-muted-foreground">No info discovered yet</p>
+                <p className="text-[11px] text-muted-foreground">No info discovered yet</p>
               )}
             </div>
           </div>
@@ -1099,7 +1399,7 @@ export function NegotiationTable() {
                     regret_aversion: '\uD83D\uDE30',
                   };
                   return (
-                    <Badge key={trapId} variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/10 text-amber-300 border-amber-500/20">
+                    <Badge key={trapId} variant="outline" className="text-[11px] px-1.5 py-0 bg-amber-500/10 text-amber-300 border-amber-500/20">
                       {BIAS_SIDEBAR_ICONS[trap?.type || ''] || '\u26A0\uFE0F'}
                       <span className="ml-1">{trap?.type.replace(/_/g, ' ') || trapId}</span>
                     </Badge>
@@ -1107,7 +1407,7 @@ export function NegotiationTable() {
                 })}
               </div>
             ) : (
-              <p className="text-[10px] text-muted-foreground">No bias traps triggered yet</p>
+              <p className="text-[11px] text-muted-foreground">No bias traps triggered yet</p>
             )}
           </div>
 
@@ -1132,15 +1432,15 @@ export function NegotiationTable() {
                       <span className="text-xs shrink-0 mt-px">{choice.choiceIcon}</span>
                       {/* Text */}
                       <div className="min-w-0">
-                        <p className="text-[10px] text-muted-foreground leading-tight line-clamp-2">{choice.choiceText}</p>
-                        <p className="text-[8px] text-muted-foreground/50 mt-0.5">{choice.choiceLabel}</p>
+                        <p className="text-[11px] text-muted-foreground leading-tight line-clamp-2">{choice.choiceText}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{choice.choiceLabel}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <p className="text-[10px] text-muted-foreground">No choices made yet</p>
+              <p className="text-[11px] text-muted-foreground">No choices made yet</p>
             )}
           </div>
         </div>
@@ -1162,21 +1462,21 @@ export function NegotiationTable() {
       />
 
       {/* Mobile Floating Node Indicator */}
-      <div className="lg:hidden fixed top-[calc(var(--header-h,56px)+52px)] left-1/2 -translate-x-1/2 z-30">
+      <div className="lg:hidden fixed top-[120px] left-1/2 -translate-x-1/2 z-[35] pointer-events-none">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-card/90 backdrop-blur-sm border border-border/30 shadow-md"
           >
             <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-[10px] font-medium text-muted-foreground">
+            <span className="text-[11px] font-medium text-muted-foreground">
               {dialogueProgress.current} of {dialogueProgress.total}
             </span>
           </motion.div>
         </div>
 
       {/* Mobile Sidebar Toggle */}
-      <div className="lg:hidden fixed bottom-4 right-4 z-50">
+      <div className="lg:hidden fixed bottom-4 right-4 z-[42]">
         <MobileSidebar
           negotiation={negotiation}
           discoveredFacts={discoveredFacts}
@@ -1205,6 +1505,16 @@ function MobileSidebar({ negotiation, discoveredFacts, open, onOpenChange }: {
 }) {
   const setOpen = onOpenChange;
 
+  // Keyboard dismissal: Escape closes the mobile sidebar
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open, setOpen]);
+
   return (
     <>
       <Button
@@ -1223,17 +1533,41 @@ function MobileSidebar({ negotiation, discoveredFacts, open, onOpenChange }: {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40"
+              className="fixed inset-0 bg-black/50 z-[47]"
               onClick={() => setOpen(false)}
             />
             <motion.div
               initial={{ opacity: 0, y: 100 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 100 }}
-              className="fixed bottom-16 right-4 left-4 z-50 max-h-[60vh] overflow-y-auto rounded-xl bg-card border border-border/50 p-4 shadow-xl"
+              className="fixed bottom-16 right-4 left-4 z-[48] max-h-[60vh] overflow-y-auto rounded-xl bg-card border border-border/50 p-4 shadow-xl"
             >
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Live Metrics</h3>
+
+                {/* Mood Spectrum Indicator - Mobile */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Mood Spectrum</span>
+                    <span className={`text-[11px] font-semibold ${mood.color}`}>{mood.label}</span>
+                  </div>
+                  <div className="mood-spectrum" style={{ width: '100%' }}>
+                    <motion.div
+                      className="mood-indicator"
+                      animate={{ left: `${mood.position}%`, scale: [0.8, 1.1, 1] }}
+                      transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
+                      key={`mobile-${mood.label}`}
+                    >
+                      <span className="text-[11px] leading-none">{mood.emoji}</span>
+                    </motion.div>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>Hostile</span>
+                    <span>Harmonious</span>
+                  </div>
+                </div>
+
+                <Separator />
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="text-center">
@@ -1272,7 +1606,7 @@ function MobileSidebar({ negotiation, discoveredFacts, open, onOpenChange }: {
                   <h4 className="text-xs font-semibold text-muted-foreground mb-2">Discovered Info</h4>
                   <div className="flex flex-wrap gap-1.5">
                     {[...discoveredFacts, ...negotiation.informationRevealed].map((fact) => (
-                      <Badge key={fact} variant="outline" className="text-[9px] px-1.5 py-0 bg-violet-500/10 text-violet-300 border-violet-500/20">
+                      <Badge key={fact} variant="outline" className="text-[11px] px-1.5 py-0 bg-violet-500/10 text-violet-300 border-violet-500/20">
                         {fact.replace(/_/g, ' ')}
                       </Badge>
                     ))}

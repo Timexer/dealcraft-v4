@@ -55,7 +55,7 @@ export function StreakIndicator({ compact = false }: { compact?: boolean }) {
         {milestone && (
           <Badge
             variant="outline"
-            className={`text-[9px] px-1.5 py-0 h-4 ${milestone.bgColor} ${milestone.color} ${milestone.borderColor}`}
+            className={`text-[11px] px-1.5 py-0 h-4 ${milestone.bgColor} ${milestone.color} ${milestone.borderColor}`}
           >
             {milestone.name}
           </Badge>
@@ -90,7 +90,7 @@ export function StreakIndicator({ compact = false }: { compact?: boolean }) {
           )}
           {/* Pulse ring */}
           {currentStreak >= 3 && (
-            <div className={`absolute inset-0 rounded-xl ${
+            <div className={`absolute inset-0 rounded-xl pointer-events-none ${
               isMaster ? 'animate-ping bg-yellow-500/10' : 'animate-pulse bg-amber-500/10'
             }`} />
           )}
@@ -117,13 +117,13 @@ export function StreakIndicator({ compact = false }: { compact?: boolean }) {
             {milestone && (
               <Badge
                 variant="outline"
-                className={`text-[9px] px-1.5 py-0 h-4 ${milestone.bgColor} ${milestone.color} ${milestone.borderColor}`}
+                className={`text-[11px] px-1.5 py-0 h-4 ${milestone.bgColor} ${milestone.color} ${milestone.borderColor}`}
               >
                 {milestone.name}
               </Badge>
             )}
             {bestStreak > currentStreak && (
-              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                 <Trophy className="h-2.5 w-2.5" />
                 Best: {bestStreak}
               </span>
@@ -135,7 +135,7 @@ export function StreakIndicator({ compact = false }: { compact?: boolean }) {
         {currentStreak >= 3 && (
           <Badge
             variant="outline"
-            className="text-[9px] px-1.5 py-0 h-4 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 ml-1"
+            className="text-[11px] px-1.5 py-0 h-4 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 ml-1"
           >
             +{Math.min(50, (currentStreak - 2) * 5)}% bonus
           </Badge>

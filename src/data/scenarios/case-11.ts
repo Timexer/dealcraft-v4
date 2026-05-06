@@ -529,6 +529,7 @@ export const case11: Scenario = {
     lesson: 'Risk clauses should motivate performance, not create opportunism.',
     bestPossibleDeal: 'Tiered delay clause + shelf commitment + shared marketing + preferred supplier commitment',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'anchor_binary',

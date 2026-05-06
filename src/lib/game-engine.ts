@@ -124,11 +124,22 @@ export function getEndingFromNegotiation(scenario: Scenario, negotiation: {
   if (negotiation.valueClaimed >= 20 && !goodRelationship) {
     return 'hard_bargain';
   }
+  // BUG FIX: Added ethical_failure and strategic_no_deal conditions that were previously unreachable
+  if (negotiation.ethicalImpact < -15) {
+    return 'ethical_failure';
+  }
+  if (totalValue < 10 && negotiation.trust >= 40 && negotiation.anger <= 40 && negotiation.informationRevealed.length >= 1) {
+    return 'strategic_no_deal';
+  }
   if (totalValue < 15 && negotiation.anger > 60) {
     return 'bad_deal';
   }
   if (negotiation.trust < 20 && negotiation.anger > 70) {
     return 'no_deal_bad';
+  }
+  // BUG FIX: Mediocre states should give bad_deal, not cooperative
+  if (totalValue < 20 && !highTrust) {
+    return 'bad_deal';
   }
   return 'cooperative';
 }

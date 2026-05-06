@@ -571,6 +571,7 @@ export const case13: Scenario = {
     lesson: 'When value depends on uncertain future events, bet on the event, not the claim.',
     bestPossibleDeal: '€18M upfront + €12M earnout tied to customer contract + €5M performance bonus + escrow + founder retention = up to €35M',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'winners_curse',

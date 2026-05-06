@@ -311,7 +311,7 @@ export const case08: Scenario = {
           id: 'choice_threaten_switch',
           text: '"Then we\'ll find a vendor who can handle it."',
           type: 'threat',
-          nextNodeId: 'ending_no_deal',
+          nextNodeId: 'ending_no_deal_bad',
           effects: { trust: -15, relationshipImpact: -15 },
         },
       ],
@@ -384,7 +384,7 @@ export const case08: Scenario = {
       isAuto: true,
     },
     {
-      id: 'ending_no_deal',
+      id: 'ending_no_deal_bad',
       speaker: 'narrator',
       text: '❌ NO DEAL: Contract not renewed. MedSure struggles through transition to new vendor during flu season. Patient care suffers.',
       isAuto: true,
@@ -416,7 +416,7 @@ export const case08: Scenario = {
       longTermConsequence: 'Vendor raises prices to cover penalty risk. Delays continue because root cause wasn\'t addressed. Relationship deteriorates further.',
     },
     {
-      id: 'ending_no_deal',
+      id: 'ending_no_deal_bad',
       type: 'no_deal_bad',
       title: 'Transition Chaos',
       description: 'Switching vendors during peak season creates chaos.',
@@ -431,6 +431,7 @@ export const case08: Scenario = {
     lesson: 'Before punishing poor performance, diagnose who controls the risk. Blame without understanding makes things worse.',
     bestPossibleDeal: 'Shared forecasting portal + 48-hour emergency buffer + 10% lower base price + forecast compliance bonus + controllable-only penalties.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'bias_vividness',

@@ -208,9 +208,9 @@ export function CaseHistory() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <History className="h-16 w-16 text-muted-foreground/30 mx-auto" />
+          <History className="h-16 w-16 text-muted-foreground mx-auto" />
           <h2 className="text-xl font-semibold text-muted-foreground">No Cases Completed Yet</h2>
-          <p className="text-sm text-muted-foreground/60">Complete your first case to see your history here.</p>
+          <p className="text-sm text-muted-foreground">Complete your first case to see your history here.</p>
           <Button variant="outline" onClick={() => setPhase('dashboard')} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
@@ -252,35 +252,35 @@ export function CaseHistory() {
                 <CardContent className="p-3 text-center">
                   <Trophy className="h-4 w-4 text-amber-500 mx-auto mb-1" />
                   <p className="text-lg font-bold">{stats.totalCases}</p>
-                  <p className="text-[10px] text-muted-foreground">Total Cases</p>
+                  <p className="text-[11px] text-muted-foreground">Total Cases</p>
                 </CardContent>
               </Card>
               <Card className="glass-card">
                 <CardContent className="p-3 text-center">
                   <BarChart3 className="h-4 w-4 text-cyan-500 mx-auto mb-1" />
                   <p className="text-lg font-bold">{stats.avgScore}</p>
-                  <p className="text-[10px] text-muted-foreground">Average Score</p>
+                  <p className="text-[11px] text-muted-foreground">Average Score</p>
                 </CardContent>
               </Card>
               <Card className="glass-card">
                 <CardContent className="p-3 text-center">
                   <Star className="h-4 w-4 text-yellow-500 mx-auto mb-1" />
                   <p className="text-lg font-bold">{stats.bestScore}</p>
-                  <p className="text-[10px] text-muted-foreground">Best Score</p>
+                  <p className="text-[11px] text-muted-foreground">Best Score</p>
                 </CardContent>
               </Card>
               <Card className="glass-card">
                 <CardContent className="p-3 text-center">
                   <Crown className="h-4 w-4 text-emerald-500 mx-auto mb-1" />
                   <p className="text-lg font-bold">{stats.maxStreak}</p>
-                  <p className="text-[10px] text-muted-foreground">Win Streak</p>
+                  <p className="text-[11px] text-muted-foreground">Win Streak</p>
                 </CardContent>
               </Card>
               <Card className="glass-card">
                 <CardContent className="p-3 text-center">
                   <Target className="h-4 w-4 text-violet-500 mx-auto mb-1" />
                   <p className="text-sm font-bold truncate">{OUTCOME_LABELS[stats.mostCommonOutcome] || 'N/A'}</p>
-                  <p className="text-[10px] text-muted-foreground">Most Common</p>
+                  <p className="text-[11px] text-muted-foreground">Most Common</p>
                 </CardContent>
               </Card>
               <Card className="glass-card">
@@ -295,7 +295,7 @@ export function CaseHistory() {
                   <p className={`text-lg font-bold ${stats.formDiff > 0 ? 'text-emerald-400' : stats.formDiff < 0 ? 'text-red-400' : 'text-muted-foreground'}`}>
                     {stats.formDiff > 0 ? '+' : ''}{stats.formDiff}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">Current Form</p>
+                  <p className="text-[11px] text-muted-foreground">Current Form</p>
                 </CardContent>
               </Card>
             </div>
@@ -330,7 +330,7 @@ export function CaseHistory() {
                       />
                       <YAxis
                         domain={[0, 100]}
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                         axisLine={{ stroke: 'hsl(var(--border))', strokeOpacity: 0.3 }}
                       />
                       <RechartsTooltip
@@ -357,7 +357,7 @@ export function CaseHistory() {
                           value: `Avg: ${stats?.avgScore || 0}`,
                           position: 'right',
                           fill: '#f59e0b',
-                          fontSize: 10,
+                          fontSize: 11,
                         }}
                       />
                       <Area
@@ -385,7 +385,7 @@ export function CaseHistory() {
               <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <button
                 onClick={() => setFilterOutcome('all')}
-                className={`text-[10px] px-2 py-1 rounded-full border transition-all ${
+                className={`text-[11px] px-2 py-1 rounded-full border transition-all ${
                   filterOutcome === 'all'
                     ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                     : 'bg-card/50 text-muted-foreground border-border/30 hover:border-amber-500/20'
@@ -397,7 +397,7 @@ export function CaseHistory() {
                 <button
                   key={outcome}
                   onClick={() => setFilterOutcome(outcome)}
-                  className={`text-[10px] px-2 py-1 rounded-full border transition-all ${
+                  className={`text-[11px] px-2 py-1 rounded-full border transition-all ${
                     filterOutcome === outcome
                       ? OUTCOME_COLORS[outcome] || 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                       : 'bg-card/50 text-muted-foreground border-border/30 hover:border-amber-500/20'
@@ -410,12 +410,12 @@ export function CaseHistory() {
 
             {/* Sort */}
             <div className="flex items-center gap-1.5 ml-auto">
-              <span className="text-[10px] text-muted-foreground">Sort:</span>
+              <span className="text-[11px] text-muted-foreground">Sort:</span>
               {(['date', 'score', 'title'] as SortOption[]).map(option => (
                 <button
                   key={option}
                   onClick={() => setSortBy(option)}
-                  className={`text-[10px] px-2 py-1 rounded-full border transition-all capitalize ${
+                  className={`text-[11px] px-2 py-1 rounded-full border transition-all capitalize ${
                     sortBy === option
                       ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                       : 'bg-card/50 text-muted-foreground border-border/30 hover:border-amber-500/20'
@@ -484,14 +484,14 @@ export function CaseHistory() {
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <p className="text-sm font-medium truncate group-hover:text-amber-500 transition-colors">{scenario.title}</p>
-                                  <Badge variant="outline" className={`text-[9px] px-1.5 py-0 shrink-0 ${CATEGORY_COLORS[scenario.category]}`}>
+                                  <Badge variant="outline" className={`text-[11px] px-1.5 py-0 shrink-0 ${CATEGORY_COLORS[scenario.category]}`}>
                                     {CATEGORY_LABELS[scenario.category]}
                                   </Badge>
                                 </div>
                                 <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-[10px] text-muted-foreground">Case #{actualIndex + 1}</span>
-                                  <span className="text-[10px] text-muted-foreground/40">·</span>
-                                  <Badge variant="outline" className={`text-[9px] px-1.5 py-0 shrink-0 ${outcomeColor}`}>
+                                  <span className="text-[11px] text-muted-foreground">Case #{actualIndex + 1}</span>
+                                  <span className="text-[11px] text-muted-foreground">·</span>
+                                  <Badge variant="outline" className={`text-[11px] px-1.5 py-0 shrink-0 ${outcomeColor}`}>
                                     {OUTCOME_ICON[result.outcome]} {OUTCOME_LABELS[result.outcome]}
                                   </Badge>
                                 </div>
@@ -502,13 +502,13 @@ export function CaseHistory() {
                               <div className="text-right">
                                 <div className="flex items-center gap-1.5">
                                   <p className="text-sm font-bold text-amber-500">{result.finalScore}</p>
-                                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 font-bold ${GRADE_BADGE_COLORS[grade.grade]}`}>
+                                  <Badge variant="outline" className={`text-[11px] px-1.5 py-0 font-bold ${GRADE_BADGE_COLORS[grade.grade]}`}>
                                     {grade.grade}
                                   </Badge>
                                 </div>
-                                <p className="text-[10px] text-muted-foreground">points</p>
+                                <p className="text-[11px] text-muted-foreground">points</p>
                               </div>
-                              <FileText className="h-4 w-4 text-muted-foreground/30 group-hover:text-amber-500 transition-colors" />
+                              <FileText className="h-4 w-4 text-muted-foreground group-hover:text-amber-500 transition-colors" />
                             </div>
                           </div>
                         </CardContent>
@@ -535,7 +535,7 @@ export function CaseHistory() {
 
       {/* Transcript Dialog */}
       <Dialog open={!!selectedCaseId} onOpenChange={(open) => { if (!open) setSelectedCaseId(null); }}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden sm:max-w-[calc(100%-2rem)]">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto sm:max-w-[calc(100%-2rem)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-amber-500" />

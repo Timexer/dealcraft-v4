@@ -380,7 +380,7 @@ function GlossaryCard({
                 </h3>
                 <Badge
                   variant="outline"
-                  className={`text-[10px] px-1.5 py-0 h-5 border ${categoryConfig.badge}`}
+                  className={`text-[11px] px-1.5 py-0 h-5 border ${categoryConfig.badge}`}
                 >
                   {categoryConfig.label}
                 </Badge>
@@ -429,10 +429,10 @@ function GlossaryCard({
                         <Lightbulb className="h-4 w-4 text-amber-400" />
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/80 block mb-1.5">
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-amber-400 block mb-1.5">
                           Negotiation Genius Tip
                         </span>
-                        <p className="text-sm text-amber-200/80 leading-relaxed">
+                        <p className="text-sm text-amber-200 leading-relaxed">
                           {term.tip}
                         </p>
                       </div>
@@ -529,7 +529,7 @@ export function NegotiationGlossary({
                   <h2 className="text-lg sm:text-xl font-bold text-amber-50 tracking-tight">
                     Negotiation Glossary
                   </h2>
-                  <p className="text-xs text-amber-500/50 mt-0.5">
+                  <p className="text-xs text-amber-500 mt-0.5">
                     Key terms from <em>Negotiation Genius</em>
                   </p>
                 </div>
@@ -551,7 +551,7 @@ export function NegotiationGlossary({
               transition={{ delay: 0.15, duration: 0.4 }}
               className="relative"
             >
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500/40 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500 pointer-events-none" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -559,7 +559,7 @@ export function NegotiationGlossary({
                 className="
                   w-full h-10 pl-9 pr-4 rounded-lg
                   bg-white/5 border border-amber-500/15
-                  text-sm text-amber-50 placeholder:text-amber-500/30
+                  text-sm text-amber-50 placeholder:text-amber-500
                   focus:border-amber-500/40 focus:ring-amber-500/20
                   transition-all duration-300
                 "
@@ -567,7 +567,7 @@ export function NegotiationGlossary({
               {search && (
                 <button
                   onClick={() => setSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500/40 hover:text-amber-400 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500 hover:text-amber-400 transition-colors"
                   aria-label="Clear search"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -595,7 +595,7 @@ export function NegotiationGlossary({
                 `}
               >
                 <span>All</span>
-                <span className="text-[10px] opacity-60 tabular-nums">
+                <span className="text-[11px] opacity-60 tabular-nums">
                   {termCounts.all}
                 </span>
               </TabsTrigger>
@@ -625,7 +625,7 @@ export function NegotiationGlossary({
                   <span className="sm:hidden">
                     {cat.label.split(' ')[0]}
                   </span>
-                  <span className="text-[10px] opacity-60 tabular-nums">
+                  <span className="text-[11px] opacity-60 tabular-nums">
                     {termCounts[cat.value]}
                   </span>
                 </TabsTrigger>
@@ -652,13 +652,13 @@ export function NegotiationGlossary({
                         animate={{ opacity: 1 }}
                         className="flex flex-col items-center justify-center py-16 text-center"
                       >
-                        <BookOpen className="h-10 w-10 text-amber-500/20 mb-3" />
+                        <BookOpen className="h-10 w-10 text-amber-500 mb-3" />
                         <p className="text-sm text-zinc-500">
                           No terms found for &ldquo;{search}&rdquo;
                         </p>
                         <button
                           onClick={() => setSearch('')}
-                          className="mt-2 text-xs text-amber-500/60 hover:text-amber-400 transition-colors underline underline-offset-2"
+                          className="mt-2 text-xs text-amber-500 hover:text-amber-400 transition-colors underline underline-offset-2"
                         >
                           Clear search
                         </button>

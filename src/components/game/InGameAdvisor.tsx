@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Lightbulb,
@@ -273,6 +273,16 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
 
   const tips = useMemo(() => generateTips(props), [props]);
 
+  // Keyboard dismissal: Escape closes the advisor panel
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isOpen]);
+
   // Generate a context key to know when to invalidate cache
   const contextKey = `${props.negotiation.trust}-${props.negotiation.anger}-${props.negotiation.patience}-${props.negotiation.choicesMade.length}-${props.negotiation.biasTrapsTriggered.length}`;
 
@@ -359,7 +369,7 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
       {/* Toggle Button */}
       <motion.button
         onClick={() => setIsOpen((prev) => !prev)}
-        className="fixed bottom-6 left-6 z-40 flex size-12 items-center justify-center rounded-full bg-amber-500/90 shadow-lg shadow-amber-500/25 backdrop-blur-sm transition-colors hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-95"
+        className="fixed bottom-6 left-6 z-[42] flex size-12 items-center justify-center rounded-full bg-amber-500/90 shadow-lg shadow-amber-500/25 backdrop-blur-sm transition-colors hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-95"
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
         aria-label={isOpen ? 'Close advisor panel' : 'Open advisor panel'}
@@ -407,7 +417,7 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
           <>
             {/* Backdrop overlay */}
             <motion.div
-              className="fixed inset-0 z-30 bg-black/20 backdrop-blur-[2px]"
+              className="fixed inset-0 z-[47] bg-black/20 backdrop-blur-[2px]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -417,7 +427,7 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
 
             {/* Panel */}
             <motion.div
-              className="fixed left-0 top-0 z-40 flex h-full max-w-sm flex-col"
+              className="fixed left-0 top-0 z-[48] flex h-full max-w-sm flex-col"
               initial={{ x: '-100%', opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '-100%', opacity: 0 }}
@@ -434,14 +444,14 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
                       <h2 className="text-base font-semibold text-amber-50 tracking-tight">
                         Advisor
                       </h2>
-                      <p className="text-[11px] leading-tight text-amber-400/60">
+                      <p className="text-[11px] leading-tight text-amber-400">
                         Negotiation Mentor
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="flex size-7 items-center justify-center rounded-md text-amber-400/50 transition-colors hover:bg-amber-500/10 hover:text-amber-300"
+                    className="flex size-7 items-center justify-center rounded-md text-amber-400 transition-colors hover:bg-amber-500/10 hover:text-amber-300"
                     aria-label="Close advisor"
                   >
                     <X className="size-4" />
@@ -476,12 +486,12 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
                               />
                             </div>
                             <div className="flex-1 min-w-0 space-y-2.5">
-                              <p className="text-[13px] leading-relaxed text-amber-50/85">
+                              <p className="text-[13px] leading-relaxed text-amber-50">
                                 {tip.text}
                               </p>
                               <Badge
                                 variant="outline"
-                                className={`gap-1 border text-[10px] font-medium ${categoryConf.badgeClass}`}
+                                className={`gap-1 border text-[11px] font-medium ${categoryConf.badgeClass}`}
                               >
                                 {categoryConf.icon}
                                 {tip.category}
@@ -499,11 +509,11 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
                       animate={{ opacity: 1 }}
                       className="flex flex-col items-center justify-center py-12 text-center"
                     >
-                      <Lightbulb className="mb-3 size-8 text-amber-500/30" />
-                      <p className="text-sm text-amber-400/50">
+                      <Lightbulb className="mb-3 size-8 text-amber-500" />
+                      <p className="text-sm text-amber-400">
                         No tips right now.
                       </p>
-                      <p className="mt-1 text-xs text-amber-400/30">
+                      <p className="mt-1 text-xs text-amber-400">
                         Start negotiating to get advice.
                       </p>
                     </motion.div>
@@ -524,7 +534,7 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
                           AI Advisor
                         </span>
                       </div>
-                      <p className="text-[13px] leading-relaxed text-amber-50/90">
+                      <p className="text-[13px] leading-relaxed text-amber-50">
                         {aiAdvice}
                       </p>
                     </motion.div>
@@ -537,7 +547,7 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
                       animate={{ opacity: 1, y: 0 }}
                       className="rounded-xl border border-amber-500/10 bg-amber-500/5 p-3.5"
                     >
-                      <p className="text-xs text-amber-400/60 italic">
+                      <p className="text-xs text-amber-400 italic">
                         AI advisor unavailable. Use the static tips above.
                       </p>
                     </motion.div>
@@ -569,7 +579,7 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
                       </>
                     )}
                   </Button>
-                  <p className="text-center text-[11px] text-amber-500/35">
+                  <p className="text-center text-[11px] text-amber-500">
                     {aiAdvice ? 'AI advice based on your current state' : 'Based on your current negotiation state'}
                   </p>
                 </div>

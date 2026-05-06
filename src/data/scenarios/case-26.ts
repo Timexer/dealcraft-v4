@@ -650,6 +650,7 @@ export const case26: Scenario = {
     lesson: 'A negotiator\'s job includes protecting the client from their own shortsightedness. An NDA that hides a safety defect isn\'t a resolution — it\'s a ticking bomb.',
     bestPossibleDeal: 'Proactive recall + €2.5M fair settlement + limited NDA + independent safety audit + Martinez family partnership + CEO safety announcement = brand transformation',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'nda_comfort',

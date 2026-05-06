@@ -73,7 +73,7 @@ export function ChallengeModeSelector({ onModeSelected }: ChallengeModeSelectorP
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <h3 className="text-sm font-semibold text-amber-500">Challenge Mode</h3>
-        <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/10 text-amber-400 border-amber-500/20">
+        <Badge variant="outline" className="text-[11px] px-1.5 py-0 bg-amber-500/10 text-amber-400 border-amber-500/20">
           Optional
         </Badge>
       </div>
@@ -108,7 +108,7 @@ export function ChallengeModeSelector({ onModeSelected }: ChallengeModeSelectorP
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${mode.badgeClass}`}>
+                      <Badge variant="outline" className={`text-[11px] px-1.5 py-0 ${mode.badgeClass}`}>
                         {mode.difficulty}
                       </Badge>
                       {isSelected && (
@@ -116,7 +116,7 @@ export function ChallengeModeSelector({ onModeSelected }: ChallengeModeSelectorP
                       )}
                     </div>
                   </div>
-                  <p className="text-[10px] leading-relaxed text-muted-foreground">
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
                     {mode.description}
                   </p>
                 </CardContent>

@@ -480,6 +480,7 @@ export const case17: Scenario = {
     lesson: 'When negotiating from weakness, find out who the strong party answers to.',
     bestPossibleDeal: '30% debt converted to marine conservation fund + 10% outright forgiveness + extended timeline + interest reduction + ESG partnership narrative',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'power_surrender_nation',

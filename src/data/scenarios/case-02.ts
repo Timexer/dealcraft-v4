@@ -160,6 +160,7 @@ export const case02: Scenario = {
           type: 'diagnostic',
           nextNodeId: 'elena_cautious',
           effects: { trust: 10, anger: -5 },
+          technique: 'calibrated_q',
         },
         {
           id: 'choice_package_hint',
@@ -174,6 +175,7 @@ export const case02: Scenario = {
           type: 'empathy',
           nextNodeId: 'elena_softens',
           effects: { trust: 15, anger: -10 },
+          technique: 'tactical_empathy',
         },
       ],
     },
@@ -195,6 +197,7 @@ export const case02: Scenario = {
           type: 'face_saving',
           nextNodeId: 'elena_pause',
           effects: { trust: 10, anger: -5, valueCreated: 5 },
+          technique: 'calibrated_q',
         },
       ],
     },
@@ -209,6 +212,7 @@ export const case02: Scenario = {
           type: 'investigative',
           nextNodeId: 'elena_slip',
           effects: { trust: 5, anger: -5 },
+          technique: 'label',
         },
         {
           id: 'choice_move_to_deal',
@@ -337,6 +341,7 @@ export const case02: Scenario = {
           type: 'empathy',
           nextNodeId: 'elena_grateful',
           effects: { trust: 20, anger: -15, valueCreated: 10 },
+          technique: 'accusation_audit',
         },
         {
           id: 'choice_leverage_urgency',
@@ -444,6 +449,7 @@ export const case02: Scenario = {
           type: 'face_saving',
           nextNodeId: 'elena_grateful',
           effects: { trust: 10, anger: -15, valueCreated: 10 },
+          technique: 'third_story',
         },
         {
           id: 'choice_hard_price',
@@ -594,13 +600,6 @@ export const case02: Scenario = {
           nextNodeId: 'elena_opens_up',
           effects: { trust: 10, anger: -20 },
         },
-        {
-          id: 'choice_walk_away',
-          text: '"Then perhaps the auction market is the right channel for us. We can get our price elsewhere."',
-          type: 'walk_away',
-          nextNodeId: 'ending_bad_deal',
-          effects: { trust: -20, anger: 10, relationshipImpact: -15 },
-        },
       ],
     },
     {
@@ -711,6 +710,7 @@ export const case02: Scenario = {
     lesson: 'The other side\'s urgency may be worth more than the asset itself. Speed, reliability, and completeness can be more valuable than the equipment — if you package them right.',
     bestPossibleDeal: '€56K + 72-hour delivery + certified installation + calibration + 90-day warranty + 2-day comprehensive training = maximum joint value with strong relationship preserved.',
   },
+  counterpartyStyle: 'analyst',
   biasTraps: [
     {
       id: 'fixed_pie_price',

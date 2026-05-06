@@ -276,7 +276,7 @@ export const case22: Scenario = {
           id: 'press_advantage',
           text: '"We\'re debating it because your patent is the entire basis for your demand. If the patent is invalid — and we believe it is — you have nothing. Let\'s be honest about what this is really worth."',
           type: 'aggressive_anchor',
-          nextNodeId: 'victor_asks_number',
+          nextNodeId: 'victor_tests_waters',
           effects: { trust: -5, anger: 5, valueClaimed: 15 },
         },
         {
@@ -603,6 +603,14 @@ export const case22: Scenario = {
       scores: { clientEconomicValue: 15, jointValueCreated: 10, infoDiscovered: 15, relationshipPreserved: 30, ethicalIntegrity: 40, strategicDiscipline: 10 },
       longTermConsequence: 'The €200K+ settlement drains LaunchPad\'s runway. Within months, two more patent trolls send demand letters, having learned from IP Shield\'s success. The startup spends more on patent settlements than product development. Investors lose confidence. The company that should have been a success story becomes a cautionary tale about patent trolls.',
     },
+    {
+      id: 'strategic_no_deal',
+      type: 'strategic_no_deal',
+      title: 'The Bold Refusal',
+      description: 'You walked away from the table entirely. No settlement, no payment. You invested in a strong legal defense instead, and the troll\'s bluff collapsed.',
+      scores: { clientEconomicValue: 80, jointValueCreated: 30, infoDiscovered: 90, relationshipPreserved: 20, ethicalIntegrity: 90, strategicDiscipline: 85 },
+      longTermConsequence: 'LaunchPad invests €15K in a strong legal defense. IP Shield\'s lawyers evaluate and decline to proceed. The case is dropped within weeks. LaunchPad pays nothing to the troll. A bold move that paid off, but not for the faint of heart.',
+    },
   ],
   postmortem: {
     masterSolution: 'Respond with detailed, legally strong refusal signaling dedicated litigation budget. Offer €15K "go-away" nuisance settlement with full portfolio release and covenant not to assert. Troll accepts and moves on.',
@@ -611,6 +619,7 @@ export const case22: Scenario = {
     lesson: 'A threat is only as strong as the other side\'s willingness to execute it. Calculate their BATNA, not just yours.',
     bestPossibleDeal: '€15K nuisance settlement + full portfolio release + covenant not to assert + no admission + mutual confidentiality.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'anchor_shock_500k',

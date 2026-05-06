@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   ArrowRight,
@@ -29,7 +29,13 @@ import {
   BarChart3,
   Info,
   Swords,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  CheckCircle2,
+  Zap,
 } from 'lucide-react';
+import { PreNegotiationChecklist } from '@/components/game/PreNegotiationChecklist';
 
 const ADVISOR_TIPS: Record<string, string> = {
   fundamentals: 'Start with your BATNA. Know your walk-away point before you sit at the table.',
@@ -42,6 +48,120 @@ const ADVISOR_TIPS: Record<string, string> = {
   ugly: 'Emotions are data. Don\'t fight them — read them.',
   ethics: 'Consider who is NOT at the table. Outsider harm is still harm.',
   master: 'Combine every skill you\'ve learned. The master sees the whole board.',
+};
+
+const CATEGORY_TIPS: Record<string, { icon: string; title: string; tips: string[] }> = {
+  fundamentals: {
+    icon: '📚',
+    title: 'Fundamentals Strategy',
+    tips: [
+      'Always quantify your BATNA before entering negotiation — a strong alternative gives you leverage.',
+      'Anchor high but justify your position with objective criteria.',
+      'Listen more than you speak in the opening phase.',
+    ],
+  },
+  hidden_interests: {
+    icon: '🔍',
+    title: 'Hidden Interests Strategy',
+    tips: [
+      'Ask diagnostic questions to uncover what the other side truly values.',
+      'Look for differences in risk preferences — they create trading opportunities.',
+      "Don't assume their priorities match their stated positions.",
+    ],
+  },
+  multi_issue: {
+    icon: '🎯',
+    title: 'Multi-Issue Strategy',
+    tips: [
+      'Never negotiate issues one at a time — package them for logrolling.',
+      'Identify which issues matter more to you vs. the other side.',
+      'Create contingency contracts when you disagree about future outcomes.',
+    ],
+  },
+  deadline: {
+    icon: '⏰',
+    title: 'Deadline Strategy',
+    tips: [
+      'Never reveal your true deadline — it becomes a weapon against you.',
+      'Use time pressure strategically: let the other side feel the clock.',
+      'Prepare your best alternative before the deadline approaches.',
+    ],
+  },
+  deception: {
+    icon: '🎭',
+    title: 'Deception Defense',
+    tips: [
+      'Verify claims independently — trust but verify.',
+      "Use contingent agreements to test the other side's assertions.",
+      'Watch for inconsistencies between their words and actions.',
+    ],
+  },
+  power_imbalance: {
+    icon: '⚖️',
+    title: 'Power Balance Strategy',
+    tips: [
+      'Your BATNA is your greatest source of power — strengthen it before negotiating.',
+      "Don't negotiate against yourself by making unilateral concessions.",
+      'Find areas where you have unique value that the stronger party needs.',
+    ],
+  },
+  relationship: {
+    icon: '🤝',
+    title: 'Relationship Strategy',
+    tips: [
+      'Separate the people from the problem — be soft on the person, hard on the issue.',
+      'Use face-saving language: "I understand your position" before disagreeing.',
+      'Build trust incrementally through small commitments.',
+    ],
+  },
+  ethics: {
+    icon: '⚖️',
+    title: 'Ethical Strategy',
+    tips: [
+      'Ethical negotiation builds long-term reputation and repeat business.',
+      'Deception may win a single deal but destroys future opportunities.',
+      'Use objective standards and fair procedures to legitimize your proposals.',
+    ],
+  },
+  ugly: {
+    icon: '🔥',
+    title: 'Ugly Negotiation Strategy',
+    tips: [
+      'Stay calm under pressure — emotional reactions are weapons used against you.',
+      'Name the tactic: "I notice we\'re being pressed for an immediate decision."',
+      'Always have a walk-away alternative ready.',
+    ],
+  },
+  master: {
+    icon: '👑',
+    title: 'Master Strategy',
+    tips: [
+      'Combine every technique — BATNA, logrolling, contingencies, and relationship.',
+      'Read the whole board: economic value, emotional stakes, and future implications.',
+      'The master creates value that neither side saw coming.',
+    ],
+  },
+};
+
+const BATNA_TIPS: Record<string, { text: string; variant: 'low' | 'medium' | 'high' }> = {
+  low: { text: '⚠️ Your BATNA seems low — consider improving your alternatives before negotiating.', variant: 'low' },
+  medium: { text: '💡 A moderate BATNA gives you some leverage. Can you strengthen it further?', variant: 'medium' },
+  high: { text: '✅ A strong BATNA gives you confidence. Don\'t accept less than you deserve.', variant: 'high' },
+};
+
+const STRATEGY_TIPS: Record<string, string> = {
+  make_first_offer: '🎯 Making the first offer anchors the negotiation. Set an ambitious but justifiable anchor.',
+  invite_their_offer: '👀 Letting them go first reveals information — but risks being anchored.',
+  diagnostic_questions: '🔍 Diagnostic questions uncover hidden interests before you commit to a position.',
+  build_rapport: '🤝 Building rapport creates trust — essential for value-creating negotiations.',
+};
+
+// Map store strategy IDs to STRATEGY_TIPS keys
+const STRATEGY_ID_MAP: Record<string, string> = {
+  first_offer: 'make_first_offer',
+  invite_offer: 'invite_their_offer',
+  diagnostic: 'diagnostic_questions',
+  rapport: 'build_rapport',
 };
 
 const TRADEABILITY_COLORS = {
@@ -74,6 +194,23 @@ export function StrategyBoard() {
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
   const [newAssumption, setNewAssumption] = useState('');
+  const [isAdvisorExpanded, setIsAdvisorExpanded] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Determine BATNA level based on player estimate vs actual client BATNA
+  const batnaLevel = useMemo<'low' | 'medium' | 'high' | null>(() => {
+    if (!batnaEstimate || !scenario) return null;
+    const clientValue = scenario.batna.clientBATNAValue;
+    if (clientValue === 0) return 'medium';
+    const ratio = batnaEstimate / clientValue;
+    if (ratio < 0.8) return 'low';
+    if (ratio > 1.2) return 'high';
+    return 'medium';
+  }, [batnaEstimate, scenario]);
+
+  // Get the mapped strategy tip key
+  const strategyTipKey = openingStrategy ? STRATEGY_ID_MAP[openingStrategy] : null;
+  const categoryTip = scenario ? (CATEGORY_TIPS[scenario.category] || CATEGORY_TIPS.fundamentals) : null;
 
   if (!scenario) {
     return (
@@ -133,7 +270,7 @@ export function StrategyBoard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -155,7 +292,11 @@ export function StrategyBoard() {
           </Badge>
         </motion.div>
 
-        <ScrollArea className="max-h-[calc(100vh-200px)]">
+        {/* Two-column layout: main content + Strategy Advisor Panel */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left column: main content */}
+          <div className="flex-1 min-w-0">
+          <ScrollArea className="h-[calc(100vh-14rem)]">
           <div className="space-y-6 pr-2">
             {/* BATNA Analysis with Visual Comparison */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -180,8 +321,8 @@ export function StrategyBoard() {
                     {/* Client BATNA bar */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-muted-foreground">Client&apos;s BATNA</span>
-                        <span className="text-[10px] font-medium">€{clientValue.toLocaleString()}</span>
+                        <span className="text-[11px] text-muted-foreground">Client&apos;s BATNA</span>
+                        <span className="text-[11px] font-medium">€{clientValue.toLocaleString()}</span>
                       </div>
                       <div className="comparison-bar">
                         <div
@@ -189,14 +330,14 @@ export function StrategyBoard() {
                           style={{ width: `${clientBatnaPercent}%` }}
                         />
                       </div>
-                      <p className="text-[10px] text-muted-foreground/70 truncate">{batna.clientBATNA}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{batna.clientBATNA}</p>
                     </div>
 
                     {/* Counterparty BATNA bar */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-muted-foreground">Counterparty&apos;s BATNA</span>
-                        <span className="text-[10px] font-medium">€{cpValue.toLocaleString()}</span>
+                        <span className="text-[11px] text-muted-foreground">Counterparty&apos;s BATNA</span>
+                        <span className="text-[11px] font-medium">€{cpValue.toLocaleString()}</span>
                       </div>
                       <div className="comparison-bar">
                         <div
@@ -204,7 +345,7 @@ export function StrategyBoard() {
                           style={{ width: `${cpBatnaPercent}%` }}
                         />
                       </div>
-                      <p className="text-[10px] text-muted-foreground/70 truncate">{batna.counterpartyBATNA}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{batna.counterpartyBATNA}</p>
                     </div>
 
                     {/* Advantage indicator */}
@@ -262,7 +403,7 @@ export function StrategyBoard() {
                         className="marker client"
                         style={{ left: `${clientPos}%` }}
                       >
-                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[8px] text-emerald-400 whitespace-nowrap font-medium">
+                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[11px] text-emerald-400 whitespace-nowrap font-medium">
                           Client
                         </span>
                       </div>
@@ -271,13 +412,13 @@ export function StrategyBoard() {
                         className="marker counterparty"
                         style={{ left: `${cpPos}%` }}
                       >
-                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[8px] text-orange-400 whitespace-nowrap font-medium">
+                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[11px] text-orange-400 whitespace-nowrap font-medium">
                           CP
                         </span>
                       </div>
                       {/* ZOPA label */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[10px] font-bold text-amber-400/80">ZOPA</span>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-[11px] font-bold text-amber-400">ZOPA</span>
                       </div>
                       {/* Reservation value marker */}
                       {rvPos > 0 && (
@@ -285,34 +426,34 @@ export function StrategyBoard() {
                           className="absolute top-0 h-full w-0.5 bg-red-500 z-10"
                           style={{ left: `${Math.min(100, rvPos)}%` }}
                         >
-                          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] text-red-400 whitespace-nowrap font-medium">
+                          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[11px] text-red-400 whitespace-nowrap font-medium">
                             Your RV
                           </span>
                         </div>
                       )}
                       {/* Scale labels */}
                       <div className="absolute bottom-0 left-0 right-0 flex justify-between px-1">
-                        <span className="text-[8px] text-muted-foreground/50">€0</span>
-                        <span className="text-[8px] text-muted-foreground/50">€{Math.round(maxVal).toLocaleString()}</span>
+                        <span className="text-[11px] text-muted-foreground">€0</span>
+                        <span className="text-[11px] text-muted-foreground">€{Math.round(maxVal).toLocaleString()}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 mt-1">
                       <div className="flex items-center gap-1.5">
                         <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                        <span className="text-[9px] text-muted-foreground">Client BATNA</span>
+                        <span className="text-[11px] text-muted-foreground">Client BATNA</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="h-2 w-2 rounded-full bg-orange-500" />
-                        <span className="text-[9px] text-muted-foreground">CP BATNA</span>
+                        <span className="text-[11px] text-muted-foreground">CP BATNA</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="h-2 w-2 rounded-full bg-amber-500/50" />
-                        <span className="text-[9px] text-muted-foreground">ZOPA Zone</span>
+                        <span className="text-[11px] text-muted-foreground">ZOPA Zone</span>
                       </div>
                       {rvPos > 0 && (
                         <div className="flex items-center gap-1.5">
                           <div className="h-2 w-0.5 bg-red-500" />
-                          <span className="text-[9px] text-muted-foreground">Your RV</span>
+                          <span className="text-[11px] text-muted-foreground">Your RV</span>
                         </div>
                       )}
                     </div>
@@ -348,7 +489,7 @@ export function StrategyBoard() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Badge variant="outline" className={`text-[10px] shrink-0 cursor-help ${TRADEABILITY_COLORS[issue.tradeability]}`}>
+                                <Badge variant="outline" className={`text-[11px] shrink-0 cursor-help ${TRADEABILITY_COLORS[issue.tradeability]}`}>
                                   {issue.tradeability} trade
                                 </Badge>
                               </TooltipTrigger>
@@ -360,7 +501,7 @@ export function StrategyBoard() {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1">
-                            <span className="text-[10px] text-muted-foreground">Client Priority</span>
+                            <span className="text-[11px] text-muted-foreground">Client Priority</span>
                             <div className="flex items-center gap-0.5">
                               {Array.from({ length: 10 }).map((_, i) => (
                                 <Star
@@ -371,7 +512,7 @@ export function StrategyBoard() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <span className="text-[10px] text-muted-foreground">Counterparty Priority</span>
+                            <span className="text-[11px] text-muted-foreground">Counterparty Priority</span>
                             <div className="flex items-center gap-0.5">
                               {Array.from({ length: 10 }).map((_, i) => (
                                 <Star
@@ -386,7 +527,7 @@ export function StrategyBoard() {
                         {issue.clientPriority !== issue.counterpartyPriority && (
                           <div className="flex items-center gap-1.5 pt-1">
                             <Lightbulb className="h-3 w-3 text-amber-400" />
-                            <span className="text-[9px] text-amber-400/70">
+                            <span className="text-[11px] text-amber-400">
                               {issue.clientPriority > issue.counterpartyPriority
                                 ? 'You value this more — potential concession for the counterparty'
                                 : 'They value this more — opportunity to trade for something you want'}
@@ -502,14 +643,14 @@ export function StrategyBoard() {
             </motion.div>
 
             {/* Advisor Tip */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="lg:hidden">
               <Card className="bg-amber-500/10 border-amber-500/20">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <Lightbulb className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
                     <div>
                       <p className="text-xs font-semibold text-amber-400 mb-1">Advisor Tip</p>
-                      <p className="text-sm text-amber-200/80 italic">
+                      <p className="text-sm text-amber-200 italic">
                         {ADVISOR_TIPS[category] || ADVISOR_TIPS.fundamentals}
                       </p>
                     </div>
@@ -517,23 +658,185 @@ export function StrategyBoard() {
                 </CardContent>
               </Card>
             </motion.div>
+
+            {/* Pre-Negotiation Checklist (NAP Method) */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+              <PreNegotiationChecklist />
+            </motion.div>
           </div>
         </ScrollArea>
+        </div>
 
-        {/* Proceed Button */}
+        {/* Right column: Strategy Advisor Panel (sticky on desktop) */}
+        <div className="w-full lg:w-80 xl:w-96 shrink-0">
+          <div className="lg:sticky lg:top-24 space-y-4">
+            {/* Mobile toggle button */}
+            <Button
+              variant="outline"
+              onClick={() => setIsAdvisorExpanded(!isAdvisorExpanded)}
+              className="w-full lg:hidden flex items-center justify-between bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300"
+            >
+              <span className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4" />
+                Strategy Tips
+              </span>
+              {isAdvisorExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+
+            {/* Desktop always-visible header */}
+            <div className="hidden lg:flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">💡</span>
+                <h2 className="text-sm font-semibold text-amber-400">Strategy Advisor</h2>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsAdvisorExpanded(!isAdvisorExpanded)}
+                className="h-6 w-6 p-0 text-muted-foreground hover:text-amber-400"
+              >
+                {isAdvisorExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              </Button>
+            </div>
+
+            {/* Advisor content */}
+            <AnimatePresence>
+              {isAdvisorExpanded && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="overflow-hidden space-y-3"
+                >
+                  {/* Category Tips Card */}
+                  {categoryTip && (
+                    <div className="glass-card p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{categoryTip.icon}</span>
+                        <h3 className="text-xs font-semibold text-amber-400">{categoryTip.title}</h3>
+                      </div>
+                      <ul className="space-y-2">
+                        {categoryTip.tips.map((tip, i) => (
+                          <motion.li
+                            key={i}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                            className="flex items-start gap-2 text-xs text-muted-foreground"
+                          >
+                            <Zap className="h-3 w-3 text-amber-500 mt-0.5 shrink-0" />
+                            <span>{tip}</span>
+                          </motion.li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* BATNA Assessment Card */}
+                  {batnaLevel && (
+                    <div className={`glass-card p-4 space-y-2 ${
+                      batnaLevel === 'low'
+                        ? 'border-orange-500/30'
+                        : batnaLevel === 'high'
+                        ? 'border-emerald-500/30'
+                        : 'border-amber-500/30'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        {batnaLevel === 'low' ? (
+                          <AlertTriangle className="h-3.5 w-3.5 text-orange-400" />
+                        ) : batnaLevel === 'high' ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                        ) : (
+                          <Lightbulb className="h-3.5 w-3.5 text-amber-400" />
+                        )}
+                        <h3 className="text-xs font-semibold text-amber-400">BATNA Assessment</h3>
+                      </div>
+                      <p className={`text-xs ${
+                        batnaLevel === 'low'
+                          ? 'text-orange-300'
+                          : batnaLevel === 'high'
+                          ? 'text-emerald-300'
+                          : 'text-amber-300'
+                      }`}>
+                        {BATNA_TIPS[batnaLevel].text}
+                      </p>
+                      {batnaEstimate > 0 && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="flex-1 h-1.5 rounded-full bg-background/50 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                batnaLevel === 'low'
+                                  ? 'bg-gradient-to-r from-orange-500 to-orange-400'
+                                  : batnaLevel === 'high'
+                                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
+                                  : 'bg-gradient-to-r from-amber-500 to-amber-400'
+                              }`}
+                              style={{
+                                width: `${Math.min(100, Math.max(10, (batnaEstimate / (scenario.batna.clientBATNAValue * 1.5 || 1)) * 100))}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground">€{batnaEstimate.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Strategy Recommendation Card */}
+                  {strategyTipKey && STRATEGY_TIPS[strategyTipKey] && (
+                    <div className="glass-card p-4 space-y-2 border-violet-500/20">
+                      <div className="flex items-center gap-2">
+                        <Target className="h-3.5 w-3.5 text-violet-400" />
+                        <h3 className="text-xs font-semibold text-amber-400">Opening Strategy</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {STRATEGY_TIPS[strategyTipKey]}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Quick Advisor Tip (from original) */}
+                  <div className="glass-card p-4 space-y-2 border-amber-500/20">
+                    <div className="flex items-start gap-2">
+                      <Lightbulb className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
+                      <p className="text-xs text-amber-200 italic">
+                        {ADVISOR_TIPS[category] || ADVISOR_TIPS.fundamentals}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+        </div>
+
+        {/* Proceed Button — BUG-001 fix: add loading state, guard against double-click, reset negotiation state */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="flex justify-end"
+          className="flex justify-end pb-4"
         >
           <Button
-            onClick={() => setPhase('investigation')}
-            className="bg-amber-600 hover:bg-amber-700 text-white gap-2"
+            onClick={() => {
+              if (isTransitioning) return;
+              setIsTransitioning(true);
+              // Reset negotiation state before entering investigation
+              useGameStore.getState().resetNegotiation();
+              // Use a small timeout to prevent AnimatePresence race conditions
+              setTimeout(() => {
+                setPhase('investigation');
+                setIsTransitioning(false);
+              }, 50);
+            }}
+            disabled={isTransitioning}
+            className="bg-amber-600 hover:bg-amber-700 text-white gap-2 relative z-30"
             size="lg"
           >
-            Proceed to Investigation
-            <ArrowRight className="h-4 w-4" />
+            {isTransitioning ? 'Loading...' : 'Proceed to Investigation'}
+            {!isTransitioning && <ArrowRight className="h-4 w-4" />}
           </Button>
         </motion.div>
       </div>

@@ -552,6 +552,7 @@ export const case28: Scenario = {
     lesson: 'Solve the root cause of the scarcity, not the allocation of the scarcity. When both sides are wasting the resource they\'re fighting over, efficiency investment beats allocation fights every time.',
     bestPossibleDeal: 'Downstream funds drip irrigation + farmers keep yield + 40% water savings + both cities invest in efficiency + permanent water authority + economic development zone',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'allocation_bias',

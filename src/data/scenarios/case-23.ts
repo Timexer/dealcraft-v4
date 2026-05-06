@@ -528,6 +528,7 @@ export const case23: Scenario = {
     lesson: 'Never counter an emotional outburst with a logical spreadsheet. Address the underlying fear, not the surface demand.',
     bestPossibleDeal: '€50M + 1-year narrow non-compete + Chief Innovation Officer + Voss Innovation Lab + Annual Voss Lecture + team retention = founder transforms instead of terminates.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'escalation_founder',

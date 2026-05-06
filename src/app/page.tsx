@@ -12,8 +12,7 @@ import { CareerProgression } from '@/components/game/CareerProgression';
 import { CaseHistory } from '@/components/game/CaseHistory';
 import { GameHeader } from '@/components/game/GameHeader';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ThemeToggle } from '@/components/game/ThemeToggle';
-import { TutorialOverlay, TutorialHelpButton } from '@/components/game/TutorialOverlay';
+import { TutorialOverlay } from '@/components/game/TutorialOverlay';
 import { KeyboardShortcutsDialog, useKeyboardShortcuts } from '@/components/game/KeyboardShortcuts';
 
 export default function Home() {
@@ -50,10 +49,6 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <GameHeader />
-      <div className="fixed top-2 right-2 z-50 flex items-center gap-1">
-        <TutorialHelpButton />
-        <ThemeToggle />
-      </div>
       <main className="flex-1 flex flex-col">
         <AnimatePresence mode="wait">
           <motion.div
@@ -68,20 +63,21 @@ export default function Home() {
           </motion.div>
         </AnimatePresence>
       </main>
-      <footer className="mt-auto bg-background/80 backdrop-blur-sm py-3 px-4 text-center border-t border-border/30">
+      {/* BUG-002 fix: footer z-index lower than CTA buttons, sticky not fixed */}
+      <footer className="mt-auto bg-background/80 backdrop-blur-sm py-3 px-4 text-center border-t border-border/30 relative z-10">
         <div className="h-px bg-gradient-to-r from-transparent via-[var(--theme-primary)]/20 to-transparent mb-2" />
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-[11px] text-muted-foreground/60">
-          <span className="font-semibold tracking-wider text-[var(--theme-primary)]/80">DEALCRAFT</span>
-          <span className="hidden sm:inline text-border/50">·</span>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-xs text-muted-foreground">
+          <span className="font-semibold tracking-wider text-amber-400">DEALCRAFT</span>
+          <span className="hidden sm:inline text-muted-foreground/50">·</span>
           <span>Negotiation Career Simulator</span>
-          <span className="hidden sm:inline text-border/50">·</span>
+          <span className="hidden sm:inline text-muted-foreground/50">·</span>
           <span>Season 1</span>
-          <span className="hidden sm:inline text-border/50">·</span>
+          <span className="hidden sm:inline text-muted-foreground/50">·</span>
           <span>v4.0</span>
-          <span className="hidden sm:inline text-border/50">·</span>
+          <span className="hidden sm:inline text-muted-foreground/50">·</span>
           <span>30 Cases · Streaks · Themes · Transcripts</span>
         </div>
-        <p className="text-[9px] text-muted-foreground/30 mt-1">Based on &quot;Negotiation Genius&quot; by Malhotra &amp; Bazerman</p>
+        <p className="text-[11px] text-muted-foreground mt-1">Based on &quot;Negotiation Genius&quot; by Malhotra &amp; Bazerman</p>
       </footer>
       <TutorialOverlay />
 

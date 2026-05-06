@@ -510,6 +510,7 @@ export const case19: Scenario = {
     lesson: 'You can save the other party\'s face without destroying your own.',
     bestPossibleDeal: 'Joint security commitment statement + €1M service credits + €1M security upgrade + Security Advisory Council + contract extension + CIO saves job',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'escalation_trap',

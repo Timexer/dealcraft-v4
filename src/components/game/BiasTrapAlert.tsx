@@ -66,7 +66,7 @@ export function BiasTrapAlert({ biasEvent, onDismiss }: BiasTrapAlertProps) {
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="fixed top-4 right-4 z-[100] w-[360px] max-w-[calc(100vw-2rem)]"
+      className="fixed top-16 right-4 z-[55] w-[360px] max-w-[calc(100vw-2rem)]"
     >
       <div
         className="relative overflow-hidden rounded-xl border-2 border-amber-500/50 shadow-2xl shadow-amber-500/20"
@@ -99,13 +99,13 @@ export function BiasTrapAlert({ biasEvent, onDismiss }: BiasTrapAlertProps) {
                 </h3>
                 <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
               </div>
-              <p className="text-xs text-amber-500/60 mt-0.5">Cognitive Bias Detected</p>
+              <p className="text-xs text-amber-500 mt-0.5">Cognitive Bias Detected</p>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleDismiss}
-              className="h-7 w-7 p-0 text-amber-500/60 hover:text-amber-400 hover:bg-amber-500/10 shrink-0"
+              className="h-7 w-7 p-0 text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 shrink-0"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -118,7 +118,7 @@ export function BiasTrapAlert({ biasEvent, onDismiss }: BiasTrapAlertProps) {
             transition={{ delay: 0.3 }}
             className="mb-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20"
           >
-            <p className="text-sm text-amber-300/90 leading-relaxed">
+            <p className="text-sm text-amber-300 leading-relaxed">
               {biasEvent.warningText}
             </p>
           </motion.div>
@@ -140,7 +140,7 @@ export function BiasTrapAlert({ biasEvent, onDismiss }: BiasTrapAlertProps) {
                       Countermeasure
                     </span>
                   </div>
-                  <p className="text-sm text-emerald-300/90 leading-relaxed">
+                  <p className="text-sm text-emerald-300 leading-relaxed">
                     {biasEvent.countermeasure}
                   </p>
                 </div>
@@ -164,7 +164,7 @@ export function BiasTrapAlert({ biasEvent, onDismiss }: BiasTrapAlertProps) {
             <Button
               size="sm"
               onClick={handleDismiss}
-              className="h-8 text-xs text-amber-500/70 hover:text-amber-400 hover:bg-amber-500/10"
+              className="h-8 text-xs text-amber-500 hover:text-amber-400 hover:bg-amber-500/10"
               variant="ghost"
             >
               Dismiss
@@ -179,7 +179,7 @@ export function BiasTrapAlert({ biasEvent, onDismiss }: BiasTrapAlertProps) {
                   transition={{ duration: 0.5 }}
                 />
               </div>
-              <span className="text-[10px] text-amber-500/40 tabular-nums">{timeLeft}s</span>
+              <span className="text-[11px] text-amber-500 tabular-nums">{timeLeft}s</span>
             </div>
           </div>
         </div>
@@ -196,7 +196,7 @@ interface BiasTrapAlertContainerProps {
 
 export function BiasTrapAlertContainer({ activeAlerts, onDismiss }: BiasTrapAlertContainerProps) {
   return (
-    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-3 pointer-events-none">
+    <div className="fixed top-16 right-4 z-[55] flex flex-col gap-3 pointer-events-none">
       <AnimatePresence>
         {activeAlerts.map((alert, i) => (
           <div key={alert.id} className="pointer-events-auto" style={{ marginTop: i > 0 ? '0' : undefined }}>

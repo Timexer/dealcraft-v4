@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById, allScenarios } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/data/scenarios/types';
@@ -64,6 +64,29 @@ export function CaseIntake() {
   const { currentScenarioId, setPhase, setCaseAccepted, setCurrentScenarioId, caseResults } = useGameStore();
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
 
+  // Typewriter effect state for stakes
+  const [displayedStakes, setDisplayedStakes] = useState('');
+  const [stakesComplete, setStakesComplete] = useState(false);
+
+  // Typewriter effect for stakes description - must be before early return
+  const stakesText = scenario?.briefing.stakes ?? '';
+  useEffect(() => {
+    if (!stakesText) return;
+    setDisplayedStakes('');
+    setStakesComplete(false);
+    let i = 0;
+    const timer = setInterval(() => {
+      if (i < stakesText.length) {
+        setDisplayedStakes(stakesText.slice(0, i + 1));
+        i++;
+      } else {
+        setStakesComplete(true);
+        clearInterval(timer);
+      }
+    }, 25);
+    return () => clearInterval(timer);
+  }, [stakesText]);
+
   // Check for similar cases in same category
   const similarCasesDone = useMemo(() => {
     if (!scenario) return [];
@@ -116,8 +139,8 @@ export function CaseIntake() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div className={`min-h-screen bg-background case-bg-${scenario.category}`}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 dramatic-entrance">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -139,10 +162,10 @@ export function CaseIntake() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="bg-card/50 border-border/50">
+          <Card className="bg-card/50 border-border/50 gradient-top-border">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="text-5xl">{client.avatar}</div>
+                <div className="text-5xl client-avatar-glow rounded-full">{client.avatar}</div>
                 <div className="flex-1">
                   <h1 className="text-2xl font-bold">{scenario.title}</h1>
                   <p className="text-sm text-muted-foreground mt-0.5">{scenario.subtitle}</p>
@@ -186,11 +209,11 @@ export function CaseIntake() {
                       <span className="text-xs text-muted-foreground w-24 shrink-0">{dim.label}</span>
                       <div className="flex-1 difficulty-bar">
                         <div
-                          className={`fill ${cssClass}`}
+                          className={`fill ${cssClass} difficulty-fill-animate`}
                           style={{ width: `${(value / 5) * 100}%` }}
                         />
                       </div>
-                      <span className={`text-[10px] font-medium w-12 text-right ${
+                      <span className={`text-[11px] font-medium w-12 text-right ${
                         cssClass === 'low' ? 'text-emerald-400' :
                         cssClass === 'medium' ? 'text-amber-400' :
                         cssClass === 'high' ? 'text-orange-400' :
@@ -229,11 +252,11 @@ export function CaseIntake() {
                     <p className="text-xs text-muted-foreground">{counterparty.role}</p>
                     <div className="flex items-center gap-1 mt-1">
                       <Flame className={`h-3 w-3 ${counterparty.personality.emotionalVolatility > 3 ? 'text-red-400' : 'text-emerald-400'}`} />
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         {counterparty.personality.emotionalVolatility > 3 ? 'Volatile' : 'Calm'}
                       </span>
-                      <span className="text-[10px] text-muted-foreground mx-1">•</span>
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground mx-1">•</span>
+                      <span className="text-[11px] text-muted-foreground">
                         {counterparty.personality.riskTolerance > 3 ? 'Risk-taker' : 'Risk-averse'}
                       </span>
                     </div>
@@ -246,14 +269,14 @@ export function CaseIntake() {
                     const value = counterparty.personality[trait.key as keyof typeof counterparty.personality];
                     return (
                       <div key={trait.key} className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground w-20 shrink-0 truncate">{trait.label}</span>
+                        <span className="text-[11px] text-muted-foreground w-20 shrink-0 truncate">{trait.label}</span>
                         <div className="flex-1 personality-bar">
                           <div
                             className="fill"
                             style={{ width: `${(value / 5) * 100}%`, background: trait.color }}
                           />
                         </div>
-                        <span className="text-[10px] text-muted-foreground w-4 text-right">{value}</span>
+                        <span className="text-[11px] text-muted-foreground w-4 text-right">{value}</span>
                       </div>
                     );
                   })}
@@ -276,7 +299,7 @@ export function CaseIntake() {
                   <User className="h-4.5 w-4.5 text-amber-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-xs font-semibold text-amber-400 mb-1">Similar Cases Experience</p>
-                    <p className="text-xs text-amber-200/70">
+                    <p className="text-xs text-amber-200">
                       You&apos;ve completed {similarCasesDone.length} case{similarCasesDone.length > 1 ? 's' : ''} in the{' '}
                       <span className="font-medium text-amber-300">{CATEGORY_LABELS[scenario.category]}</span> category.
                       Your experience with{' '}
@@ -298,7 +321,7 @@ export function CaseIntake() {
         )}
 
         {/* Case Briefing Sections */}
-        <ScrollArea className="max-h-[calc(100vh-600px)]">
+        <ScrollArea className="max-h-[50vh] overflow-y-auto">
           <div className="space-y-4 pr-2">
             {/* Situation */}
             <motion.div custom={0} variants={sectionVariants} initial="hidden" animate="visible">
@@ -409,7 +432,10 @@ export function CaseIntake() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground">{briefing.stakes}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {displayedStakes}
+                      {!stakesComplete && <span className="typewriter-cursor" />}
+                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -443,7 +469,7 @@ export function CaseIntake() {
         >
           <Button
             onClick={handleAccept}
-            className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold gap-2"
+            className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold gap-2 accept-button-glow"
             size="lg"
           >
             <CheckCircle2 className="h-5 w-5" />

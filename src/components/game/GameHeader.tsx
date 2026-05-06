@@ -21,14 +21,21 @@ import {
   ChevronUp,
   Palette,
   Flame,
+  RotateCcw,
+  AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { NegotiationGlossary } from '@/components/game/NegotiationGlossary';
 import { KeyboardShortcutsDialog } from '@/components/game/KeyboardShortcuts';
 import { ThemeSelector, useThemeApplication } from '@/components/game/ThemeSelector';
+import { TutorialHelpButton } from '@/components/game/TutorialOverlay';
+import { ThemeToggle } from '@/components/game/ThemeToggle';
 import { useSound } from '@/hooks/use-sound';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export function GameHeader() {
   const { playerName, careerTier, casesCompleted, totalScore, reputation, phase, setPhase, currentScenarioId, challengeMode, currentStreak, streakType } = useGameStore();
@@ -36,6 +43,7 @@ export function GameHeader() {
   const [showGlossary, setShowGlossary] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [quickStatsCollapsed, setQuickStatsCollapsed] = useState(false);
   const { soundEnabled, toggleSound } = useSound();
 
@@ -45,6 +53,19 @@ export function GameHeader() {
   const repType = getReputationType(reputation);
   const tierName = TIER_NAMES[careerTier];
 
+  // Reset handler
+  const handleResetGame = () => {
+    useGameStore.getState().resetGame();
+    setShowResetConfirm(false);
+  };
+
+  // Listen for keyboard shortcut to show reset confirmation
+  useEffect(() => {
+    const handleShowReset = () => setShowResetConfirm(true);
+    window.addEventListener('dealcraft:show-reset', handleShowReset);
+    return () => window.removeEventListener('dealcraft:show-reset', handleShowReset);
+  }, []);
+
   // Don't show header on title screen
   if (phase === 'title') return null;
 
@@ -52,7 +73,7 @@ export function GameHeader() {
   const tierProgress = Math.min(100, (casesCompleted / nextTierThreshold) * 100);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md" style={{ '--header-height': 'auto' } as React.CSSProperties}>
       <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-3">
         {/* Left: Back + Logo */}
         <div className="flex items-center gap-3 min-w-0">
@@ -93,7 +114,7 @@ export function GameHeader() {
         {/* Center: Player Info */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-amber-500/30 text-amber-500">
+            <Badge variant="outline" className="text-[11px] px-1.5 py-0 h-5 border-amber-500/30 text-amber-500">
               {tierName}
             </Badge>
             <span className="truncate max-w-[120px]">{playerName}</span>
@@ -121,19 +142,28 @@ export function GameHeader() {
             <span className="hidden lg:inline">Glossary</span>
           </Button>
           <NotificationPanel />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={toggleSound}
-            title={soundEnabled ? 'Mute sounds (S)' : 'Enable sounds (S)'}
-          >
-            {soundEnabled ? (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-            )}
-          </Button>
+          {/* BUG-003 fix: Sound toggle with visual feedback + tooltip */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 w-8 p-0 transition-colors ${!soundEnabled ? 'text-muted-foreground' : ''}`}
+                  onClick={toggleSound}
+                >
+                  {soundEnabled ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>{soundEnabled ? 'Sound on — click to mute (S)' : 'Sound off — click to unmute (S)'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Button
             variant="ghost"
             size="sm"
@@ -150,8 +180,10 @@ export function GameHeader() {
             onClick={() => setShowShortcuts(true)}
             title="Keyboard Shortcuts (?)"
           >
-            <Keyboard className="h-3.5 w-3.5 text-amber-500/70" />
+            <Keyboard className="h-3.5 w-3.5 text-amber-500" />
           </Button>
+          <TutorialHelpButton />
+          <ThemeToggle />
           <Button
             variant="ghost"
             size="sm"
@@ -159,7 +191,7 @@ export function GameHeader() {
             onClick={() => setShowThemePicker(true)}
             title="Color Theme"
           >
-            <Palette className="h-3.5 w-3.5 text-amber-500/70" />
+            <Palette className="h-3.5 w-3.5 text-amber-500" />
           </Button>
           <Button
             variant="ghost"
@@ -178,6 +210,54 @@ export function GameHeader() {
           >
             <Home className="h-3.5 w-3.5" />
           </Button>
+          {/* Game Reset Button */}
+          <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                title="Reset Game"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="max-w-md">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-400" />
+                  Reset Game?
+                </AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      This will permanently delete all your game progress. This action cannot be undone.
+                    </p>
+                    <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 space-y-1.5">
+                      <p className="text-xs font-medium text-red-400">The following will be lost:</p>
+                      <ul className="text-xs text-muted-foreground space-y-1">
+                        <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />All case results and scores ({casesCompleted} case{casesCompleted !== 1 ? 's' : ''})</li>
+                        <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Career progress (Tier {careerTier} — {tierName})</li>
+                        <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Achievements ({useGameStore.getState().achievements.length})</li>
+                        <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Reputation and stats</li>
+                        <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Streak history and challenge records</li>
+                      </ul>
+                    </div>
+                  </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="gap-2 sm:gap-0">
+                <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleResetGame}
+                  className="bg-red-500 hover:bg-red-600 text-white font-semibold mt-0"
+                >
+                  <RotateCcw className="h-4 w-4 mr-1.5" />
+                  Reset Everything
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
@@ -202,7 +282,7 @@ export function GameHeader() {
                 <span className="font-medium">{repType.label}</span>
               </div>
               <div className="flex-1 min-w-[120px] max-w-[200px]">
-                <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-0.5">
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-0.5">
                   <span>{tierName}</span>
                   <span>{casesCompleted}/{nextTierThreshold}</span>
                 </div>
@@ -216,33 +296,34 @@ export function GameHeader() {
       {/* Quick Stats Bar - Desktop only */}
       {!quickStatsCollapsed && (
         <div className="hidden md:block border-b border-border/20 bg-card/15">
-          <div className="max-w-7xl mx-auto px-4 py-1 flex items-center gap-4 text-[11px]">
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-amber-500/25 text-amber-400 bg-amber-500/5">
+          <div className="max-w-7xl mx-auto px-4 py-1 flex items-center gap-4 text-xs">
+            <Badge variant="outline" className="text-[11px] px-1.5 py-0 h-5 border-amber-500/25 text-amber-400 bg-amber-500/5">
               {tierName}
             </Badge>
-            <span className="text-muted-foreground flex items-center gap-1">
+            {/* BUG-007 fix: whitespace-nowrap to prevent word break in stat labels */}
+            <span className="text-muted-foreground flex items-center gap-1 whitespace-nowrap">
               <Briefcase className="h-3 w-3" />
               {casesCompleted} case{casesCompleted !== 1 ? 's' : ''}
             </span>
-            <span className="text-muted-foreground flex items-center gap-1">
+            <span className="text-muted-foreground flex items-center gap-1 whitespace-nowrap">
               <Star className="h-3 w-3 text-amber-400" />
               <span className="font-semibold text-foreground">{totalScore}</span> pts
             </span>
             {challengeMode !== 'none' && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-amber-500/20 text-amber-300 bg-amber-500/5">
+              <Badge variant="outline" className="text-[11px] px-1.5 py-0 h-5 border-amber-500/20 text-amber-300 bg-amber-500/5">
                 <Zap className="h-2.5 w-2.5 mr-0.5" />
                 {challengeMode === 'speed' ? 'Speed Run' : challengeMode === 'limited_choices' ? 'Limited Choices' : 'Ethics Lock'}
               </Badge>
             )}
             {currentStreak > 0 && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-amber-500/20 text-amber-300 bg-amber-500/5">
+              <Badge variant="outline" className="text-[11px] px-1.5 py-0 h-5 border-amber-500/20 text-amber-300 bg-amber-500/5">
                 {streakType === 'master' ? '👑' : <Flame className="h-2.5 w-2.5 mr-0.5" />}
                 x{currentStreak}
               </Badge>
             )}
             <button
               onClick={() => setQuickStatsCollapsed(true)}
-              className="ml-auto text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+              className="ml-auto text-muted-foreground hover:text-muted-foreground transition-colors"
               aria-label="Collapse quick stats"
             >
               <ChevronUp className="h-3 w-3" />
@@ -254,7 +335,7 @@ export function GameHeader() {
         <div className="hidden md:flex items-center justify-center border-b border-border/10 bg-card/5">
           <button
             onClick={() => setQuickStatsCollapsed(false)}
-            className="text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors py-0.5 flex items-center gap-1"
+            className="text-[11px] text-muted-foreground hover:text-muted-foreground transition-colors py-0.5 flex items-center gap-1"
             aria-label="Expand quick stats"
           >
             <ChevronDown className="h-2.5 w-2.5" />

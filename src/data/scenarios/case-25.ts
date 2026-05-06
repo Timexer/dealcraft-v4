@@ -551,6 +551,14 @@ export const case25: Scenario = {
       scores: { clientEconomicValue: 50, jointValueCreated: 40, infoDiscovered: 80, relationshipPreserved: 25, ethicalIntegrity: 90, strategicDiscipline: 70 },
       longTermConsequence: 'The anti-corruption investigation takes six months. You\'re reassigned during that time. The procurement is eventually rerun with proper oversight and Vendor A wins. The Deputy Minister is quietly moved. Your career survives but is slowed — whistleblower protections don\'t prevent professional isolation. The right outcome was achieved, but a structural solution would have been faster and less personally costly.',
     },
+    {
+      id: 'bad_deal',
+      type: 'bad_deal',
+      title: 'The Compromised Process',
+      description: 'You adjusted the scoring to favor Vendor B. They won the contract, but cost overruns and a corruption investigation followed. Your career and reputation were destroyed.',
+      scores: { clientEconomicValue: 10, jointValueCreated: 5, infoDiscovered: 15, relationshipPreserved: 15, ethicalIntegrity: 10, strategicDiscipline: 10 },
+      longTermConsequence: 'Vendor B wins the contract. Within 18 months, costs are 40% over budget. An audit reveals the biased scoring criteria and the Deputy Minister\'s connection. You\'re named as complicit in the corruption investigation. Your career is destroyed and the government loses €20M.',
+    },
   ],
   postmortem: {
     masterSolution: 'Redesign scoring matrix to heavily weight "cost overrun penalties" and "historical adherence." The favored vendor must either adopt strict terms or naturally lose on objective metrics. Add independent evaluation committee and full audit trail.',
@@ -559,6 +567,7 @@ export const case25: Scenario = {
     lesson: 'Use structural rules to neutralize unethical pressure. The best defense against corruption is a process that makes corruption impossible — not just illegal.',
     bestPossibleDeal: 'Objective scoring criteria + cost overrun penalties + independent review + full audit trail + favored vendor competes on merit or loses naturally = integrity preserved, career protected, best vendor selected.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'authority_compliance',

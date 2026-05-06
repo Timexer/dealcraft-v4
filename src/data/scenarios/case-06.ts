@@ -606,6 +606,7 @@ export const case06: Scenario = {
     lesson: 'They\'re not refusing price — they\'re refusing identity loss. When someone rejects every number, stop offering numbers and start offering what they actually need.',
     bestPossibleDeal: '€10M + 3yr employee protection + board observer + brand retained + €250K community fund + €1M earnout = €11.25M+ total value with full legacy protection.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'bias_fixed_pie',

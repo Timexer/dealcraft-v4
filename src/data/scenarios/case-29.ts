@@ -531,6 +531,7 @@ export const case29: Scenario = {
     lesson: 'The highest level of negotiation is inventing the system that makes the deal possible. When both sides want the same thing but can\'t agree on the mechanism, don\'t negotiate over positions — invent the architecture that resolves the structural impasse.',
     bestPossibleDeal: 'Macro-licensing pool + annual revenue percentage + market-share dividends + registration system + independent governance + regulatory submission as global standard',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'micro_tracking_bias',

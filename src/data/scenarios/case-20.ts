@@ -538,6 +538,7 @@ export const case20: Scenario = {
     lesson: 'Winning the battle but losing the war is a failure of preparation.',
     bestPossibleDeal: 'Waive €200K damages + free next-gen upgrades (worth €400K) + 5-year discounted maintenance + penalty-backed SLA + quarterly reviews',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'revenge_bias',

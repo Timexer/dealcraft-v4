@@ -349,7 +349,7 @@ export const case10: Scenario = {
       isAuto: true,
     },
     {
-      id: 'ending_no_deal',
+      id: 'ending_no_deal_bad',
       speaker: 'narrator',
       text: '❌ NO DEAL: Rejected penalty clause. City walks. Consortium loses the contract. New builder starts from scratch — stadium opens a year late.',
       isAuto: true,
@@ -381,7 +381,7 @@ export const case10: Scenario = {
       longTermConsequence: 'Permit delays persist. Construction runs close to deadline. No margin for weather events. Adversarial relationship with the city.',
     },
     {
-      id: 'ending_no_deal',
+      id: 'ending_no_deal_bad',
       type: 'no_deal_bad',
       title: 'Lost Contract',
       description: 'Consortium walks, city hires slower competitor. Everyone loses.',
@@ -396,6 +396,7 @@ export const case10: Scenario = {
     lesson: 'A new demand reveals what the other side fears. Address the fear, not just the demand.',
     bestPossibleDeal: 'Stronger controllable penalties + early completion bonus + city-funded expedited permits + 24/7 site access + force majeure protocol. Stadium opens 2 weeks early.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'bias_egocentrism',

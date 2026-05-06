@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AchievementGallery } from '@/components/game/AchievementGallery';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -31,6 +33,7 @@ import {
   Check,
   ChevronRight,
   Sparkles,
+  Award,
 } from 'lucide-react';
 
 const STAT_ICONS: Record<string, React.ElementType> = {
@@ -162,6 +165,8 @@ export function CareerProgression() {
     setPhase,
   } = useGameStore();
 
+  const [showAchievements, setShowAchievements] = useState(false);
+
   const tierName = TIER_NAMES[careerTier];
   const tierDesc = TIER_DESCRIPTIONS[careerTier];
   const repType = getReputationType(reputation);
@@ -189,15 +194,20 @@ export function CareerProgression() {
             Back
           </Button>
           <h1 className="text-xl sm:text-2xl font-bold">Career Progression</h1>
-          {/* Achievement count badge with animated number */}
-          <Badge variant="outline" className="ml-auto gap-1.5 border-amber-500/30 text-amber-400 bg-amber-500/10">
-            <Sparkles className="h-3.5 w-3.5" />
-            <AnimatedStatNumber value={achievements.length} />
-            <span className="text-[10px] text-amber-500/60">achievements</span>
-          </Badge>
+          {/* BUG-004 fix: Achievement count badge is now clickable, opens achievements dialog */}
+          <button
+            onClick={() => setShowAchievements(true)}
+            className="ml-auto"
+          >
+            <Badge variant="outline" className="gap-1.5 border-amber-500/30 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition-colors cursor-pointer">
+              <Sparkles className="h-3.5 w-3.5" />
+              <AnimatedStatNumber value={achievements.length} />
+              <span className="text-[11px] text-amber-500">achievements</span>
+            </Badge>
+          </button>
         </motion.div>
 
-        <ScrollArea className="max-h-[calc(100vh-140px)]">
+        <ScrollArea className="h-[calc(100vh-10rem)]">
           <div className="space-y-6 pr-2">
             {/* Player Card - Glass Card */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -217,11 +227,11 @@ export function CareerProgression() {
                   <div className="flex items-center justify-center gap-6 mt-4">
                     <div className="text-center">
                       <p className="text-2xl font-black"><AnimatedStatNumber value={casesCompleted} /></p>
-                      <p className="text-[10px] text-muted-foreground">Cases</p>
+                      <p className="text-[11px] text-muted-foreground">Cases</p>
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-black text-amber-500"><AnimatedStatNumber value={totalScore} /></p>
-                      <p className="text-[10px] text-muted-foreground">Total Score</p>
+                      <p className="text-[11px] text-muted-foreground">Total Score</p>
                     </div>
                   </div>
 
@@ -229,8 +239,8 @@ export function CareerProgression() {
                   {careerTier < 5 && (
                     <div className="mt-4 max-w-sm mx-auto">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] text-muted-foreground">Progress to {nextTierName}</span>
-                        <span className="text-[10px] text-muted-foreground">{casesCompleted}/{nextTierThreshold}</span>
+                        <span className="text-[11px] text-muted-foreground">Progress to {nextTierName}</span>
+                        <span className="text-[11px] text-muted-foreground">{casesCompleted}/{nextTierThreshold}</span>
                       </div>
                       <div className="h-2 bg-muted/30 rounded-full overflow-hidden tier-progress-bar breathing-animation">
                         <motion.div
@@ -309,7 +319,7 @@ export function CareerProgression() {
                                 </div>
                               ) : (
                                 <div className="w-10 h-10 rounded-full bg-muted/20 border-2 border-border/30 flex items-center justify-center">
-                                  <Lock className="h-4 w-4 text-muted-foreground/40" />
+                                  <Lock className="h-4 w-4 text-muted-foreground" />
                                 </div>
                               )}
                             </div>
@@ -318,28 +328,28 @@ export function CareerProgression() {
                             <div className="flex-1 min-w-0 pt-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className={`text-sm font-semibold ${
-                                  isCurrent ? 'text-amber-400' : isUnlocked ? 'text-emerald-400' : 'text-muted-foreground/50'
+                                  isCurrent ? 'text-amber-400' : isUnlocked ? 'text-emerald-400' : 'text-muted-foreground'
                                 }`}>
                                   Tier {tier}: {name}
                                 </span>
                                 {isCurrent && (
-                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/20 text-amber-400 border-amber-500/30">
+                                  <Badge variant="outline" className="text-[11px] px-1.5 py-0 bg-amber-500/20 text-amber-400 border-amber-500/30">
                                     Current
                                   </Badge>
                                 )}
                               </div>
-                              <p className={`text-[10px] mt-0.5 ${
-                                isFuture ? 'text-muted-foreground/30' : 'text-muted-foreground/60'
+                              <p className={`text-[11px] mt-0.5 ${
+                                isFuture ? 'text-muted-foreground' : 'text-muted-foreground'
                               }`}>
                                 {TIER_DESCRIPTIONS[tierNum]}
                               </p>
                               <div className="flex items-center gap-1.5 mt-1">
-                                <span className="text-[9px] text-muted-foreground/40">{threshold} cases</span>
+                                <span className="text-[11px] text-muted-foreground">{threshold} cases</span>
                                 {isUnlocked && tierNum < careerTier && (
-                                  <span className="text-[9px] text-emerald-400/60">✅ Completed</span>
+                                  <span className="text-[11px] text-emerald-400">✅ Completed</span>
                                 )}
                                 {isCurrent && (
-                                  <span className="text-[9px] text-amber-400/60">{casesCompleted}/{threshold}</span>
+                                  <span className="text-[11px] text-amber-400">{casesCompleted}/{threshold}</span>
                                 )}
                               </div>
                             </div>
@@ -435,7 +445,7 @@ export function CareerProgression() {
                     <p className="text-xs text-muted-foreground">
                       {REP_LABELS[topRep1[0]]} + {REP_LABELS[topRep2[0]]}
                     </p>
-                    <p className="text-[10px] text-muted-foreground/60 mt-1">{repType.description}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">{repType.description}</p>
                   </div>
 
                   {/* Dominant Reputation Highlight */}
@@ -457,7 +467,7 @@ export function CareerProgression() {
                       <div>
                         <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Dominant Style</p>
                         <p className="text-sm font-bold">{REP_LABELS[topRep1[0]]}</p>
-                        <p className="text-[10px] text-muted-foreground">{topRep1[1]} points</p>
+                        <p className="text-[11px] text-muted-foreground">{topRep1[1]} points</p>
                       </div>
                     </div>
                   </motion.div>
@@ -480,8 +490,8 @@ export function CareerProgression() {
                               <div className="flex items-center justify-between mb-0.5">
                                 <span className={`text-xs capitalize ${isTop ? 'font-bold text-amber-400' : isSecond ? 'font-semibold text-violet-300' : 'text-muted-foreground'}`}>
                                   {key}
-                                  {isTop && <span className="ml-1 text-[9px] text-amber-500">#1</span>}
-                                  {isSecond && <span className="ml-1 text-[9px] text-violet-400">#2</span>}
+                                  {isTop && <span className="ml-1 text-[11px] text-amber-500">#1</span>}
+                                  {isSecond && <span className="ml-1 text-[11px] text-violet-400">#2</span>}
                                 </span>
                                 <span className="text-xs font-bold">{value}</span>
                               </div>
@@ -530,12 +540,12 @@ export function CareerProgression() {
                               <span className="text-xl">{caseScenario?.client.avatar || '📁'}</span>
                               <div>
                                 <p className="text-sm font-medium">{caseScenario?.title || result.scenarioId}</p>
-                                <p className="text-[10px] text-muted-foreground capitalize">{result.outcome.replace(/_/g, ' ')}</p>
+                                <p className="text-[11px] text-muted-foreground capitalize">{result.outcome.replace(/_/g, ' ')}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-bold">{result.finalScore}</span>
-                              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${GRADE_COLORS_BG[grade.grade] || ''}`}>
+                              <Badge variant="outline" className={`text-[11px] px-1.5 py-0 ${GRADE_COLORS_BG[grade.grade] || ''}`}>
                                 {grade.grade}
                               </Badge>
                             </div>
@@ -552,6 +562,22 @@ export function CareerProgression() {
           </div>
         </ScrollArea>
       </div>
+
+      {/* BUG-004 fix: Achievement Gallery Dialog */}
+      <Dialog open={showAchievements} onOpenChange={setShowAchievements}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto sm:max-w-[calc(100%-2rem)]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-amber-500" />
+              Achievement Gallery
+            </DialogTitle>
+            <DialogDescription>
+              Track your negotiation milestones and accomplishments
+            </DialogDescription>
+          </DialogHeader>
+          <AchievementGallery />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

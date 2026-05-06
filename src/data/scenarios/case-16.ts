@@ -219,7 +219,7 @@ export const case16: Scenario = {
           id: 'understand_need',
           text: '"I hear you. The overlap concern is valid. But what if we could address that concern without taking ownership away from Sarah? Would TechGiant be open to a licensing arrangement?"',
           type: 'face_saving',
-          nextNodeId: 'marcus_considers_license',
+          nextNodeId: 'marcus_curious',
           effects: { trust: 10, anger: -5, valueCreated: 10 },
         },
       ],
@@ -503,6 +503,7 @@ export const case16: Scenario = {
     lesson: 'Large organizations often care about precedent more than the immediate asset.',
     bestPossibleDeal: 'Full ownership + narrow company license + no precedent + confidential + positive joint departure statement + limited non-compete',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'power_surrender',

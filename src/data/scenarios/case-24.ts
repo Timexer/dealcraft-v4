@@ -590,6 +590,14 @@ export const case24: Scenario = {
       scores: { clientEconomicValue: 50, jointValueCreated: 40, infoDiscovered: 85, relationshipPreserved: 40, ethicalIntegrity: 90, strategicDiscipline: 85 },
       longTermConsequence: 'The proposed standard dies without TelecomCo\'s participation. NovaNet publishes their open-source protocol, which naturally gains market adoption due to its superiority. TelecomCo eventually adopts it. The industry converges organically. You protected your client from a disastrous antitrust exposure. The efficiency gains are delayed but arrive without the legal and ethical baggage.',
     },
+    {
+      id: 'bad_deal',
+      type: 'bad_deal',
+      title: 'The Collusive Standard',
+      description: 'You signed on without fully understanding the implications. The exclusionary standard is adopted, a competitor is eliminated, and antitrust investigations follow.',
+      scores: { clientEconomicValue: 40, jointValueCreated: 20, infoDiscovered: 20, relationshipPreserved: 55, ethicalIntegrity: 15, strategicDiscipline: 20 },
+      longTermConsequence: 'The standard is adopted, NovaNet is forced into a costly rebuild or exits the market, and within 18 months the EU Commission opens an antitrust investigation. TelecomCo faces €200M in potential fines. Your client\'s VP who approved it is looking for a new career.',
+    },
   ],
   postmortem: {
     masterSolution: 'Propose modified standard that achieves efficiency gains but remains open-source enough to avoid regulatory backlash and antitrust lawsuits. Better yet, adopt NovaNet\'s superior protocol as the open core.',
@@ -598,6 +606,7 @@ export const case24: Scenario = {
     lesson: 'Value created at the unethical expense of an outsider is a liability, not a victory. Always ask: who gets hurt, and does that harm create our gain?',
     bestPossibleDeal: 'Open-source core (based on NovaNet\'s superior protocol) + competitive proprietary extensions + independent governance + no antitrust risk + best technology wins.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'fixed_pie_efficiency',

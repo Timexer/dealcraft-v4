@@ -550,6 +550,7 @@ export const case18: Scenario = {
     lesson: 'Family disputes are rarely about math; they are about respect and identity.',
     bestPossibleDeal: '€10M buyout + Legacy Chairman title + warehouse naming + Weiss Family Foundation + retirement celebration + company stays Weiss Logistics',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'fixed_pie_price',

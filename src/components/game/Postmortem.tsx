@@ -6,6 +6,8 @@ import { getScenarioById } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS, type EndingScores } from '@/data/scenarios/types';
 import { calculateFinalScore, getScoreGrade, getReputationType, calculateReputationDelta, calculateStatsDelta } from '@/lib/game-engine';
 import { StreakIndicator } from '@/components/game/StreakIndicator';
+import { TechniqueBadge, TECHNIQUE_INFO, getTechniqueInfo } from '@/components/game/TechniqueBadge';
+import { NegotiationTechnique } from '@/data/scenarios/types';
 import { NegotiationTranscript } from '@/components/game/NegotiationTranscript';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,6 +48,7 @@ import {
   FileText,
   XCircle,
   BookOpen,
+  Clock,
 } from 'lucide-react';
 
 const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string; maxColor: string }[] = [
@@ -200,8 +203,8 @@ function ComparisonBar({ playerScore, maxScore, label, playerColor, maxColor, de
         <span className="text-xs text-muted-foreground">{label}</span>
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold">{playerScore}</span>
-          <span className="text-[10px] text-muted-foreground">/</span>
-          <span className="text-[10px] text-muted-foreground">{maxScore}</span>
+          <span className="text-[11px] text-muted-foreground">/</span>
+          <span className="text-[11px] text-muted-foreground">{maxScore}</span>
         </div>
       </div>
       <div className="comparison-bar">
@@ -231,6 +234,7 @@ export function Postmortem() {
     discoveredFacts, stats, addStats,
     reputation, addReputation,
     currentStreak, bestStreak, streakType,
+    techniquesUsed,
   } = useGameStore();
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
@@ -308,6 +312,14 @@ export function Postmortem() {
   // Determine if this is a good ending for sparkle effect
   const isGoodEnding = endingType === 'master' || endingType === 'cooperative';
 
+  // Format elapsed time for display
+  const elapsedTime = latestResult.elapsedTime;
+  const formatElapsedTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   // Get master ending scores for "What If?" comparison
   const masterEnding = scenario.endings.find(e => e.type === 'master');
   const masterScores = masterEnding?.scores || null;
@@ -316,24 +328,24 @@ export function Postmortem() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Header */}
+        {/* Header - with dramatic reveal for ending type */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h1 className="text-2xl sm:text-3xl font-bold">Case Review</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold ending-reveal-dramatic">Case Review</h1>
           <p className="text-sm text-muted-foreground mt-1">{scenario.title}</p>
           <Badge variant="outline" className={`mt-2 ${CATEGORY_COLORS[scenario.category]}`}>
             {CATEGORY_LABELS[scenario.category]}
           </Badge>
         </motion.div>
 
-        <ScrollArea className="max-h-[calc(100vh-180px)]">
+        <ScrollArea className="h-[calc(100vh-12rem)]">
           <div className="space-y-6 pr-2">
             {/* Score Card - with grade flip animation and score counter */}
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-              <Card className={`bg-card/50 border-border/50 overflow-hidden relative ${isGoodEnding ? 'sparkle-effect' : ''}`}>
+              <Card className={`bg-card/50 border-border/50 overflow-hidden relative ${isGoodEnding ? 'sparkle-effect negotiation-success-flash' : ''}`}>
                 {isGoodEnding && <SparkleOverlay />}
                 <CardContent className="p-6 relative z-10">
                   <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -371,7 +383,7 @@ export function Postmortem() {
                             <p className="text-xs font-bold text-amber-300">
                               Streak Bonus: +{streakBonus} pts ({Math.round((streakMultiplier - 1) * 100)}%)
                             </p>
-                            <p className="text-[10px] text-amber-400/60">
+                            <p className="text-[11px] text-amber-400">
                               From {currentStreak}x {streakType === 'master' ? 'master' : 'win'} streak
                             </p>
                           </div>
@@ -409,12 +421,32 @@ export function Postmortem() {
               </Card>
             </motion.div>
 
+            {/* Negotiation Duration */}
+            {elapsedTime != null && elapsedTime > 0 && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.37 }}>
+                <Card className="bg-card/50 border-border/50">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-cyan-500/10 flex items-center justify-center shrink-0">
+                      <Clock className="h-4 w-4 text-cyan-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Negotiation Duration</p>
+                      <p className="text-sm font-bold tabular-nums text-cyan-400">{formatElapsedTime(elapsedTime)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Section divider */}
+            <div className="section-divider" />
+
             {/* Radar Chart - with animated reveal */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Hexagon className="h-4 w-4 text-amber-400" />
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <Hexagon className="h-5 w-5 text-amber-400" />
                     Performance Profile
                   </CardTitle>
                 </CardHeader>
@@ -432,24 +464,24 @@ export function Postmortem() {
                         }))}
                       >
                         <PolarGrid
-                          stroke="hsl(var(--border))"
-                          strokeOpacity={0.4}
+                          stroke="rgba(255,255,255,0.15)"
+                          strokeOpacity={1}
                           gridType="polygon"
                         />
                         <PolarAngleAxis
                           dataKey="dimension"
                           tick={{
-                            fill: 'hsl(var(--muted-foreground))',
-                            fontSize: 10,
-                            fontWeight: 500,
+                            fill: 'rgba(255,255,255,0.88)',
+                            fontSize: 11,
+                            fontWeight: 700,
                           }}
                         />
                         <PolarRadiusAxis
                           angle={90}
                           domain={[0, 100]}
                           tick={{
-                            fill: 'hsl(var(--muted-foreground))',
-                            fontSize: 9,
+                            fill: 'rgba(255,255,255,0.6)',
+                            fontSize: 10,
                           }}
                           tickCount={5}
                           axisLine={false}
@@ -459,8 +491,8 @@ export function Postmortem() {
                           dataKey="score"
                           stroke="#f59e0b"
                           fill="#f59e0b"
-                          fillOpacity={0.2}
-                          strokeWidth={2}
+                          fillOpacity={0.3}
+                          strokeWidth={2.5}
                         />
                         <Tooltip
                           contentStyle={{
@@ -486,7 +518,7 @@ export function Postmortem() {
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <BarChart3 className="h-4 w-4 text-cyan-400" />
                     Score Breakdown
-                    <span className="text-[10px] font-normal text-muted-foreground ml-1">Click to expand</span>
+                    <span className="text-[11px] font-normal text-muted-foreground ml-1">Click to expand</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-2">
@@ -524,11 +556,11 @@ export function Postmortem() {
                               <span className="text-xs font-medium truncate">{dim.label}</span>
                               <div className="flex items-center gap-1.5 shrink-0 ml-2">
                                 <span className="text-xs font-bold">{playerScore}</span>
-                                <span className="text-[10px] text-muted-foreground">/</span>
-                                <span className="text-[10px] text-muted-foreground">{maxScore}</span>
+                                <span className="text-[11px] text-muted-foreground">/</span>
+                                <span className="text-[11px] text-muted-foreground">{maxScore}</span>
                                 <Badge
                                   variant="outline"
-                                  className={`text-[9px] px-1.5 py-0 border-0 ${
+                                  className={`text-[11px] px-2 py-0.5 border-0 ${
                                     playerScore >= 80
                                       ? 'bg-emerald-500/15 text-emerald-400'
                                       : playerScore >= 60
@@ -585,8 +617,8 @@ export function Postmortem() {
                                 <div className="flex items-center gap-3 p-2.5 rounded-md bg-muted/20">
                                   <div className="flex-1">
                                     <div className="flex items-center justify-between mb-1">
-                                      <span className="text-[10px] text-muted-foreground">Your Score</span>
-                                      <span className="text-[10px] font-bold">{playerScore}</span>
+                                      <span className="text-[11px] text-muted-foreground">Your Score</span>
+                                      <span className="text-[11px] font-bold">{playerScore}</span>
                                     </div>
                                     <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
                                       <div
@@ -597,11 +629,11 @@ export function Postmortem() {
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex items-center justify-between mb-1">
-                                      <span className="text-[10px] text-yellow-300 flex items-center gap-1">
+                                      <span className="text-[11px] text-yellow-300 flex items-center gap-1">
                                         <Crown className="h-2.5 w-2.5" />
                                         Master
                                       </span>
-                                      <span className="text-[10px] font-bold text-yellow-300">{maxScore}</span>
+                                      <span className="text-[11px] font-bold text-yellow-300">{maxScore}</span>
                                     </div>
                                     <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
                                       <div
@@ -614,15 +646,13 @@ export function Postmortem() {
 
                                 {/* Score gap indicator */}
                                 {scoreGap > 0 && (
-                                  <div className="flex items-center gap-1.5 text-[10px] text-amber-400/70">
-                                    <TrendingUp className="h-3 w-3" />
-                                    <span>{scoreGap} points away from master deal in this dimension</span>
+                                  <div className="flex items-center gap-1.5 text-[11px] text-amber-400 stat-decrease">
+                                    <span>{scoreGap} pts below master</span>
                                   </div>
                                 )}
                                 {scoreGap <= 0 && (
-                                  <div className="flex items-center gap-1.5 text-[10px] text-emerald-400">
-                                    <Star className="h-3 w-3" />
-                                    <span>You matched or exceeded the master deal in this dimension!</span>
+                                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 stat-increase">
+                                    <span>Matched or exceeded master!</span>
                                   </div>
                                 )}
 
@@ -630,14 +660,14 @@ export function Postmortem() {
                                 <div className="p-2.5 rounded-md bg-amber-500/10 border border-amber-500/15">
                                   <div className="flex items-center gap-1.5 mb-1">
                                     <BookOpen className="h-3 w-3 text-amber-400" />
-                                    <p className="text-[10px] text-amber-400 font-semibold uppercase tracking-wider">
+                                    <p className="text-[11px] text-amber-400 font-semibold uppercase tracking-wider">
                                       Improvement Tip
                                     </p>
                                   </div>
-                                  <p className="text-xs text-amber-200/80 leading-relaxed italic">
+                                  <p className="text-xs text-amber-200 leading-relaxed italic">
                                     {details?.tip}
                                   </p>
-                                  <p className="text-[9px] text-amber-400/40 mt-1">
+                                  <p className="text-[11px] text-amber-400 mt-1">
                                     — From &ldquo;Negotiation Genius&rdquo; by Malhotra & Bazerman
                                   </p>
                                 </div>
@@ -655,7 +685,7 @@ export function Postmortem() {
             {/* What If? - Master Deal Comparison */}
             {masterEnding && masterScores && masterFinalScore !== null && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-                <Card className="bg-amber-500/10 border-amber-500/20 overflow-hidden">
+                <Card className="bg-amber-500/10 border-amber-500/20 overflow-hidden master-solution-glow rounded-xl">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-300">
                       <HelpCircle className="h-4 w-4" />
@@ -663,7 +693,7 @@ export function Postmortem() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0 space-y-4">
-                    <p className="text-xs text-amber-200/60">
+                    <p className="text-xs text-amber-200">
                       How your deal compares to the master deal — the best possible outcome for this case
                     </p>
                     
@@ -721,7 +751,7 @@ export function Postmortem() {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">How It Works</p>
-                      <p className="text-sm text-amber-200/80">{scenario.postmortem.masterSolution}</p>
+                      <p className="text-sm text-amber-200">{scenario.postmortem.masterSolution}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -753,16 +783,66 @@ export function Postmortem() {
                     transition={{ delay: 1.2 }}
                   >
                     <p className="text-xs text-muted-foreground mb-1">Missed Opportunity</p>
-                    <p className="text-sm text-violet-200/80">{scenario.postmortem.missedOpportunity}</p>
+                    <p className="text-sm text-violet-200">{scenario.postmortem.missedOpportunity}</p>
                   </motion.div>
                 </CardContent>
               </Card>
             </motion.div>
 
+            {/* Technique Reflection */}
+            {techniquesUsed.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 }}>
+                <Card className="bg-cyan-500/10 border-cyan-500/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2 text-cyan-300">
+                      <BookOpen className="h-4 w-4" />
+                      Technique Reflection
+                      <span className="text-[11px] font-normal text-cyan-400 ml-1">From "Never Split the Difference" & "Difficult Conversations"</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0 space-y-2">
+                    {techniquesUsed.map((technique, i) => {
+                      const info = getTechniqueInfo(technique);
+                      if (!info) return null;
+                      const isPositive = ['mirror', 'label', 'calibrated_q', 'tactical_empathy', 'that_right', 'contribution', 'feelings_first', 'third_story', 'identity_ground'].includes(technique);
+                      return (
+                        <motion.div
+                          key={technique}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.85 + i * 0.1 }}
+                          className="flex items-start gap-3 p-2.5 rounded-lg bg-card/30 border border-border/20"
+                        >
+                          <TechniqueBadge technique={technique} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-foreground leading-relaxed">{info.description}</p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="text-[11px] text-muted-foreground">📖 {info.source}</span>
+                              <span className={`text-[11px] px-1.5 py-0 rounded-full ${isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                                {isPositive ? '✓ Effective approach' : '⚡ Use with caution'}
+                              </span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                    {techniquesUsed.length === 0 && (
+                      <p className="text-xs text-muted-foreground italic">No specific negotiation techniques were identified in your choices. Try exploring different approaches!</p>
+                    )}
+                    <div className="mt-3 p-2.5 rounded-lg bg-cyan-500/5 border border-cyan-500/10">
+                      <p className="text-[11px] text-cyan-300">
+                        💡 <strong>Tip:</strong> Look for the technique badges (e.g., 🪞 Mirror, 🎯 Cal.Q) next to dialogue choices during negotiation. Each technique has a tooltip explaining when and how to use it effectively.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
             {/* The Master Deal - kept for cases where we don't have "What If" comparison */}
             {!masterEnding && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
-                <Card className={`bg-amber-500/10 border-amber-500/20 ${endingType === 'master' ? 'sparkle-effect' : ''}`}>
+                <Card className={`bg-amber-500/10 border-amber-500/20 master-solution-glow rounded-xl ${endingType === 'master' ? 'sparkle-effect tier-up-celebration' : ''}`}>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-300">
                       <Crown className="h-4 w-4" />
@@ -777,7 +857,7 @@ export function Postmortem() {
                     <Separator className="bg-amber-500/20" />
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Master Solution</p>
-                      <p className="text-sm text-amber-200/80">{scenario.postmortem.masterSolution}</p>
+                      <p className="text-sm text-amber-200">{scenario.postmortem.masterSolution}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -808,8 +888,7 @@ export function Postmortem() {
                       return (
                         <div key={key} className="flex items-center justify-between">
                           <span className="text-xs text-muted-foreground capitalize">{key}</span>
-                          <span className={`text-xs font-bold flex items-center gap-1 ${value > 0 ? 'text-emerald-400' : value < 0 ? 'text-red-400' : 'text-muted-foreground'}`}>
-                            {value > 0 ? <TrendingUp className="h-3 w-3" /> : value < 0 ? <TrendingDown className="h-3 w-3" /> : null}
+                          <span className={`text-xs font-bold flex items-center gap-1 ${value > 0 ? 'stat-increase' : value < 0 ? 'stat-decrease' : 'text-muted-foreground'}`}>
                             {value > 0 ? '+' : ''}{value}
                           </span>
                         </div>
@@ -864,7 +943,7 @@ export function Postmortem() {
                   {scenario.biasTraps.length > 0 ? (
                     <>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs text-amber-400/70">
+                        <span className="text-xs text-amber-400">
                           {negotiation.biasTrapsTriggered.length} of {scenario.biasTraps.length} traps triggered
                         </span>
                         <div className="flex-1 h-1.5 bg-amber-500/10 rounded-full overflow-hidden">
@@ -906,12 +985,12 @@ export function Postmortem() {
                                     {trap.type.replace(/_/g, ' ')}
                                   </span>
                                   {wasTriggered ? (
-                                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/20 text-amber-400 border-amber-500/30">
+                                    <Badge variant="outline" className="text-[11px] px-1.5 py-0 bg-amber-500/20 text-amber-400 border-amber-500/30">
                                       <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
                                       Triggered
                                     </Badge>
                                   ) : (
-                                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                                    <Badge variant="outline" className="text-[11px] px-1.5 py-0 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
                                       <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
                                       Avoided
                                     </Badge>
@@ -926,24 +1005,24 @@ export function Postmortem() {
                                     />
                                   </button>
                                 </div>
-                                <p className="text-xs text-amber-200/70 mb-1">{trap.description}</p>
+                                <p className="text-xs text-amber-200 mb-1">{trap.description}</p>
                                 
                                 {/* Expandable countermeasure section */}
                                 <div className={`expand-toggle ${isExpanded ? 'expanded' : ''}`}>
                                   <div className="mt-2 p-2.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
                                     <div className="flex items-center gap-1.5 mb-1">
                                       <Sparkles className="h-3 w-3 text-emerald-400" />
-                                      <p className="text-[10px] text-emerald-400 font-semibold">Countermeasure</p>
+                                      <p className="text-[11px] text-emerald-400 font-semibold">Countermeasure</p>
                                     </div>
-                                    <p className="text-xs text-emerald-300/80">{trap.countermeasure}</p>
+                                    <p className="text-xs text-emerald-300">{trap.countermeasure}</p>
                                   </div>
                                   {wasTriggered && (
-                                    <p className="text-[10px] text-amber-400/50 mt-1.5 italic">
+                                    <p className="text-[11px] text-amber-400 mt-1.5 italic">
                                       This trap was triggered during your negotiation. Apply the countermeasure next time.
                                     </p>
                                   )}
                                   {!wasTriggered && (
-                                    <p className="text-[10px] text-emerald-400/50 mt-1.5 italic">
+                                    <p className="text-[11px] text-emerald-400 mt-1.5 italic">
                                       You successfully avoided this trap — keep it up!
                                     </p>
                                   )}
@@ -955,7 +1034,7 @@ export function Postmortem() {
                       })}
                     </>
                   ) : (
-                    <p className="text-xs text-amber-300/50 text-center py-2">No bias traps defined for this case.</p>
+                    <p className="text-xs text-amber-300 text-center py-2">No bias traps defined for this case.</p>
                   )}
                 </CardContent>
               </Card>
@@ -991,7 +1070,7 @@ export function Postmortem() {
 
       {/* Transcript Review Dialog */}
       <Dialog open={showTranscript} onOpenChange={setShowTranscript}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden sm:max-w-[calc(100%-2rem)]">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto sm:max-w-[calc(100%-2rem)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-amber-500" />

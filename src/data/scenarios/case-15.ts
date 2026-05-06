@@ -217,7 +217,7 @@ export const case15: Scenario = {
           id: 'offer_limited',
           text: '"What if we provide API-level integration data — everything your platform needs to work smoothly with VerityMesh — but keep our training datasets and raw user data separate? That protects our IP while giving you full integration capability."',
           type: 'package_offer',
-          nextNodeId: 'helen_considers',
+          nextNodeId: 'helen_thinking',
           effects: { trust: 10, valueCreated: 15, valueClaimed: 10 },
         },
       ],
@@ -231,14 +231,14 @@ export const case15: Scenario = {
           id: 'data_boundary',
           text: '"Aggregated analytics and performance metrics — yes. Raw training data and granular user data — no. And we need explicit independence protections: VerityMesh controls its own roadmap, branding, and pricing."',
           type: 'package_offer',
-          nextNodeId: 'helen_considers',
+          nextNodeId: 'helen_thinking',
           effects: { trust: 10, valueCreated: 15, valueClaimed: 15 },
         },
         {
           id: 'full_proposal',
           text: '"Here\'s what I\'d propose: Limited data rights — aggregated and anonymized only. Premium distribution partnership. 60/40 revenue split in your favor. Full operational independence for VerityMesh. And a public partnership narrative that showcases OmniCorp\'s commitment to independent AI — which I understand matters to you."',
           type: 'package_offer',
-          nextNodeId: 'helen_surprised',
+          nextNodeId: 'helen_impressed',
           effects: { trust: 15, valueCreated: 25, valueClaimed: 20, relationshipImpact: 10 },
           requirement: { type: 'info_discovered', factId: 'regulatory_pressure' },
         },
@@ -489,6 +489,7 @@ export const case15: Scenario = {
     lesson: 'Weak parties have power when the strong party needs what only they can provide.',
     bestPossibleDeal: 'Fair data limits + public partnership + regulatory showcase + revenue share + independence protections + limited exclusivity + co-development',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'power_assumption',

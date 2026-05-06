@@ -598,6 +598,7 @@ export const case27: Scenario = {
     lesson: 'When egos cause a stalemate, change the rules of the game. Invent the mechanism that makes the deal possible.',
     bestPossibleDeal: 'Escrow mechanism + charity pressure + season proceeds + luxury tax + fan trust measures + automatic escrow trigger for future disputes',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'escalation_trap',

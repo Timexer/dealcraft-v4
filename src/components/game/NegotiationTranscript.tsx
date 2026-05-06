@@ -131,7 +131,7 @@ export function NegotiationTranscript({ scenarioId, transcript, choicesMade }: N
       <div className="text-center py-8 text-muted-foreground">
         <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-30" />
         <p className="text-sm">No transcript data available for this case.</p>
-        <p className="text-xs text-muted-foreground/60 mt-1">Transcripts are recorded for new cases.</p>
+        <p className="text-xs text-muted-foreground mt-1">Transcripts are recorded for new cases.</p>
       </div>
     );
   }
@@ -142,7 +142,7 @@ export function NegotiationTranscript({ scenarioId, transcript, choicesMade }: N
       <div className="bg-card/30 rounded-lg border border-border/30 p-3">
         <div className="flex items-center gap-2 mb-2">
           <Eye className="h-3.5 w-3.5 text-amber-400" />
-          <span className="text-[10px] text-muted-foreground font-medium">Conversation Flow</span>
+          <span className="text-[11px] text-muted-foreground font-medium">Conversation Flow</span>
         </div>
         <div className="flex items-center gap-1 overflow-x-auto pb-1 custom-scrollbar">
           {builtTranscript.map((entry, i) => {
@@ -155,7 +155,7 @@ export function NegotiationTranscript({ scenarioId, transcript, choicesMade }: N
               <button
                 key={`${entry.nodeId}-${i}`}
                 onClick={() => handleScrubberClick(i)}
-                className={`shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] transition-all duration-200 ${
+                className={`shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center text-[11px] transition-all duration-200 ${
                   isFocused
                     ? 'border-amber-500 bg-amber-500/20 scale-110 ring-2 ring-amber-500/30'
                     : isEnding
@@ -173,11 +173,11 @@ export function NegotiationTranscript({ scenarioId, transcript, choicesMade }: N
         </div>
         {/* Position indicator */}
         <div className="flex items-center justify-between mt-1.5">
-          <span className="text-[9px] text-muted-foreground">Start</span>
-          <span className="text-[9px] text-amber-400 font-medium">
+          <span className="text-[11px] text-muted-foreground">Start</span>
+          <span className="text-[11px] text-amber-400 font-medium">
             {focusedIndex + 1} of {builtTranscript.length}
           </span>
-          <span className="text-[9px] text-muted-foreground">End</span>
+          <span className="text-[11px] text-muted-foreground">End</span>
         </div>
       </div>
 
@@ -241,7 +241,7 @@ export function NegotiationTranscript({ scenarioId, transcript, choicesMade }: N
                       {speakerInfo.label}
                     </span>
                     {isEnding && (
-                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-yellow-500/15 text-yellow-400 border-yellow-500/30">
+                      <Badge variant="outline" className="text-[11px] px-1.5 py-0 bg-yellow-500/15 text-yellow-400 border-yellow-500/30">
                         Ending
                       </Badge>
                     )}
@@ -256,7 +256,7 @@ export function NegotiationTranscript({ scenarioId, transcript, choicesMade }: N
                   <div className="mx-3 mb-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/20">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <User className="h-3 w-3 text-amber-400" />
-                      <span className="text-[10px] text-amber-400 font-medium">Your Choice</span>
+                      <span className="text-[11px] text-amber-400 font-medium">Your Choice</span>
                     </div>
                     <p className="text-xs text-amber-300">→ {entry.chosenChoiceText}</p>
                   </div>
@@ -265,7 +265,7 @@ export function NegotiationTranscript({ scenarioId, transcript, choicesMade }: N
                 {/* Available choices (branch indicators) */}
                 {entry.availableChoices && entry.availableChoices.length > 0 && (
                   <div className="mx-3 mb-3 space-y-1.5">
-                    <p className="text-[10px] text-muted-foreground/60 font-medium">Available paths:</p>
+                    <p className="text-[11px] text-muted-foreground font-medium">Available paths:</p>
                     {entry.availableChoices.map(choice => {
                       const wasTaken = choice.wasTaken;
                       const choiceStyle = CHOICE_TYPE_STYLES[choice.type as keyof typeof CHOICE_TYPE_STYLES];
@@ -284,22 +284,22 @@ export function NegotiationTranscript({ scenarioId, transcript, choicesMade }: N
                             {wasTaken ? (
                               <Eye className="h-3 w-3 text-amber-400" />
                             ) : (
-                              <Lock className="h-3 w-3 text-muted-foreground/40" />
+                              <Lock className="h-3 w-3 text-muted-foreground" />
                             )}
                           </span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className={wasTaken ? 'text-amber-300' : 'text-muted-foreground/60'}>
+                              <span className={wasTaken ? 'text-amber-300' : 'text-muted-foreground'}>
                                 {choice.text}
                               </span>
                               {choiceStyle && (
-                                <Badge variant="outline" className={`text-[8px] px-1 py-0 ${wasTaken ? choiceStyle.color : 'bg-muted/20 text-muted-foreground/40 border-border/20'}`}>
+                                <Badge variant="outline" className={`text-[11px] px-1 py-0 ${wasTaken ? choiceStyle.color : 'bg-muted/20 text-muted-foreground border-border/20'}`}>
                                   {choiceStyle.icon} {choiceStyle.label}
                                 </Badge>
                               )}
                             </div>
                             {!wasTaken && (
-                              <span className="text-[9px] text-muted-foreground/40 italic">Road not taken</span>
+                              <span className="text-[11px] text-muted-foreground italic">Road not taken</span>
                             )}
                           </div>
                         </div>

@@ -486,6 +486,7 @@ export const case12: Scenario = {
     lesson: 'Do not accuse first. Create a truth-revealing structure.',
     bestPossibleDeal: 'Contingent contract: full compensation if internal failure proven, moderate adjustment if external cause verified — then upgrade to comprehensive deal with tracking, SLA, and volume discount',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'trust_force_majeure',

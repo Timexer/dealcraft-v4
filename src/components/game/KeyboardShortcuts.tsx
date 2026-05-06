@@ -30,6 +30,7 @@ const SHORTCUTS: ShortcutDef[] = [
   { key: 'N', label: 'N', description: 'Toggle notification panel', category: 'ui' },
   { key: 'S', label: 'S', description: 'Toggle sound on/off', category: 'ui' },
   { key: 'T', label: 'T', description: 'Toggle tutorial', category: 'ui' },
+  { key: 'R', label: 'R', description: 'Reset game (with confirmation)', category: 'ui' },
   { key: 'Space', label: 'Space', description: 'Advance dialogue (auto-advance/ending)', category: 'game' },
 ];
 
@@ -117,7 +118,7 @@ export function KeyboardShortcutsDialog({
                       key={shortcut.key}
                       className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-muted/30 transition-colors"
                     >
-                      <span className="text-sm text-foreground/80">{shortcut.description}</span>
+                      <span className="text-sm text-foreground">{shortcut.description}</span>
                       <KeyBadge>{shortcut.label}</KeyBadge>
                     </div>
                   ))}
@@ -135,8 +136,8 @@ export function KeyboardShortcutsDialog({
 
 export function ChoiceHintBadge() {
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/60 ml-2">
-      <kbd className="inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded border border-amber-500/20 bg-amber-500/5 text-[9px] font-mono font-bold text-amber-500/50">
+    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground ml-2">
+      <kbd className="inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded border border-amber-500/20 bg-amber-500/5 text-[11px] font-mono font-bold text-amber-500">
         1-4
       </kbd>
     </span>
@@ -211,6 +212,13 @@ export function useKeyboardShortcuts() {
           // Toggle tutorial
           e.preventDefault();
           window.dispatchEvent(new CustomEvent('dealcraft:show-tutorial'));
+          break;
+        }
+        case 'r':
+        case 'R': {
+          // Show reset confirmation
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('dealcraft:show-reset'));
           break;
         }
         case ' ': {

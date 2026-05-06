@@ -81,8 +81,8 @@ export function TitleScreen() {
       className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
     >
       {/* Animated grid background */}
-      <div className="absolute inset-0 grid-pattern opacity-60" />
-      <div className="absolute inset-0 opacity-[0.02]">
+      <div className="absolute inset-0 grid-pattern opacity-60 pointer-events-none" />
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
         <div className="absolute inset-0" style={{
           backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
           backgroundSize: '40px 40px'
@@ -106,9 +106,9 @@ export function TitleScreen() {
       ))}
 
       {/* Ambient glow orbs */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-cyan-500/3 rounded-full blur-[100px]" />
-      <div className="absolute top-1/2 right-1/4 w-[300px] h-[300px] bg-amber-600/3 rounded-full blur-[100px]" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-cyan-500/3 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/2 right-1/4 w-[300px] h-[300px] bg-amber-600/3 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Floating negotiation term badges */}
       {NEGOTIATION_TERMS.slice(0, 8).map((term, i) => {
@@ -117,7 +117,7 @@ export function TitleScreen() {
         return (
           <div
             key={term}
-            className="floating-badge glass-card px-3 py-1 rounded-full text-[10px] text-amber-500/40 font-medium tracking-wider"
+            className="floating-badge glass-card px-3 py-1 rounded-full text-[11px] text-amber-500/40 font-medium tracking-wider pointer-events-none"
             style={{
               top: `${top}%`,
               left: `${left}%`,
@@ -135,11 +135,11 @@ export function TitleScreen() {
       })}
 
       {/* Animated corner accents */}
-      <div className="absolute top-0 left-0 w-40 h-40">
+      <div className="absolute top-0 left-0 w-40 h-40 pointer-events-none">
         <div className="absolute top-8 left-8 w-16 h-px bg-gradient-to-r from-amber-500/30 to-transparent" />
         <div className="absolute top-8 left-8 w-px h-16 bg-gradient-to-b from-amber-500/30 to-transparent" />
       </div>
-      <div className="absolute bottom-0 right-0 w-40 h-40">
+      <div className="absolute bottom-0 right-0 w-40 h-40 pointer-events-none">
         <div className="absolute bottom-8 right-8 w-16 h-px bg-gradient-to-l from-amber-500/30 to-transparent" />
         <div className="absolute bottom-8 right-8 w-px h-16 bg-gradient-to-t from-amber-500/30 to-transparent" />
       </div>
@@ -186,7 +186,7 @@ export function TitleScreen() {
             {displayedSubtitle}
             {!typewriterDone && <span className="typewriter-cursor" />}
           </p>
-          <p className="text-sm text-muted-foreground/60 max-w-md mx-auto">
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
             Discover what reality actually is — and design a deal that reality will accept.
           </p>
         </motion.div>
@@ -270,7 +270,7 @@ export function TitleScreen() {
           }}
         >
           {['30 Cases', '5 Tiers', 'Career Mode', 'Postmortem Analysis', 'Reputation System', 'Glossary', 'AI Advisor', 'Bias Traps', 'Streaks', 'Themes'].map((badge) => (
-            <span key={badge} className="glass-card px-3 py-1.5 rounded-full text-xs text-muted-foreground/80 hover:text-amber-400 transition-colors duration-200 card-hover-lift cursor-default">
+            <span key={badge} className="glass-card px-3 py-1.5 rounded-full text-xs text-muted-foreground hover:text-amber-400 transition-colors duration-200 card-hover-lift cursor-default">
               {badge}
             </span>
           ))}

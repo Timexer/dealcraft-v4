@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { GamePhase, NegotiationState, PlayerStats, ReputationScores, CaseResult } from '@/data/scenarios/types';
+import type { GamePhase, NegotiationState, NegotiationTechnique, PlayerStats, ReputationScores, CaseResult } from '@/data/scenarios/types';
 import { getScenariosByCategory, getScenarioById } from '@/data/scenarios';
 
 export interface Achievement {
@@ -62,6 +62,10 @@ export interface GameState {
   spendInvestigationPoint: (actionId: string, revealedFacts: string[]) => void;
   resetInvestigation: () => void;
 
+  // Technique tracking
+  techniquesUsed: NegotiationTechnique[];
+  addTechniqueUsed: (technique: NegotiationTechnique) => void;
+
   // Negotiation state
   negotiation: NegotiationState;
   updateNegotiation: (delta: Partial<NegotiationState>) => void;
@@ -99,6 +103,10 @@ export interface GameState {
   challengeTimer: number;
   setChallengeTimer: (seconds: number) => void;
 
+  // Negotiation Timer
+  negotiationStartTime: number | null;
+  setNegotiationStartTime: (time: number | null) => void;
+
   // Streak System
   currentStreak: number;
   bestStreak: number;
@@ -130,6 +138,10 @@ export interface GameState {
   addNotification: (notification: Omit<GameNotification, 'id' | 'timestamp' | 'read'>) => void;
   markNotificationRead: (id: string) => void;
   unreadNotificationCount: () => number;
+
+  // Black Swans
+  discoveredBlackSwans: string[];
+  discoverBlackSwan: (id: string) => void;
 }
 
 const defaultStats: PlayerStats = {
@@ -221,7 +233,14 @@ export const useGameStore = create<GameState>()(
           maxInvestigationPoints: 5,
           discoveredFacts: [],
           investigationHistory: [],
+          discoveredBlackSwans: [],
         }),
+
+      techniquesUsed: [],
+      addTechniqueUsed: (technique) =>
+        set((s) => ({
+          techniquesUsed: s.techniquesUsed.includes(technique) ? s.techniquesUsed : [...s.techniquesUsed, technique],
+        })),
 
       negotiation: { ...defaultNegotiation },
       updateNegotiation: (delta) =>
@@ -235,10 +254,11 @@ export const useGameStore = create<GameState>()(
             trust: Math.min(100, Math.max(0, s.negotiation.trust + (effects.trust ?? 0))),
             anger: Math.min(100, Math.max(0, s.negotiation.anger + (effects.anger ?? 0))),
             patience: Math.min(100, Math.max(0, s.negotiation.patience + (effects.patience ?? 0))),
-            valueClaimed: s.negotiation.valueClaimed + (effects.valueClaimed ?? 0),
-            valueCreated: s.negotiation.valueCreated + (effects.valueCreated ?? 0),
-            relationshipImpact: s.negotiation.relationshipImpact + (effects.relationshipImpact ?? 0),
-            ethicalImpact: s.negotiation.ethicalImpact + (effects.ethicalImpact ?? 0),
+            // BUG FIX: Add bounds clamping to value fields to prevent negative/unbounded values
+            valueClaimed: Math.max(0, s.negotiation.valueClaimed + (effects.valueClaimed ?? 0)),
+            valueCreated: Math.max(0, s.negotiation.valueCreated + (effects.valueCreated ?? 0)),
+            relationshipImpact: Math.max(-100, Math.min(100, s.negotiation.relationshipImpact + (effects.relationshipImpact ?? 0))),
+            ethicalImpact: Math.max(-100, Math.min(100, s.negotiation.ethicalImpact + (effects.ethicalImpact ?? 0))),
             clientSatisfaction: Math.min(100, Math.max(0, s.negotiation.clientSatisfaction + (effects.clientSatisfaction ?? 0))),
             counterpartySatisfaction: Math.min(100, Math.max(0, s.negotiation.counterpartySatisfaction + (effects.counterpartySatisfaction ?? 0))),
             informationRevealed: effects.informationRevealed
@@ -277,10 +297,10 @@ export const useGameStore = create<GameState>()(
               trust: Math.min(100, Math.max(0, s.negotiation.trust + (effects.trust ?? 0))),
               anger: Math.min(100, Math.max(0, s.negotiation.anger + (effects.anger ?? 0))),
               patience: Math.min(100, Math.max(0, s.negotiation.patience + (effects.patience ?? 0))),
-              valueClaimed: s.negotiation.valueClaimed + (effects.valueClaimed ?? 0),
-              valueCreated: s.negotiation.valueCreated + (effects.valueCreated ?? 0),
-              relationshipImpact: s.negotiation.relationshipImpact + (effects.relationshipImpact ?? 0),
-              ethicalImpact: s.negotiation.ethicalImpact + (effects.ethicalImpact ?? 0),
+              valueClaimed: Math.max(0, s.negotiation.valueClaimed + (effects.valueClaimed ?? 0)),
+              valueCreated: Math.max(0, s.negotiation.valueCreated + (effects.valueCreated ?? 0)),
+              relationshipImpact: Math.max(-100, Math.min(100, s.negotiation.relationshipImpact + (effects.relationshipImpact ?? 0))),
+              ethicalImpact: Math.max(-100, Math.min(100, s.negotiation.ethicalImpact + (effects.ethicalImpact ?? 0))),
               clientSatisfaction: Math.min(100, Math.max(0, s.negotiation.clientSatisfaction + (effects.clientSatisfaction ?? 0))),
               counterpartySatisfaction: Math.min(100, Math.max(0, s.negotiation.counterpartySatisfaction + (effects.counterpartySatisfaction ?? 0))),
               informationRevealed: infoRevealed
@@ -784,6 +804,14 @@ export const useGameStore = create<GameState>()(
             achievements: newAchievements,
             notifications: newNotifications,
             isReplay: false,
+            // BUG FIX: Update streak system on replay too
+            currentStreak: result.outcome === 'master' || result.outcome === 'cooperative'
+              ? s.currentStreak + 1
+              : 0,
+            bestStreak: result.outcome === 'master' || result.outcome === 'cooperative'
+              ? Math.max(s.bestStreak, s.currentStreak + 1)
+              : s.bestStreak,
+            streakType: result.outcome === 'master' ? 'master' : result.outcome === 'cooperative' ? 'win' : 'none',
           };
         }),
 
@@ -809,6 +837,9 @@ export const useGameStore = create<GameState>()(
       setChallengeMode: (mode) => set({ challengeMode: mode }),
       challengeTimer: 0,
       setChallengeTimer: (seconds) => set({ challengeTimer: seconds }),
+
+      negotiationStartTime: null,
+      setNegotiationStartTime: (time) => set({ negotiationStartTime: time }),
 
       // Streak System
       currentStreak: 0,
@@ -843,6 +874,7 @@ export const useGameStore = create<GameState>()(
           maxInvestigationPoints: 5,
           discoveredFacts: [],
           investigationHistory: [],
+          techniquesUsed: [],
           negotiation: { ...defaultNegotiation },
           batnaEstimate: 0,
           reservationEstimate: 0,
@@ -855,6 +887,8 @@ export const useGameStore = create<GameState>()(
           bestStreak: 0,
           streakType: 'none',
           streakHistory: [],
+          negotiationStartTime: null,
+          discoveredBlackSwans: [],
         }),
 
       resetGame: () =>
@@ -874,6 +908,7 @@ export const useGameStore = create<GameState>()(
           maxInvestigationPoints: 5,
           discoveredFacts: [],
           investigationHistory: [],
+          techniquesUsed: [],
           negotiation: { ...defaultNegotiation },
           batnaEstimate: 0,
           reservationEstimate: 0,
@@ -886,6 +921,12 @@ export const useGameStore = create<GameState>()(
           bestStreak: 0,
           streakType: 'none',
           streakHistory: [],
+          negotiationStartTime: null,
+          achievements: [],
+          notifications: [],
+          tutorialCompleted: false,
+          colorTheme: 'amber',
+          discoveredBlackSwans: [],
         }),
 
       unlockedCases: ['case-01', 'case-02', 'case-03'],
@@ -924,6 +965,24 @@ export const useGameStore = create<GameState>()(
           notifications: s.notifications.map(n => n.id === id ? { ...n, read: true } : n),
         })),
       unreadNotificationCount: () => get().notifications.filter(n => !n.read).length,
+
+      discoveredBlackSwans: [],
+      discoverBlackSwan: (id) =>
+        set((s) => {
+          if (s.discoveredBlackSwans.includes(id)) return s;
+          return {
+            discoveredBlackSwans: [...s.discoveredBlackSwans, id],
+            notifications: [{
+              id: `notif-bs-${Date.now()}`,
+              type: 'info' as const,
+              title: '🦢 Black Swan Discovered!',
+              message: 'A hidden truth has been revealed that changes everything.',
+              icon: '🦢',
+              timestamp: Date.now(),
+              read: false,
+            }, ...s.notifications],
+          };
+        }),
     }),
     {
       name: 'dealcraft-game-state',
@@ -954,11 +1013,14 @@ export const useGameStore = create<GameState>()(
         investigationHistory: state.investigationHistory,
         negotiation: state.negotiation,
         challengeMode: state.challengeMode,
+        challengeTimer: state.challengeTimer,
+        negotiationStartTime: state.negotiationStartTime,
         currentStreak: state.currentStreak,
         bestStreak: state.bestStreak,
         streakType: state.streakType,
         streakHistory: state.streakHistory,
         colorTheme: state.colorTheme,
+        discoveredBlackSwans: state.discoveredBlackSwans,
       }),
     }
   )

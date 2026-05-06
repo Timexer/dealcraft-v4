@@ -13,6 +13,16 @@ export function NotificationPanel() {
   const [latestNotification, setLatestNotification] = useState<typeof notifications[0] | null>(null);
   const unread = unreadNotificationCount();
 
+  // Keyboard dismissal: Escape closes the notification dropdown
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isOpen]);
+
   // Show toast for new notifications
   useEffect(() => {
     if (notifications.length > 0 && !notifications[0].read) {
@@ -54,7 +64,7 @@ export function NotificationPanel() {
             animate={{ opacity: 1, y: 0, x: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="fixed top-14 right-4 z-50 max-w-xs"
+            className="fixed top-14 right-4 z-[45] max-w-xs"
           >
             <div className={`rounded-xl border p-3 shadow-xl backdrop-blur-md ${getTypeBg(latestNotification.type)}`}>
               <div className="flex items-start gap-2">
@@ -85,7 +95,7 @@ export function NotificationPanel() {
         >
           <Bell className="h-4 w-4" />
           {unread > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-amber-500 text-[9px] font-bold text-black flex items-center justify-center">
+            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-amber-500 text-[11px] font-bold text-black flex items-center justify-center">
               {unread > 9 ? '9+' : unread}
             </span>
           )}
@@ -99,22 +109,23 @@ export function NotificationPanel() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-40"
+                className="fixed inset-0 z-[45] bg-black/5"
                 onClick={() => setIsOpen(false)}
+                aria-hidden="true"
               />
               <motion.div
                 initial={{ opacity: 0, y: -10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 top-10 z-50 w-80 rounded-xl border border-border/50 bg-card shadow-xl"
+                className="absolute right-0 top-10 z-[46] w-80 rounded-xl border border-border/50 bg-card shadow-xl"
               >
                 <div className="p-3 border-b border-border/30 flex items-center justify-between">
                   <h3 className="text-sm font-semibold">Notifications</h3>
                   {unread > 0 && (
                     <button
                       onClick={() => notifications.forEach(n => markNotificationRead(n.id))}
-                      className="text-[10px] text-amber-500 hover:text-amber-400"
+                      className="text-[11px] text-amber-500 hover:text-amber-400"
                     >
                       Mark all read
                     </button>
@@ -142,7 +153,7 @@ export function NotificationPanel() {
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold">{notif.title}</p>
                               <p className="text-[11px] text-muted-foreground mt-0.5">{notif.message}</p>
-                              <p className="text-[9px] text-muted-foreground/50 mt-1">
+                              <p className="text-[11px] text-muted-foreground mt-1">
                                 {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </p>
                             </div>

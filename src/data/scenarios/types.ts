@@ -78,6 +78,26 @@ export interface StateEffect {
   counterpartySatisfaction?: number;
 }
 
+export type NegotiationTechnique =
+  | 'mirror'          // Repeat last 1-3 words (Voss Ch2)
+  | 'label'           // "It seems like..." / "It sounds like..." (Voss Ch3)
+  | 'calibrated_q'    // "How/What" open questions (Voss Ch7)
+  | 'accusation_audit' // Preemptively naming negatives (Voss Ch3)
+  | 'tactical_empathy' // Understanding feelings strategically (Voss Ch3)
+  | 'strategic_no'    // Using "No" to create safety (Voss Ch4)
+  | 'that_right'      // Seeking "That's right" not "You're right" (Voss Ch5)
+  | 'ackerman'        // Incremental offer system (Voss Ch9)
+  | 'black_swan'      // Revealing unknown unknowns (Voss Ch10)
+  | 'loss_aversion'   // Framing as loss prevention (Voss Ch6)
+  | 'contribution'    // Mapping contribution not blame (Difficult Conversations Ch4)
+  | 'intent_impact'   // Separating intent from impact (Difficult Conversations Ch3)
+  | 'third_story'     // Starting from neutral observer (Difficult Conversations Ch8)
+  | 'feelings_first'  // Addressing feelings before substance (Difficult Conversations Ch5)
+  | 'identity_ground' // Grounding identity before conversation (Difficult Conversations Ch6)
+  | 'none';           // No specific technique
+
+export type CounterpartyStyle = 'analyst' | 'accommodator' | 'assertive';
+
 export interface DialogueChoice {
   id: string;
   text: string;
@@ -86,6 +106,7 @@ export interface DialogueChoice {
   effects: StateEffect;
   requirement?: { type: 'info_discovered'; factId: string } | { type: 'min_trust'; value: number } | { type: 'max_anger'; value: number };
   disabledReason?: string;
+  technique?: NegotiationTechnique;
 }
 
 export interface DialogueNode {
@@ -145,6 +166,15 @@ export interface CaseBriefing {
   clientEmotionalState: string;
 }
 
+export interface BlackSwan {
+  id: string;
+  fact: string;         // The hidden fact
+  discoveredVia: string[]; // investigation action IDs that can reveal it
+  dialogueNodeId?: string; // dialogue node that can reveal it (optional)
+  impact: string;       // What happens when discovered
+  value: number;        // Score bonus for discovering it (10-30 points)
+}
+
 export interface Scenario {
   id: string;
   title: string;
@@ -164,6 +194,8 @@ export interface Scenario {
   endings: CaseEnding[];
   postmortem: PostmortemInfo;
   biasTraps: BiasEvent[];
+  blackSwans?: BlackSwan[];
+  counterpartyStyle: CounterpartyStyle;
   fee: number;
   stakesLabel: string;
 }
@@ -231,6 +263,7 @@ export interface CaseResult {
   hiddenFactsFound: string[];
   postmortemRead: boolean;
   transcript?: TranscriptEntry[];
+  elapsedTime?: number; // seconds spent in negotiation
 }
 
 export const CATEGORY_COLORS: Record<string, string> = {

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/data/scenarios/types';
+import type { BlackSwan } from '@/data/scenarios/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +22,7 @@ import {
   ChevronUp,
   Eye,
   Shield,
+  Sparkles,
 } from 'lucide-react';
 
 const RISK_COLORS = {
@@ -41,6 +43,30 @@ export function Investigation() {
   const [expandedFact, setExpandedFact] = useState<string | null>(null);
   const [revealedActions, setRevealedActions] = useState<Set<string>>(new Set(investigationHistory));
   const [actionResponses, setActionResponses] = useState<Record<string, string>>({});
+  const [discoveryFlash, setDiscoveryFlash] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [discoveredSwans, setDiscoveredSwans] = useState<BlackSwan[]>([]);
+  const [latestSwan, setLatestSwan] = useState<BlackSwan | null>(null);
+  const prevFactsCount = useRef(discoveredFacts.length);
+
+  // Track discovery flash animation - must be before early return
+  useEffect(() => {
+    if (discoveredFacts.length > prevFactsCount.current) {
+      const latestFact = discoveredFacts[discoveredFacts.length - 1];
+      if (latestFact) {
+        const raf = requestAnimationFrame(() => {
+          setDiscoveryFlash(latestFact);
+        });
+        const timer = setTimeout(() => setDiscoveryFlash(null), 800);
+        prevFactsCount.current = discoveredFacts.length;
+        return () => {
+          cancelAnimationFrame(raf);
+          clearTimeout(timer);
+        };
+      }
+    }
+    prevFactsCount.current = discoveredFacts.length;
+  }, [discoveredFacts.length]);
 
   if (!scenario) {
     return (
@@ -66,11 +92,30 @@ export function Investigation() {
     spendInvestigationPoint(actionId, action.reveals);
     setRevealedActions(prev => new Set([...prev, actionId]));
     setActionResponses(prev => ({ ...prev, [actionId]: action.responseText }));
+
+    // Check for Black Swan discovery
+    if (scenario?.blackSwans) {
+      for (const swan of scenario.blackSwans) {
+        if (swan.discoveredVia.includes(actionId) && !discoveredSwans.find(s => s.id === swan.id)) {
+          setDiscoveredSwans(prev => [...prev, swan]);
+          setLatestSwan(swan);
+          useGameStore.getState().discoverBlackSwan(swan.id);
+          // Auto-hide after 5 seconds
+          setTimeout(() => setLatestSwan(null), 5000);
+        }
+      }
+    }
   };
 
   const handleProceed = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
     useGameStore.getState().resetNegotiation();
-    setPhase('negotiation');
+    // Small delay to prevent AnimatePresence race conditions
+    setTimeout(() => {
+      setPhase('negotiation');
+      setIsTransitioning(false);
+    }, 50);
   };
 
   return (
@@ -108,22 +153,33 @@ export function Investigation() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Eye className="h-4 w-4 text-amber-500" />
-                  <span className="text-sm font-medium">Investigation Points</span>
+                  <span className="text-sm font-medium">Investigation Points: {pointsUsed}/{maxInvestigationPoints}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-amber-400">
-                    {investigationPoints}/{maxInvestigationPoints}
-                  </span>
                   {investigationPoints === 0 && (
-                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">
+                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[11px]">
                       All Spent
                     </Badge>
                   )}
                 </div>
               </div>
-              <div className="relative">
-                <Progress value={progressPercent} className="h-2" />
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent pointer-events-none rounded-full" />
+              <div className="investigation-progress-bar">
+                <div
+                  className="fill"
+                  style={{ width: `${progressPercent}%` }}
+                />
+                {/* Milestone markers at 25%, 50%, 75%, 100% */}
+                {[25, 50, 75, 100].map(milestone => (
+                  <div
+                    key={milestone}
+                    className="progress-milestone"
+                    style={{
+                      left: `${milestone}%`,
+                      opacity: progressPercent >= milestone ? 1 : 0.3,
+                      background: progressPercent >= milestone ? 'oklch(0.77 0.16 75)' : 'oklch(1 0 0 / 15%)',
+                    }}
+                  />
+                ))}
               </div>
               <div className="flex items-center justify-between mt-2">
                 <p className="text-xs text-muted-foreground">
@@ -165,17 +221,17 @@ export function Investigation() {
                     transition={{ delay: i * 0.08 }}
                   >
                     <Card
-                      className={`bg-card/50 border-border/50 transition-all duration-300 ${
+                      className={`glass-card investigation-card risk-border-${action.riskLevel} ${
                         isUsed
-                          ? 'opacity-60 border-emerald-500/20'
-                          : 'hover:border-amber-500/30 cursor-pointer card-hover-lift'
-                      }`}
+                          ? 'opacity-60'
+                          : 'cursor-pointer'
+                      } ${discoveryFlash && action.reveals.includes(discoveryFlash) ? 'discovery-reveal' : ''}`}
                       onClick={() => !isDisabled && handleInvestigate(action.id)}
                     >
                       <CardContent className="p-4 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm font-medium">{action.name}</p>
-                          <Badge variant="outline" className={`text-[10px] shrink-0 ${RISK_COLORS[action.riskLevel]}`}>
+                          <Badge variant="outline" className={`text-[11px] shrink-0 ${RISK_COLORS[action.riskLevel]}`}>
                             {action.riskLevel} risk
                           </Badge>
                         </div>
@@ -185,7 +241,7 @@ export function Investigation() {
                             Cost: {action.cost} point{action.cost > 1 ? 's' : ''}
                           </span>
                           {isUsed ? (
-                            <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                            <Badge variant="outline" className="text-[11px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20 checkmark-animate">
                               ✓ Done
                             </Badge>
                           ) : (
@@ -214,7 +270,7 @@ export function Investigation() {
                               exit={{ opacity: 0, height: 0 }}
                               className="pt-2 border-t border-border/30"
                             >
-                              <p className="text-xs text-amber-200/80 italic leading-relaxed">{response}</p>
+                              <p className="text-xs text-amber-200 italic leading-relaxed">{response}</p>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -247,7 +303,7 @@ export function Investigation() {
                     const isExpanded = expandedFact === factId;
                     const matchingAction = investigationActions.find(a => a.reveals.includes(factId));
                     return (
-                      <Card key={factId} className="bg-emerald-500/10 border-emerald-500/20">
+                      <Card key={factId} className={`bg-emerald-500/10 border-emerald-500/20 ${discoveryFlash === factId ? 'discovery-reveal' : ''}`}>
                         <CardContent className="p-3">
                           <button
                             onClick={() => setExpandedFact(isExpanded ? null : factId)}
@@ -271,7 +327,7 @@ export function Investigation() {
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="text-xs text-emerald-200/70 mt-2 leading-relaxed"
+                                className="text-xs text-emerald-200 mt-2 leading-relaxed"
                               >
                                 {matchingAction.responseText}
                               </motion.p>
@@ -284,7 +340,7 @@ export function Investigation() {
                 ) : (
                   <Card className="bg-card/30 border-border/30">
                     <CardContent className="p-6 text-center">
-                      <Search className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+                      <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                       <p className="text-xs text-muted-foreground">
                         No intelligence gathered yet. Spend investigation points to uncover information.
                       </p>
@@ -293,8 +349,65 @@ export function Investigation() {
                 )}
               </div>
             </ScrollArea>
+
+            {/* Black Swans Discovered */}
+            {discoveredSwans.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <span>🦢</span>
+                  Black Swans
+                </h3>
+                {discoveredSwans.map(swan => (
+                  <Card key={swan.id} className="bg-violet-500/10 border-violet-500/20">
+                    <CardContent className="p-3 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-3.5 w-3.5 text-violet-400 shrink-0" />
+                        <span className="text-xs font-medium text-violet-300">{swan.fact}</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground ml-5.5">{swan.impact}</p>
+                      <Badge variant="outline" className="text-[11px] bg-amber-500/10 text-amber-400 border-amber-500/20 ml-5.5">
+                        +{swan.value} bonus
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Black Swan Discovery Popup */}
+        <AnimatePresence>
+          {latestSwan && (
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 50, scale: 0.9 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-md"
+            >
+              <Card className="bg-gradient-to-br from-violet-500/20 via-violet-500/10 to-transparent border-violet-500/30 shadow-lg shadow-violet-500/10">
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🦢</span>
+                    <div>
+                      <p className="text-sm font-bold text-violet-300">Black Swan Discovered!</p>
+                      <p className="text-[11px] text-muted-foreground">Unknown unknown that transforms the negotiation</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-foreground font-medium">{latestSwan.fact}</p>
+                  <p className="text-[11px] text-muted-foreground">{latestSwan.impact}</p>
+                  <div className="flex items-center justify-between pt-1">
+                    <Badge variant="outline" className="text-[11px] bg-amber-500/10 text-amber-400 border-amber-500/20">
+                      +{latestSwan.value} bonus points
+                    </Badge>
+                    <span className="text-[11px] text-muted-foreground">📖 Voss Ch.10 — Find the Black Swan</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="animated-line" />
 
@@ -312,11 +425,12 @@ export function Investigation() {
           </p>
           <Button
             onClick={handleProceed}
-            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white gap-2 premium-button dramatic-glow"
+            disabled={isTransitioning}
+            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white gap-2 premium-button dramatic-glow relative z-30"
             size="lg"
           >
-            Proceed to Negotiation
-            <ArrowRight className="h-4 w-4" />
+            {isTransitioning ? 'Loading...' : 'Proceed to Negotiation'}
+            {!isTransitioning && <ArrowRight className="h-4 w-4" />}
           </Button>
         </motion.div>
       </div>

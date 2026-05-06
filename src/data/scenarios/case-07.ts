@@ -284,7 +284,7 @@ export const case07: Scenario = {
           id: 'choice_walk',
           text: '"€3.5M doesn\'t reflect the value. We have other offers."',
           type: 'walk_away',
-          nextNodeId: 'ending_no_deal',
+          nextNodeId: 'ending_no_deal_bad',
           effects: { trust: -10, relationshipImpact: -10 },
         },
       ],
@@ -364,7 +364,7 @@ export const case07: Scenario = {
       isAuto: true,
     },
     {
-      id: 'ending_no_deal',
+      id: 'ending_no_deal_bad',
       speaker: 'narrator',
       text: '❌ NO DEAL: Both sides lose. Content goes to a competitor platform at a lower fee.',
       isAuto: true,
@@ -396,7 +396,7 @@ export const case07: Scenario = {
       longTermConsequence: 'Moderate fee. StreamVista gets far more value from repeat runs and promo exclusivity than they paid for. SilverArc left millions on the table.',
     },
     {
-      id: 'ending_no_deal',
+      id: 'ending_no_deal_bad',
       type: 'no_deal_bad',
       title: 'The Missed Connection',
       description: 'Both sides lose the deal over fee disagreement.',
@@ -411,6 +411,7 @@ export const case07: Scenario = {
     lesson: 'Splitting the difference destroys value when parties value issues differently. Trade, don\'t compromise.',
     bestPossibleDeal: '€4M fee + unlimited runs + promo exclusivity + sequel co-marketing + revenue share kicker = total value far exceeding any fee-only deal.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'bias_fixed_pie',

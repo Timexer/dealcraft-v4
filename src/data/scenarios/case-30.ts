@@ -566,6 +566,7 @@ export const case30: Scenario = {
     lesson: 'Multi-party peace requires designing dignity, not dividing resources. When demands conflict on paper but not in substance, the negotiator\'s job is to discover the underlying architecture that makes everyone\'s dignity possible simultaneously.',
     bestPossibleDeal: 'Security Accord (Gamma) → Sovereignty Accord (Alpha) + Recognition Accord (Beta) signed in parallel → Truth & Reconciliation → Joint Development Fund → Regional Coordination Council',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'uniform_solution',

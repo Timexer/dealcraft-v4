@@ -146,6 +146,7 @@ export const case04: Scenario = {
           type: 'investigative',
           nextNodeId: 'theodor_evasive',
           effects: { trust: 10, anger: -5 },
+          technique: 'calibrated_q',
         },
         {
           id: 'choice_raise_price',
@@ -160,6 +161,7 @@ export const case04: Scenario = {
           type: 'empathy',
           nextNodeId: 'theodor_appreciative',
           effects: { trust: 15, anger: -10 },
+          technique: 'tactical_empathy',
         },
         {
           id: 'choice_define_exclusivity',
@@ -181,6 +183,7 @@ export const case04: Scenario = {
           type: 'face_saving',
           nextNodeId: 'theodor_hesitant',
           effects: { trust: 15, anger: -10, valueCreated: 5 },
+          technique: 'feelings_first',
         },
         {
           id: 'choice_who_are_they',
@@ -293,6 +296,7 @@ export const case04: Scenario = {
           type: 'face_saving',
           nextNodeId: 'theodor_thaws',
           effects: { trust: 15, anger: -20, valueCreated: 5 },
+          technique: 'identity_ground',
         },
         {
           id: 'choice_escalate',
@@ -314,6 +318,7 @@ export const case04: Scenario = {
           type: 'package_offer',
           nextNodeId: 'theodor_hopeful',
           effects: { trust: 25, anger: -15, valueCreated: 20 },
+          technique: 'that_right',
         },
         {
           id: 'choice_how_small',
@@ -660,6 +665,7 @@ export const case04: Scenario = {
     lesson: '"No exclusivity" may mean "protect one small promise." What sounds like an absolute position often conceals a specific, solvable constraint. Find the real obstacle and design around it.',
     bestPossibleDeal: 'Global beverage category exclusivity + named artisan carve-outs (<8% volume) + audit rights + €100K minimum annual orders + 20% price premium = complete brand protection for Luma and honored promises for Hahn.',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'fixed_pie_exclusivity',

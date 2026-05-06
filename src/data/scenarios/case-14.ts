@@ -537,6 +537,7 @@ export const case14: Scenario = {
     lesson: 'Reputation is not proof. Test the claim.',
     bestPossibleDeal: 'Milestone-based contract + independent testing + termination rights + performance bond + delivery bonus = €8.8M total possible value',
   },
+  counterpartyStyle: 'assertive',
   biasTraps: [
     {
       id: 'reputation_heuristic',

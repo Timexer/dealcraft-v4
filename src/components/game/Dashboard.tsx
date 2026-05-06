@@ -10,14 +10,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X, Clock, Activity, Zap, History, FileText, Crown, Handshake, Shield, AlertTriangle, Footprints, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X, Clock, Activity, Zap, History, FileText, Crown, Handshake, Shield, AlertTriangle, Footprints, ArrowUpRight, ArrowDownRight, Minus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CaseResult, EndingScores } from '@/data/scenarios/types';
 import { AchievementGallery } from './AchievementGallery';
 import { ChallengeModeSelector } from './ChallengeModeSelector';
 import { StreakIndicator } from './StreakIndicator';
 import { NegotiationTranscript } from './NegotiationTranscript';
 import { Input } from '@/components/ui/input';
 import { useSound } from '@/hooks/use-sound';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 // Category distribution color map for mini chart
 const CATEGORY_BAR_COLORS: Record<string, string> = {
@@ -102,7 +105,7 @@ function ScoreTrend({ currentScore, previousScore }: { currentScore: number; pre
   const diff = currentScore - previousScore;
   if (diff === 0) {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+      <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground">
         <Minus className="h-3 w-3" />
         <span>0</span>
       </span>
@@ -110,7 +113,7 @@ function ScoreTrend({ currentScore, previousScore }: { currentScore: number; pre
   }
   const isUp = diff > 0;
   return (
-    <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
+    <span className={`inline-flex items-center gap-0.5 text-[11px] font-medium ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
       {isUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
       <span>{isUp ? '+' : ''}{diff}</span>
     </span>
@@ -122,14 +125,14 @@ function OutcomeBadge({ outcome }: { outcome: string }) {
   const config = OUTCOME_BADGE_CONFIG[outcome];
   if (!config) {
     return (
-      <Badge variant="outline" className="text-[10px] px-2 py-0 capitalize">
+      <Badge variant="outline" className="text-[11px] px-2 py-0 capitalize">
         {outcome.replace(/_/g, ' ')}
       </Badge>
     );
   }
   const IconComponent = config.icon;
   return (
-    <Badge variant="outline" className={`text-[10px] px-2 py-0.5 gap-1 ${config.color}`}>
+    <Badge variant="outline" className={`text-[11px] px-2 py-0.5 gap-1 ${config.color}`}>
       <IconComponent className="h-3 w-3" />
       {config.label}
     </Badge>
@@ -140,7 +143,7 @@ export function Dashboard() {
   const {
     playerName, careerTier, casesCompleted, totalScore, stats,
     reputation, caseResults, unlockedCases, setPhase, setCurrentScenarioId, setCaseAccepted,
-    setIsReplay, achievements,
+    setIsReplay, achievements, resetGame,
   } = useGameStore();
   const repType = getReputationType(reputation);
   const tierName = TIER_NAMES[careerTier];
@@ -162,6 +165,9 @@ export function Dashboard() {
   // Challenge mode dialog state
   const [showChallengeMode, setShowChallengeMode] = useState(false);
   const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
+
+  // Case detail sheet state
+  const [detailCaseId, setDetailCaseId] = useState<string | null>(null);
 
   // Sound effects
   const { playClick, playNegotiation } = useSound();
@@ -258,6 +264,34 @@ export function Dashboard() {
     setPhase('intake');
   };
 
+  // Score dimension labels for the detail sheet
+  const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string }[] = [
+    { key: 'clientEconomicValue', label: 'Client Economic Value' },
+    { key: 'jointValueCreated', label: 'Joint Value Created' },
+    { key: 'infoDiscovered', label: 'Info Discovered' },
+    { key: 'relationshipPreserved', label: 'Relationship Preserved' },
+    { key: 'ethicalIntegrity', label: 'Ethical Integrity' },
+    { key: 'strategicDiscipline', label: 'Strategic Discipline' },
+  ];
+
+  // Find the selected case result for the detail sheet
+  const detailCaseResult = detailCaseId ? caseResults.find(r => r.scenarioId === detailCaseId) : null;
+  const detailScenario = detailCaseResult ? getScenarioById(detailCaseResult.scenarioId) : null;
+  const detailGrade = detailCaseResult ? getScoreGrade(detailCaseResult.finalScore) : null;
+
+  // Helper: score bar color based on value
+  const getScoreBarColor = (value: number) => {
+    if (value >= 80) return 'bg-emerald-500';
+    if (value >= 50) return 'bg-amber-500';
+    return 'bg-red-500';
+  };
+
+  const getScoreBarBg = (value: number) => {
+    if (value >= 80) return 'bg-emerald-500/20';
+    if (value >= 50) return 'bg-amber-500/20';
+    return 'bg-red-500/20';
+  };
+
   const GRADE_BADGE_COLORS: Record<string, string> = {
     S: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
     A: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
@@ -311,6 +345,50 @@ export function Dashboard() {
                 <span className="hidden sm:inline">History</span>
               </Button>
             )}
+            {/* Reset Game Button with Confirmation */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 sm:gap-2 text-muted-foreground hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 transition-colors">
+                  <Trash2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Reset</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="max-w-md">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-red-400" />
+                    Reset Game?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription asChild>
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        This will permanently delete all your game progress. This action cannot be undone.
+                      </p>
+                      <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 space-y-1.5">
+                        <p className="text-xs font-medium text-red-400">The following will be lost:</p>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />All case results and scores ({casesCompleted} case{casesCompleted !== 1 ? 's' : ''})</li>
+                          <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Career progress (Tier {careerTier} — {tierName})</li>
+                          <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Achievements ({achievements.length})</li>
+                          <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Reputation and stats</li>
+                          <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Streak history and challenge records</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="gap-2 sm:gap-0">
+                  <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={resetGame}
+                    className="bg-red-500 hover:bg-red-600 text-white font-semibold mt-0"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-1.5" />
+                    Reset Everything
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </motion.div>
 
@@ -328,18 +406,18 @@ export function Dashboard() {
                 {/* Circular progress ring showing tier progress */}
                 <div className="relative shrink-0">
                   <CircularProgress value={tierProgress} size={56} strokeWidth={4} color="#f59e0b" />
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <span className="text-lg font-bold bg-gradient-to-br from-amber-400 to-amber-600 bg-clip-text text-transparent">
                       {careerTier}
                     </span>
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Tier</span>
+                  <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Tier</span>
                   <p className="text-sm font-semibold truncate bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
                     {tierName}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">{Math.round(tierProgress)}% to next</p>
+                  <p className="text-[11px] text-muted-foreground">{Math.round(tierProgress)}% to next</p>
                 </div>
               </CardContent>
             </Card>
@@ -390,8 +468,8 @@ export function Dashboard() {
               <div className="mt-3 flex items-center gap-3">
                 <div className="relative shrink-0">
                   <CircularProgress value={sessionProgress.percentage} size={36} strokeWidth={3} color="#f59e0b" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[9px] font-bold text-amber-500">{sessionProgress.percentage}%</span>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-[11px] font-bold text-amber-500">{sessionProgress.percentage}%</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -433,13 +511,13 @@ export function Dashboard() {
                     {categoryDistribution.map(([cat, count]) => (
                       <div key={cat} className="flex items-center gap-1.5">
                         <div className={`h-2 w-2 rounded-full ${CATEGORY_BAR_COLORS[cat] || 'bg-amber-500'}`} />
-                        <span className="text-[10px] text-muted-foreground">{CATEGORY_LABELS[cat]} ({count})</span>
+                        <span className="text-[11px] text-muted-foreground">{CATEGORY_LABELS[cat]} ({count})</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground/60 italic">Complete cases to see distribution</p>
+                <p className="text-xs text-muted-foreground italic">Complete cases to see distribution</p>
               )}
             </CardContent>
           </Card>
@@ -461,7 +539,7 @@ export function Dashboard() {
           {availableCases.length > 0 && (
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1 search-focus-glow rounded-lg">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -482,7 +560,7 @@ export function Dashboard() {
                   <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                   <button
                     onClick={() => setFilterCategory('all')}
-                    className={`text-[10px] px-2 py-1 rounded-full border transition-all ${
+                    className={`text-[11px] px-2 py-1 rounded-full border transition-all ${
                       filterCategory === 'all'
                         ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                         : 'bg-card/50 text-muted-foreground border-border/30 hover:border-amber-500/20'
@@ -494,7 +572,7 @@ export function Dashboard() {
                     <button
                       key={cat}
                       onClick={() => setFilterCategory(cat)}
-                      className={`text-[10px] px-2 py-1 rounded-full border transition-all ${
+                      className={`text-[11px] px-2 py-1 rounded-full border transition-all ${
                         filterCategory === cat
                           ? CATEGORY_COLORS[cat]
                           : 'bg-card/50 text-muted-foreground border-border/30 hover:border-amber-500/20'
@@ -533,14 +611,14 @@ export function Dashboard() {
                   </CardHeader>
                   <CardContent className="pt-0 space-y-3">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className={`text-[10px] px-2 py-0 ${CATEGORY_COLORS[scenario.category]}`}>
+                      <Badge variant="outline" className={`text-[11px] px-2 py-0 ${CATEGORY_COLORS[scenario.category]}`}>
                         {CATEGORY_LABELS[scenario.category]}
                       </Badge>
-                      <Badge variant="outline" className="text-[10px] px-2 py-0">
+                      <Badge variant="outline" className="text-[11px] px-2 py-0">
                         Tier {scenario.tier}
                       </Badge>
                       <div className="flex items-center gap-1">
-                        <span className={`text-[10px] font-medium ${getDifficultyColor(getDifficultyLabel(scenario.difficulty))}`}>
+                        <span className={`text-[11px] font-medium ${getDifficultyColor(getDifficultyLabel(scenario.difficulty))}`}>
                           {getDifficultyLabel(scenario.difficulty)}
                         </span>
                         <div className="flex items-center">
@@ -558,7 +636,7 @@ export function Dashboard() {
                             return Array.from({ length: 5 }).map((_, starIdx) => (
                               <Star
                                 key={starIdx}
-                                className={`h-3 w-3 ${starIdx < starRating ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground/30'}`}
+                                className={`h-3 w-3 ${starIdx < starRating ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground'}`}
                               />
                             ));
                           })()}
@@ -625,7 +703,13 @@ export function Dashboard() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.03 }}
                   >
-                    <Card className="bg-card/30 border-border/30 hover:bg-card/50 hover:border-amber-500/15 transition-all duration-200 sealed-card">
+                    <Card
+                      className="bg-card/30 border-border/30 hover:bg-card/50 hover:border-amber-500/15 transition-all duration-200 sealed-card cursor-pointer"
+                      onClick={() => {
+                        playClick();
+                        setDetailCaseId(result.scenarioId);
+                      }}
+                    >
                       <CardContent className="p-3 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           <span className="text-xl shrink-0">{scenario.client.avatar}</span>
@@ -638,7 +722,7 @@ export function Dashboard() {
                           <div className="text-right">
                             <div className="flex items-center gap-1.5">
                               <p className="text-sm font-bold text-amber-500">{result.finalScore}</p>
-                              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 font-bold ${GRADE_BADGE_COLORS[grade.grade]}`}>
+                              <Badge variant="outline" className={`text-[11px] px-1.5 py-0 font-bold ${GRADE_BADGE_COLORS[grade.grade]}`}>
                                 {grade.grade}
                               </Badge>
                             </div>
@@ -786,7 +870,7 @@ export function Dashboard() {
 
       {/* Transcript Review Dialog */}
       <Dialog open={showTranscript} onOpenChange={setShowTranscript}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden sm:max-w-[calc(100%-2rem)]">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto sm:max-w-[calc(100%-2rem)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-amber-500" />
@@ -809,6 +893,117 @@ export function Dashboard() {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Case Detail Sheet - slides in from right when completed case is clicked */}
+      <Sheet open={!!detailCaseId} onOpenChange={(open) => { if (!open) setDetailCaseId(null); }}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto p-0">
+          {detailCaseResult && detailScenario && detailGrade && (
+            <>
+              {/* Glass-card header with gradient border */}
+              <div className="relative">
+                {/* Gradient top border */}
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600" />
+                <div className="glass-card p-5 pt-6">
+                  <SheetHeader className="p-0 gap-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-3xl">{detailScenario.client.avatar}</span>
+                      <div className="flex-1 min-w-0">
+                        <SheetTitle className="text-lg leading-tight truncate">{detailScenario.title}</SheetTitle>
+                        <SheetDescription className="sr-only">Case details and score breakdown for {detailScenario.title}</SheetDescription>
+                        <p className="text-xs text-muted-foreground mt-0.5">{detailScenario.subtitle}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant="outline" className={`text-[11px] px-2 py-0 ${CATEGORY_COLORS[detailScenario.category]}`}>
+                        {CATEGORY_LABELS[detailScenario.category]}
+                      </Badge>
+                      <Badge variant="outline" className="text-[11px] px-2 py-0">
+                        Tier {detailScenario.tier}
+                      </Badge>
+                    </div>
+                  </SheetHeader>
+                </div>
+              </div>
+
+              {/* Score Card */}
+              <div className="px-5 py-4">
+                <div className="glass-card rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-amber-500 score-counter">
+                        {detailCaseResult.finalScore}
+                      </span>
+                      <span className="text-sm text-muted-foreground">/100</span>
+                    </div>
+                    <Badge variant="outline" className={`text-sm font-bold px-3 py-1 ${GRADE_BADGE_COLORS[detailGrade.grade]}`}>
+                      {GRADE_ICON_MAP[detailGrade.grade]} {detailGrade.grade}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <OutcomeBadge outcome={detailCaseResult.outcome} />
+                    <span className="text-xs text-muted-foreground">{detailGrade.description}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 6-Dimension Score Breakdown */}
+              <div className="px-5 pb-4">
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-amber-500" />
+                  Score Breakdown
+                </h3>
+                <div className="space-y-3">
+                  {SCORE_DIMENSIONS.map((dim) => {
+                    const value = detailCaseResult.scores[dim.key];
+                    return (
+                      <div key={dim.key} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">{dim.label}</span>
+                          <span className={`text-xs font-bold ${value >= 80 ? 'text-emerald-400' : value >= 50 ? 'text-amber-400' : 'text-red-400'}`}>
+                            {value}
+                          </span>
+                        </div>
+                        <div className={`h-2 rounded-full overflow-hidden ${getScoreBarBg(value)}`}>
+                          <div
+                            className={`h-full rounded-full ${getScoreBarColor(value)} stat-bar-gradient transition-all duration-700 ease-out`}
+                            style={{ width: `${Math.max(value, 2)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="px-5 pb-6 space-y-2">
+                <Button
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold premium-button-themed gap-2"
+                  onClick={() => {
+                    setTranscriptScenarioId(detailCaseResult.scenarioId);
+                    setShowTranscript(true);
+                    setDetailCaseId(null);
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  View Transcript
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => {
+                    handleReplayCase(detailCaseResult.scenarioId);
+                    setDetailCaseId(null);
+                  }}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Replay Case
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
