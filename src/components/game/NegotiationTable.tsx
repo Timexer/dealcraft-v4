@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BiasTrapAlertContainer } from '@/components/game/BiasTrapAlert';
 import { InGameAdvisor } from '@/components/game/InGameAdvisor';
+import { ChoiceHintBadge } from '@/components/game/KeyboardShortcuts';
 import { useSound } from '@/hooks/use-sound';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -49,14 +50,75 @@ export function NegotiationTable() {
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
 
-  // Initialize with start node via lazy state
+  // Initialize from store's currentDialogueNodeId if available (for page reload restoration)
+  const getInitialNode = useCallback((): DialogueNode | null => {
+    if (!scenario) return null;
+    const savedNodeId = useGameStore.getState().negotiation.currentDialogueNodeId;
+    if (savedNodeId && savedNodeId !== 'start') {
+      const savedNode = scenario.dialogueTree.find(n => n.id === savedNodeId);
+      if (savedNode) return savedNode;
+    }
+    return getStartNode(scenario);
+  }, [scenario]);
+
+  // Build initial dialogue history by replaying from start to current node
+  const getInitialHistory = useCallback((): DialogueEntry[] => {
+    if (!scenario) return [];
+    const savedNodeId = useGameStore.getState().negotiation.currentDialogueNodeId;
+    const startNode = getStartNode(scenario);
+    if (!startNode) return [];
+
+    // If we have a saved node and it's not start, rebuild the path
+    if (savedNodeId && savedNodeId !== 'start') {
+      const choicesMade = useGameStore.getState().negotiation.choicesMade;
+      const history: DialogueEntry[] = [{ node: startNode }];
+      
+      // Walk the dialogue tree following the choices made
+      let currentId: string | undefined = startNode.nextNodeId || undefined;
+      let choiceIdx = 0;
+      
+      while (currentId && currentId !== savedNodeId) {
+        const node = scenario.dialogueTree.find(n => n.id === currentId);
+        if (!node) break;
+        history.push({ node });
+        
+        // If this node has choices, follow the choice the player made
+        if (node.choices && choiceIdx < choicesMade.length) {
+          const choice = node.choices.find(c => c.id === choicesMade[choiceIdx]);
+          if (choice) {
+            history[history.length - 1] = {
+              ...history[history.length - 1],
+              chosenChoiceId: choice.id,
+              chosenChoiceText: choice.text,
+            };
+            currentId = choice.nextNodeId;
+            choiceIdx++;
+          } else {
+            break;
+          }
+        } else if (node.nextNodeId) {
+          currentId = node.nextNodeId;
+        } else {
+          break;
+        }
+      }
+      
+      // Add the final saved node
+      const savedNode = scenario.dialogueTree.find(n => n.id === savedNodeId);
+      if (savedNode && history[history.length - 1]?.node.id !== savedNodeId) {
+        history.push({ node: savedNode });
+      }
+      
+      return history;
+    }
+    
+    return [{ node: startNode }];
+  }, [scenario]);
+
   const startNode = useMemo(() => getStartNode(scenario), [scenario]);
 
-  const [dialogueHistory, setDialogueHistory] = useState<DialogueEntry[]>(() => {
-    const node = getStartNode(scenario);
-    return node ? [{ node }] : [];
-  });
-  const [currentNode, setCurrentNode] = useState<DialogueNode | null>(() => getStartNode(scenario));
+  const [dialogueHistory, setDialogueHistory] = useState<DialogueEntry[]>(getInitialHistory);
+  const [currentNode, setCurrentNode] = useState<DialogueNode | null>(getInitialNode);
   const [isTyping, setIsTyping] = useState(false);
   const [showChoices, setShowChoices] = useState(false);
   const [activeBiasAlerts, setActiveBiasAlerts] = useState<BiasEvent[]>([]);
@@ -67,6 +129,16 @@ export function NegotiationTable() {
 
   // Sound effects
   const { playClick, playSuccess, playWarning, playNegotiation } = useSound();
+
+  // Mobile metrics panel state (toggled by swipe or button)
+  const [mobileMetricsOpen, setMobileMetricsOpen] = useState(false);
+
+  // Haptic feedback helper
+  const hapticFeedback = useCallback((pattern: number | number[] = 10) => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(pattern);
+    }
+  }, []);
 
   // Update ref when currentNode changes
   useEffect(() => {
@@ -126,8 +198,10 @@ export function NegotiationTable() {
     if (nextNode) {
       setCurrentNode(nextNode);
       setDialogueHistory(prev => [...prev, { node: nextNode }]);
+      // Persist dialogue position for page reload restoration
+      updateNegotiation({ currentDialogueNodeId: nodeId });
     }
-  }, [scenario]);
+  }, [scenario, updateNegotiation]);
 
   // Check for bias traps triggered by dialogue node
   useEffect(() => {
@@ -236,8 +310,9 @@ export function NegotiationTable() {
       if (choice.requirement.type === 'max_anger' && neg.anger > choice.requirement.value) return;
     }
 
-    // Play click sound
+    // Play click sound + haptic feedback
     playClick();
+    hapticFeedback(10);
 
     // Apply choice effects
     const eff = choice.effects || {};
@@ -407,6 +482,89 @@ export function NegotiationTable() {
     }
   }, [challengeTimer, challengeMode, currentNode, isEndingNode, handleViewResults]);
 
+  // Keyboard shortcut listeners for negotiation choices
+  useEffect(() => {
+    const handleSelectChoice = (e: CustomEvent<{ index: number }>) => {
+      if (!showChoices || !currentNode?.choices) return;
+      const choiceIndex = e.detail.index;
+      const choice = currentNode.choices[choiceIndex];
+      if (choice && !isChoiceDisabled(choice, choiceIndex)) {
+        handleChoiceClick(choice);
+      }
+    };
+
+    const handleAdvanceDialogue = () => {
+      // Space can advance: auto-advance nodes or trigger View Results on ending
+      if (currentNode?.isAuto && currentNode.nextNodeId) {
+        advanceToNode(currentNode.nextNodeId);
+      } else if (isEndingNode) {
+        handleViewResults();
+      }
+    };
+
+    const handleEscape = () => {
+      // Close mobile metrics if open, otherwise go back
+      if (mobileMetricsOpen) {
+        setMobileMetricsOpen(false);
+      }
+    };
+
+    window.addEventListener('dealcraft:select-choice', handleSelectChoice as EventListener);
+    window.addEventListener('dealcraft:advance-dialogue', handleAdvanceDialogue);
+    window.addEventListener('dealcraft:escape', handleEscape);
+
+    return () => {
+      window.removeEventListener('dealcraft:select-choice', handleSelectChoice as EventListener);
+      window.removeEventListener('dealcraft:advance-dialogue', handleAdvanceDialogue);
+      window.removeEventListener('dealcraft:escape', handleEscape);
+    };
+  }, [showChoices, currentNode, isEndingNode, handleChoiceClick, advanceToNode, handleViewResults, mobileMetricsOpen, isChoiceDisabled]);
+
+  // Swipe gesture detection for mobile metrics toggle
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+
+      // Only trigger on horizontal swipes (not vertical scrolling)
+      if (Math.abs(diffX) > 80 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+        if (diffX > 0) {
+          // Swipe right - open metrics
+          setMobileMetricsOpen(true);
+        } else {
+          // Swipe left - close metrics
+          setMobileMetricsOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
+  // Calculate dialogue progress for node indicator
+  const dialogueProgress = useMemo(() => {
+    if (!scenario || !currentNode) return { current: 0, total: 0 };
+    const total = scenario.dialogueTree.length;
+    const currentIndex = scenario.dialogueTree.findIndex(n => n.id === currentNode.id);
+    return { current: currentIndex + 1, total };
+  }, [scenario, currentNode]);
+
   if (!scenario) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -449,6 +607,32 @@ export function NegotiationTable() {
     <div className="min-h-screen bg-background flex flex-col relative">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 grid-pattern opacity-40 pointer-events-none" />
+
+      {/* Mobile Trust/Anger Mini-Bars - always visible on mobile */}
+      <div className="lg:hidden border-b border-border/30 bg-card/20 backdrop-blur-sm px-4 py-1.5">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 flex-1">
+            <Heart className="h-3 w-3 text-emerald-400 shrink-0" />
+            <div className="flex-1 h-1.5 rounded-full bg-muted/50 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500 bg-emerald-400"
+                style={{ width: `${negotiation.trust}%` }}
+              />
+            </div>
+            <span className="text-[10px] font-bold tabular-nums text-muted-foreground w-5 text-right">{negotiation.trust}</span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-1">
+            <Flame className="h-3 w-3 text-red-400 shrink-0" />
+            <div className="flex-1 h-1.5 rounded-full bg-muted/50 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500 bg-red-400"
+                style={{ width: `${negotiation.anger}%` }}
+              />
+            </div>
+            <span className="text-[10px] font-bold tabular-nums text-muted-foreground w-5 text-right">{negotiation.anger}</span>
+          </div>
+        </div>
+      </div>
 
       {/* Top Bar */}
       <div className="relative border-b border-border/50 bg-card/30 backdrop-blur-sm px-4 py-3">
@@ -573,7 +757,10 @@ export function NegotiationTable() {
                     exit={{ opacity: 0, y: -10 }}
                     className="space-y-2"
                   >
-                    <p className="text-xs text-muted-foreground mb-2">Choose your response:</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-xs text-muted-foreground">Choose your response:</p>
+                      <ChoiceHintBadge />
+                    </div>
                     <TooltipProvider delayDuration={300}>
                       {currentNode.choices.map((choice, choiceIndex) => {
                         const challengeCheck = isChoiceDisabledByChallenge(choice, choiceIndex);
@@ -810,11 +997,27 @@ export function NegotiationTable() {
         recentDialogueText={currentNode?.text || ''}
       />
 
+      {/* Mobile Floating Node Indicator */}
+      <div className="lg:hidden fixed top-[calc(var(--header-h,56px)+52px)] left-1/2 -translate-x-1/2 z-30">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-card/90 backdrop-blur-sm border border-border/30 shadow-md"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-[10px] font-medium text-muted-foreground">
+              {dialogueProgress.current} of {dialogueProgress.total}
+            </span>
+          </motion.div>
+        </div>
+
       {/* Mobile Sidebar Toggle */}
       <div className="lg:hidden fixed bottom-4 right-4 z-50">
         <MobileSidebar
           negotiation={negotiation}
           discoveredFacts={discoveredFacts}
+          open={mobileMetricsOpen}
+          onOpenChange={setMobileMetricsOpen}
         />
       </div>
     </div>
@@ -822,7 +1025,7 @@ export function NegotiationTable() {
 }
 
 // Mobile sidebar as a dialog/drawer
-function MobileSidebar({ negotiation, discoveredFacts }: {
+function MobileSidebar({ negotiation, discoveredFacts, open, onOpenChange }: {
   negotiation: {
     trust: number;
     anger: number;
@@ -833,8 +1036,10 @@ function MobileSidebar({ negotiation, discoveredFacts }: {
     informationRevealed: string[];
   };
   discoveredFacts: string[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const setOpen = onOpenChange;
 
   return (
     <>

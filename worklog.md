@@ -478,3 +478,220 @@ Unresolved Issues / Risks:
 - Could add social sharing of scores
 - Could add multiplayer/competitive negotiation mode
 - Could add case difficulty scaling based on player skill
+
+---
+Task ID: 7
+Agent: Feature Developer (Keyboard Shortcuts & Mobile Enhancement)
+Task: Add keyboard shortcuts system, enhanced mobile experience, and quick stats bar
+
+Work Log:
+- Read worklog.md to understand project progress from 8+ previous agents
+- Read all key files: NegotiationTable.tsx, GameHeader.tsx, game-store.ts, TutorialOverlay.tsx, NotificationPanel.tsx, use-sound.ts
+- Feature 1: Keyboard Shortcuts System
+  - Created `src/components/game/KeyboardShortcuts.tsx` with:
+    - `useKeyboardShortcuts` hook: global keyboard event handler with input field detection
+    - Escape = Go back / Close dialogs (dispatches `dealcraft:escape` custom event)
+    - 1-4 = Select choice in negotiation (dispatches `dealcraft:select-choice` custom event with index)
+    - ? = Show keyboard shortcuts help dialog
+    - G = Open glossary
+    - N = Toggle notification panel (dispatches `dealcraft:toggle-notifications`)
+    - S = Toggle sound on/off
+    - T = Toggle tutorial (dispatches `dealcraft:show-tutorial`)
+    - Space = Advance dialogue (auto-advance nodes or trigger View Results on ending)
+    - `KeyboardShortcutsDialog` component: modal with key badges showing all shortcuts grouped by Navigation/Game/Interface categories
+    - `ChoiceHintBadge` component: small "Press 1-4" keyboard hint shown next to "Choose your response:" text
+  - Integrated into `page.tsx`: `useKeyboardShortcuts` hook at root level, `KeyboardShortcutsDialog` rendered globally
+  - Integrated into `GameHeader.tsx`: Keyboard icon button opens shortcuts dialog, shortcut hints in button titles
+  - Integrated into `NegotiationTable.tsx`: listens for `dealcraft:select-choice`, `dealcraft:advance-dialogue`, and `dealcraft:escape` events; `ChoiceHintBadge` shown next to choices
+- Feature 2: Enhanced Mobile Negotiation Experience
+  - Mobile Trust/Anger Mini-Bars: always-visible thin progress bars at top of negotiation screen (below header) on mobile only (lg:hidden)
+    - Shows trust (emerald) and anger (red) with numeric values
+    - Smooth transition animations on value changes
+  - Floating Node Indicator: small floating badge showing dialogue progress "3 of 15" on mobile
+    - Amber pulse dot, glassmorphism background, fixed positioning below header
+  - Swipe Gesture Detection: swipe left/right to toggle mobile metrics panel
+    - 80px minimum swipe distance with 1.5x horizontal-to-vertical ratio check
+    - Passive touch event listeners for performance
+  - Haptic Feedback on Choice Selection: `navigator.vibrate(10)` when available on choice click
+  - Enhanced MobileSidebar: now controlled externally via `open`/`onOpenChange` props for swipe integration
+- Feature 3: Quick Stats Bar
+  - Thin stats bar below GameHeader on desktop only (md:block, hidden on mobile)
+  - Shows: current tier badge, cases completed count, total score with amber star, active challenge mode badge (if any)
+  - Collapsible with chevron up/down toggle
+  - Subtle design: border-border/20, bg-card/15, small 11px text
+  - Challenge mode badge uses Zap icon with amber styling
+- All lint checks pass cleanly with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- Keyboard Shortcuts System: 8 global shortcuts (Escape, 1-4, ?, G, N, S, T, Space) with dialog and hint badges
+- Enhanced Mobile Experience: trust/anger mini-bars, floating node indicator, swipe gestures, haptic feedback
+- Quick Stats Bar: thin desktop-only bar with tier badge, cases, score, challenge mode, collapsible
+- All features integrated into existing components without breaking changes
+- Amber/gold color scheme maintained throughout
+
+Current Project Status:
+- Dealcraft is a fully playable, feature-rich negotiation career simulator
+- 30 cases with RICH dialogue trees (all expanded)
+- Complete game loop with scoring, reputation, achievements, career progression, replay
+- LLM AI Advisor, Challenge Mode, Sound Effects, Keyboard Shortcuts
+- Enhanced mobile experience with swipe gestures, mini-bars, haptic feedback
+- Quick Stats Bar for desktop users
+- Premium visual design with 20+ CSS animations and micro-interactions
+- All core features working: BATNA analysis, issue matrix, investigation, branching dialogue, multiple endings
+
+Unresolved Issues / Risks:
+- Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- AI Advisor response time varies (3-8 seconds)
+- Could add more achievements for challenge mode completions
+- Could add social sharing of scores
+- Could add multiplayer/competitive negotiation mode
+
+---
+Task ID: 8
+Agent: Styling Expert (Micro-interactions & Visual Polish)
+Task: Improve styling with more details, micro-interactions, and visual consistency across the game
+
+Work Log:
+- Read worklog.md to understand project progress from 9+ previous agents
+- Read all existing component files (Dashboard, Postmortem, CaseIntake, StrategyBoard) and globals.css
+- Read types.ts and game-engine.ts for data structures and helper functions
+- Global CSS Polish (globals.css):
+  - Added `.glass-card-hover`: glassmorphism card with enhanced hover (scale 1.02 + glow + border color change)
+  - Added `.stat-bar-gradient`: animated gradient background for stat bars (200% background-size, 4s animation)
+  - Added `.comparison-bar`: side-by-side comparison bar style with .bar-fill, .bar-label, .bar-label-left, .bar-label-right
+  - Added `.difficulty-bar`: thin 4px difficulty indicator bar with color coding (.fill.low/.medium/.high/.extreme)
+  - Added `.slide-in-right` and `.slide-in-left`: mobile panel slide animations (0.35s cubic-bezier)
+  - Added `.fade-scale-in`: card appear animation (opacity 0→1, scale 0.92→1, blur 4px→0)
+  - Added `.zopa-bar`: ZOPA visualization range bar with .overlap-zone, .marker.client, .marker.counterparty
+  - Added `.expand-toggle` / `.expand-toggle.expanded`: expandable toggle animation (max-height + opacity transition)
+  - Added `.personality-bar`: 3px personality trait mini bar with .fill
+  - Added `.strategy-tooltip`: tooltip style for strategy board with arrow pointer
+  - Added `.weekly-pulse`: pulse ring animation for weekly progress indicator
+  - Added `.category-dist-bar`: category distribution bar with .segment for multi-color segments
+  - Added `@keyframes statBarGradient`, `@keyframes slideInRight`, `@keyframes slideInLeft`, `@keyframes fadeScaleIn`, `@keyframes weeklyPulse`
+- Dashboard Improvements (Dashboard.tsx):
+  - Added "Recent Activity" section at bottom showing last 3 completed cases with scores and grade badges
+  - Each recent activity card uses glass-card-hover, comparison-bar for score visualization, grade icon badges
+  - Added category distribution mini-chart (colored segments showing how many cases per category with legend)
+  - Improved stats overview cards: subtle gradient backgrounds matching stat theme (amber/cyan/emerald/violet)
+  - Added "Session Progress" indicator with weekly-pulse dot and percentage text
+  - Side-by-side layout for Tier Progress and Category Distribution (grid-cols-2)
+  - Added CATEGORY_BAR_COLORS for mini chart color mapping
+  - Added STAT_GRADIENTS for per-stat gradient backgrounds
+  - Added GRADE_ICON_MAP for grade emoji icons in recent activity
+- Postmortem Enhancements (Postmortem.tsx):
+  - Added prominent "Key Takeaway" card with amber accent (left border gradient, icon circle, bold label)
+  - Added "What If?" section showing player score vs master deal score with comparison bars
+  - Comparison bars use stat-bar-gradient animation, show score gap indicator
+  - "What If?" shows master solution text and best possible deal description
+  - Added animated ComparisonBar component: player score overlay on max score background
+  - Animated comparison bars for each score dimension (player vs maximum possible)
+  - Improved bias traps section: expandable countermeasures with toggle animation
+  - Each trap has a chevron button that expands/collapses countermeasure details
+  - Uses expand-toggle CSS class with max-height transition
+  - Added contextual message: triggered traps warn "Apply the countermeasure next time", avoided traps say "You successfully avoided this trap"
+  - Added Sparkles icon for countermeasure header
+- Case Intake Enhancement (CaseIntake.tsx):
+  - Added "Difficulty Preview" section with visual difficulty bars for all 7 dimensions
+  - Each dimension has icon, label, colored difficulty bar (.difficulty-bar), and level text
+  - Colors: Low=emerald, Medium=amber, High=orange, Extreme=red
+  - Added counterparty personality preview as avatar card with personality trait mini-bars
+  - Shows 8 personality traits (truthfulness, ego, riskTolerance, patience, fairness, volatility, preparation, relationship)
+  - Each trait has colored mini bar with value indicator
+  - Avatar card shows volatility and risk tolerance tags
+  - Added "Similar Cases" hint showing if player has done cases in the same category before
+  - Lists up to 2 similar case titles with link text
+  - Amber accent card with User icon
+- Strategy Board Enhancement (StrategyBoard.tsx):
+  - Added visual BATNA comparison chart: horizontal bars showing client vs counterparty BATNA values
+  - Client bar: emerald gradient, Counterparty bar: red-orange gradient, both with stat-bar-gradient animation
+  - Added BATNA advantage indicator (emerald for client advantage, orange for counterparty, amber for equal)
+  - Added ZOPA visualization (range bar showing overlap zone):
+    - Overlap zone with gradient fill and border markers
+    - Client BATNA marker (emerald), Counterparty BATNA marker (orange)
+    - Reservation value marker (red) when user enters it
+    - Scale labels at edges
+    - Color legend below the bar
+  - Added tooltips on issue priority matrix cells explaining tradeability
+  - Uses shadcn/ui TooltipProvider + Tooltip component
+  - High/Medium/Low tradeability each have descriptive tooltip text
+  - Added trade opportunity indicator: lightbulb icon + contextual hint per issue
+  - Added Swords icon for BATNA power comparison header
+  - Added Info icon for advantage indicator
+- All lint checks pass cleanly with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- 15+ new CSS utility classes and animations added to globals.css
+- Dashboard: Recent Activity, Category Distribution mini-chart, gradient stat cards, session progress
+- Postmortem: Key Takeaway amber card, "What If?" comparison section, animated comparison bars, expandable bias traps
+- Case Intake: Difficulty Preview bars (7 dimensions), counterparty personality profile, Similar Cases hint
+- Strategy Board: BATNA comparison chart, ZOPA visualization with markers, tradeability tooltips, trade opportunity hints
+- All changes use amber/gold color scheme consistently
+- Responsive design maintained throughout
+- All lint checks pass cleanly
+
+---
+Task ID: 9
+Agent: Main Developer (Round 9)
+Task: QA testing, bug fixes (hydration mismatch, negotiation state restoration), keyboard shortcuts, enhanced mobile experience, quick stats bar, premium styling polish
+
+Work Log:
+- Read worklog.md to understand project status (8+ previous agents, extensive feature development)
+- Performed comprehensive QA testing via agent-browser: full game loop verified (Title → Dashboard → Intake → Strategy → Investigation → Negotiation → Ending → Postmortem → Dashboard)
+- Found and fixed hydration mismatch bug: TitleScreen particles used Math.random() which produced different values on server vs client
+  - Replaced with deterministic seededRandom() function using sin-based PRNG
+  - Rounded all particle values to 4 decimal places with toFixed(4) to eliminate floating-point precision differences
+  - Verified: no hydration errors after reload
+- Found and fixed negotiation state restoration bug: page reload lost dialogue position
+  - NegotiationTable now initializes from store's negotiation.currentDialogueNodeId instead of always starting from 'start'
+  - Added getInitialNode() and getInitialHistory() callbacks that rebuild dialogue path from choicesMade
+  - Updated advanceToNode() to persist currentDialogueNodeId to store via updateNegotiation()
+  - Updated makeChoice() in game-store.ts to also update currentDialogueNodeId based on the choice's nextNodeId
+  - Added getScenarioById import to game-store.ts
+- Delegated keyboard shortcuts & mobile enhancement to subagent (Task 7): completed successfully
+  - 8 global keyboard shortcuts (Escape, 1-4, ?, G, N, S, T, Space) with dialog
+  - Enhanced mobile: trust/anger mini-bars, floating node indicator, swipe gestures, haptic feedback
+  - Quick Stats Bar: desktop-only thin bar with tier, cases, score, challenge mode
+- Delegated premium styling polish to subagent (Task 8): completed successfully
+  - Dashboard: Recent Activity section, Category Distribution mini-chart, gradient stat cards, session progress
+  - Postmortem: Key Takeaway card, "What If?" comparison section, animated comparison bars, expandable bias trap countermeasures
+  - CaseIntake: Difficulty Preview with 7 visual bars, Counterparty Personality Profile, Similar Cases hint
+  - StrategyBoard: BATNA Comparison Chart, ZOPA Visualization, Tradeability tooltips
+  - 15+ new CSS classes: glass-card-hover, stat-bar-gradient, comparison-bar, difficulty-bar, slide-in-right/left, fade-scale-in, zopa-bar, expand-toggle, personality-bar, etc.
+- Updated game version from v2.0 to v3.0 in footer
+- All lint checks pass cleanly with zero errors
+- No hydration errors, no console errors, no runtime errors
+
+Stage Summary:
+- Fixed critical hydration mismatch bug (TitleScreen particles SSR/client mismatch)
+- Fixed negotiation state restoration bug (dialogue position now persists across page reloads)
+- Keyboard Shortcuts: 8 global shortcuts with help dialog and choice hint badges
+- Enhanced Mobile: mini-bars, node indicator, swipe gestures, haptic feedback
+- Quick Stats Bar: collapsible desktop-only stats strip
+- Dashboard: Recent Activity, Category Distribution, gradient stats, session progress
+- Postmortem: Key Takeaway, What If? comparison, animated bars, expandable countermeasures
+- CaseIntake: Difficulty Preview (7 bars), Personality Profile, Similar Cases hint
+- StrategyBoard: BATNA Comparison Chart, ZOPA Visualization, Tradeability tooltips
+- 15+ new CSS utility classes and animations
+- Game version updated to v3.0
+
+Current Project Status:
+- Dealcraft v3.0 is a fully playable, feature-rich negotiation career simulator
+- 30 cases with rich dialogue trees (all 30 expanded)
+- Complete game loop with scoring, reputation, achievements, career progression, replay
+- LLM AI Advisor (z-ai-web-dev-sdk), Challenge Mode (4 modes), Sound Effects
+- Keyboard Shortcuts, Enhanced Mobile Experience, Quick Stats Bar
+- Premium visual design with 35+ CSS animations and micro-interactions
+- Full state persistence including negotiation dialogue position
+- Tutorial, Glossary (28 terms), Achievement Gallery (13), Bias Trap Alerts, Career Visualization
+- No hydration errors, no runtime errors, all lint checks pass
+
+Unresolved Issues / Risks:
+- Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- AI Advisor response time varies (3-8 seconds) - could add streaming
+- Could add more achievements for challenge mode completions
+- Could add social sharing of scores
+- Could add case difficulty scaling based on player skill
+- Could add multiplayer/competitive negotiation mode

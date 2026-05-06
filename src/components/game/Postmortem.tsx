@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS, type EndingScores } from '@/data/scenarios/types';
@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   RadarChart,
   PolarGrid,
@@ -36,15 +36,18 @@ import {
   ShieldAlert,
   CheckCircle2,
   AlertTriangle,
+  ChevronDown,
+  HelpCircle,
+  Sparkles,
 } from 'lucide-react';
 
-const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string }[] = [
-  { key: 'clientEconomicValue', label: 'Client Economic Value', color: 'bg-amber-500' },
-  { key: 'jointValueCreated', label: 'Joint Value Created', color: 'bg-emerald-500' },
-  { key: 'infoDiscovered', label: 'Info Discovered', color: 'bg-violet-500' },
-  { key: 'relationshipPreserved', label: 'Relationship Preserved', color: 'bg-pink-500' },
-  { key: 'ethicalIntegrity', label: 'Ethical Integrity', color: 'bg-teal-500' },
-  { key: 'strategicDiscipline', label: 'Strategic Discipline', color: 'bg-cyan-500' },
+const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string; maxColor: string }[] = [
+  { key: 'clientEconomicValue', label: 'Client Economic Value', color: 'bg-amber-500', maxColor: 'bg-amber-500/30' },
+  { key: 'jointValueCreated', label: 'Joint Value Created', color: 'bg-emerald-500', maxColor: 'bg-emerald-500/30' },
+  { key: 'infoDiscovered', label: 'Info Discovered', color: 'bg-violet-500', maxColor: 'bg-violet-500/30' },
+  { key: 'relationshipPreserved', label: 'Relationship Preserved', color: 'bg-pink-500', maxColor: 'bg-pink-500/30' },
+  { key: 'ethicalIntegrity', label: 'Ethical Integrity', color: 'bg-teal-500', maxColor: 'bg-teal-500/30' },
+  { key: 'strategicDiscipline', label: 'Strategic Discipline', color: 'bg-cyan-500', maxColor: 'bg-cyan-500/30' },
 ];
 
 const GRADE_COLORS: Record<string, string> = {
@@ -81,26 +84,6 @@ function AnimatedNumber({ value, duration = 1500 }: { value: number; duration?: 
   return <span>{displayValue}</span>;
 }
 
-function AnimatedBar({ value, delay = 0 }: { value: number; delay?: number }) {
-  const [width, setWidth] = useState(0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setWidth(value), delay + 200);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-
-  return (
-    <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
-      <motion.div
-        className="h-full rounded-full"
-        initial={{ width: 0 }}
-        animate={{ width: `${width}%` }}
-        transition={{ duration: 1, ease: 'easeOut', delay: delay / 1000 }}
-      />
-    </div>
-  );
-}
-
 // Sparkle particles component for master/cooperative endings
 function SparkleOverlay() {
   const sparkles = useMemo(() =>
@@ -134,6 +117,51 @@ function SparkleOverlay() {
   );
 }
 
+// Comparison bar for player vs max score
+function ComparisonBar({ playerScore, maxScore, label, playerColor, maxColor, delay }: {
+  playerScore: number;
+  maxScore: number;
+  label: string;
+  playerColor: string;
+  maxColor: string;
+  delay: number;
+}) {
+  const [animated, setAnimated] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimated(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold">{playerScore}</span>
+          <span className="text-[10px] text-muted-foreground">/</span>
+          <span className="text-[10px] text-muted-foreground">{maxScore}</span>
+        </div>
+      </div>
+      <div className="comparison-bar">
+        {/* Max score background */}
+        <div
+          className={`bar-fill ${maxColor}`}
+          style={{ width: animated ? `${maxScore}%` : '0%' }}
+        />
+        {/* Player score overlay */}
+        <div
+          className={`absolute top-0 left-0 h-full rounded-l-md ${playerColor} stat-bar-gradient`}
+          style={{
+            width: animated ? `${playerScore}%` : '0%',
+            transition: 'width 1s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            zIndex: 1,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function Postmortem() {
   const {
     currentScenarioId, setPhase,
@@ -152,6 +180,21 @@ export function Postmortem() {
   useEffect(() => {
     const timer = setTimeout(() => setShowRadar(true), 600);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Expanded bias traps state
+  const [expandedTraps, setExpandedTraps] = useState<Set<string>>(new Set());
+
+  const toggleTrap = useCallback((trapId: string) => {
+    setExpandedTraps(prev => {
+      const next = new Set(prev);
+      if (next.has(trapId)) {
+        next.delete(trapId);
+      } else {
+        next.add(trapId);
+      }
+      return next;
+    });
   }, []);
 
   if (!scenario || !latestResult) {
@@ -179,6 +222,11 @@ export function Postmortem() {
 
   // Determine if this is a good ending for sparkle effect
   const isGoodEnding = endingType === 'master' || endingType === 'cooperative';
+
+  // Get master ending scores for "What If?" comparison
+  const masterEnding = scenario.endings.find(e => e.type === 'master');
+  const masterScores = masterEnding?.scores || null;
+  const masterFinalScore = masterScores ? calculateFinalScore(masterScores) : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -225,6 +273,26 @@ export function Postmortem() {
                       <p className={`text-sm font-medium mt-1 ${grade.color}`}>{grade.description}</p>
                       <p className="text-sm text-muted-foreground mt-2">{ending.description}</p>
                       <p className="text-xs text-muted-foreground mt-1 italic">{ending.longTermConsequence}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Key Takeaway Card - prominent with amber accent */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+              <Card className="bg-amber-500/15 border-amber-500/30 overflow-hidden relative">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600" />
+                <CardContent className="p-5 pl-6">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 shrink-0 w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                      <Lightbulb className="h-4.5 w-4.5 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1.5">Key Takeaway</p>
+                      <p className="text-sm text-amber-100 italic font-medium leading-relaxed">
+                        &ldquo;{scenario.postmortem.lesson}&rdquo;
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -301,7 +369,7 @@ export function Postmortem() {
               </Card>
             </motion.div>
 
-            {/* Score Dimensions */}
+            {/* Score Dimensions with Animated Comparison Bars */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-3">
@@ -310,31 +378,104 @@ export function Postmortem() {
                     Score Breakdown
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 space-y-3">
-                  {SCORE_DIMENSIONS.map((dim, i) => (
-                    <div key={dim.key} className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">{dim.label}</span>
-                        <span className="text-xs font-bold">
-                          <AnimatedNumber value={latestResult.scores[dim.key]} duration={1200} />
-                        </span>
-                      </div>
-                      <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
-                        <motion.div
-                          className={`h-full rounded-full ${dim.color}`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${latestResult.scores[dim.key]}%` }}
-                          transition={{ duration: 1, ease: 'easeOut', delay: 0.5 + i * 0.1 }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                <CardContent className="pt-0 space-y-4">
+                  {SCORE_DIMENSIONS.map((dim, i) => {
+                    const playerScore = latestResult.scores[dim.key];
+                    const maxScore = masterScores ? masterScores[dim.key] : 100;
+                    return (
+                      <ComparisonBar
+                        key={dim.key}
+                        playerScore={playerScore}
+                        maxScore={maxScore}
+                        label={dim.label}
+                        playerColor={dim.color}
+                        maxColor={dim.maxColor}
+                        delay={500 + i * 100}
+                      />
+                    );
+                  })}
                 </CardContent>
               </Card>
             </motion.div>
 
+            {/* What If? - Master Deal Comparison */}
+            {masterEnding && masterScores && masterFinalScore !== null && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+                <Card className="bg-amber-500/10 border-amber-500/20 overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-300">
+                      <HelpCircle className="h-4 w-4" />
+                      What If?
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0 space-y-4">
+                    <p className="text-xs text-amber-200/60">
+                      How your deal compares to the master deal — the best possible outcome for this case
+                    </p>
+                    
+                    {/* Score comparison bar */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-amber-300">Your Score</span>
+                        <span className="text-xs font-bold text-amber-300">{finalScore}/100</span>
+                      </div>
+                      <div className="comparison-bar">
+                        <div
+                          className="bar-fill bg-gradient-to-r from-amber-600/60 to-amber-500/70 stat-bar-gradient"
+                          style={{ width: `${finalScore}%` }}
+                        />
+                        <span className="bar-label bar-label-left">{finalScore}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-yellow-300 flex items-center gap-1">
+                          <Crown className="h-3 w-3" />
+                          Master Deal
+                        </span>
+                        <span className="text-xs font-bold text-yellow-300">{masterFinalScore}/100</span>
+                      </div>
+                      <div className="comparison-bar">
+                        <div
+                          className="bar-fill bg-gradient-to-r from-yellow-500/40 to-yellow-400/50 stat-bar-gradient"
+                          style={{ width: `${masterFinalScore}%` }}
+                        />
+                        <span className="bar-label bar-label-left">{masterFinalScore}</span>
+                      </div>
+                    </div>
+
+                    {/* Score gap indicator */}
+                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/15">
+                      <TrendingUp className="h-3.5 w-3.5 text-amber-400" />
+                      <span className="text-xs text-amber-200">
+                        {finalScore < masterFinalScore 
+                          ? `You were ${masterFinalScore - finalScore} points away from the master deal`
+                          : finalScore >= masterFinalScore 
+                          ? '🎉 You achieved the master deal score!'
+                          : 'Great result!'
+                        }
+                      </span>
+                    </div>
+
+                    <Separator className="bg-amber-500/20" />
+
+                    {/* Master solution text */}
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">The Master Deal</p>
+                      <p className="text-sm text-amber-200">{scenario.postmortem.bestPossibleDeal}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">How It Works</p>
+                      <p className="text-sm text-amber-200/80">{scenario.postmortem.masterSolution}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
             {/* What You Missed */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
               <Card className="bg-violet-500/10 border-violet-500/20">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2 text-violet-300">
@@ -364,48 +505,33 @@ export function Postmortem() {
               </Card>
             </motion.div>
 
-            {/* The Master Deal */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
-              <Card className={`bg-amber-500/10 border-amber-500/20 ${endingType === 'master' ? 'sparkle-effect' : ''}`}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-300">
-                    <Crown className="h-4 w-4" />
-                    The Master Deal
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0 space-y-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Best Possible Outcome</p>
-                    <p className="text-sm text-amber-200">{scenario.postmortem.bestPossibleDeal}</p>
-                  </div>
-                  <Separator className="bg-amber-500/20" />
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Master Solution</p>
-                    <p className="text-sm text-amber-200/80">{scenario.postmortem.masterSolution}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Lesson Card */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0 }}>
-              <Card className="bg-emerald-500/10 border-emerald-500/20">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Lightbulb className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+            {/* The Master Deal - kept for cases where we don't have "What If" comparison */}
+            {!masterEnding && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
+                <Card className={`bg-amber-500/10 border-amber-500/20 ${endingType === 'master' ? 'sparkle-effect' : ''}`}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-300">
+                      <Crown className="h-4 w-4" />
+                      The Master Deal
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0 space-y-3">
                     <div>
-                      <p className="text-xs font-semibold text-emerald-400 mb-1">Key Takeaway</p>
-                      <p className="text-sm text-emerald-200 italic font-medium">
-                        &ldquo;{scenario.postmortem.lesson}&rdquo;
-                      </p>
+                      <p className="text-xs text-muted-foreground mb-1">Best Possible Outcome</p>
+                      <p className="text-sm text-amber-200">{scenario.postmortem.bestPossibleDeal}</p>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                    <Separator className="bg-amber-500/20" />
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Master Solution</p>
+                      <p className="text-sm text-amber-200/80">{scenario.postmortem.masterSolution}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* Reputation Impact */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0 }}>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -441,7 +567,7 @@ export function Postmortem() {
             </motion.div>
 
             {/* Stats Improvement */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.4 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2 }}>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -471,8 +597,8 @@ export function Postmortem() {
               </Card>
             </motion.div>
 
-            {/* Bias Traps */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}>
+            {/* Bias Traps - with expandable countermeasures */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.3 }}>
               <Card className="bg-amber-500/10 border-amber-500/20">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-300">
@@ -496,6 +622,7 @@ export function Postmortem() {
                       </div>
                       {scenario.biasTraps.map((trap, i) => {
                         const wasTriggered = negotiation.biasTrapsTriggered.includes(trap.id);
+                        const isExpanded = expandedTraps.has(trap.id);
                         const BIAS_POSTMORTEM_ICONS: Record<string, string> = {
                           anchor_shock: '⚠️',
                           fixed_pie: '🎯',
@@ -510,8 +637,8 @@ export function Postmortem() {
                             key={trap.id}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 1.6 + i * 0.1 }}
-                            className={`p-3 rounded-lg border ${
+                            transition={{ delay: 1.4 + i * 0.1 }}
+                            className={`p-3 rounded-lg border transition-colors duration-200 ${
                               wasTriggered
                                 ? 'bg-amber-500/10 border-amber-500/30'
                                 : 'bg-emerald-500/5 border-emerald-500/20'
@@ -535,14 +662,38 @@ export function Postmortem() {
                                       Avoided
                                     </Badge>
                                   )}
+                                  {/* Expand toggle button */}
+                                  <button
+                                    onClick={() => toggleTrap(trap.id)}
+                                    className="ml-auto shrink-0 p-0.5 rounded hover:bg-amber-500/10 transition-all"
+                                  >
+                                    <ChevronDown
+                                      className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+                                    />
+                                  </button>
                                 </div>
                                 <p className="text-xs text-amber-200/70 mb-1">{trap.description}</p>
-                                {wasTriggered && (
-                                  <div className="mt-2 p-2 rounded bg-emerald-500/10 border border-emerald-500/20">
-                                    <p className="text-[10px] text-emerald-400 font-semibold mb-0.5">Countermeasure:</p>
+                                
+                                {/* Expandable countermeasure section */}
+                                <div className={`expand-toggle ${isExpanded ? 'expanded' : ''}`}>
+                                  <div className="mt-2 p-2.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                      <Sparkles className="h-3 w-3 text-emerald-400" />
+                                      <p className="text-[10px] text-emerald-400 font-semibold">Countermeasure</p>
+                                    </div>
                                     <p className="text-xs text-emerald-300/80">{trap.countermeasure}</p>
                                   </div>
-                                )}
+                                  {wasTriggered && (
+                                    <p className="text-[10px] text-amber-400/50 mt-1.5 italic">
+                                      This trap was triggered during your negotiation. Apply the countermeasure next time.
+                                    </p>
+                                  )}
+                                  {!wasTriggered && (
+                                    <p className="text-[10px] text-emerald-400/50 mt-1.5 italic">
+                                      You successfully avoided this trap — keep it up!
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </motion.div>
@@ -562,7 +713,7 @@ export function Postmortem() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.6 }}
+          transition={{ delay: 1.5 }}
           className="flex justify-center"
         >
           <Button

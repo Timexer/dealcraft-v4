@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { GamePhase, NegotiationState, PlayerStats, ReputationScores, CaseResult } from '@/data/scenarios/types';
-import { getScenariosByCategory } from '@/data/scenarios';
+import { getScenariosByCategory, getScenarioById } from '@/data/scenarios';
 
 export interface Achievement {
   id: string;
@@ -230,27 +230,48 @@ export const useGameStore = create<GameState>()(
           },
         })),
       makeChoice: (choiceId, effects, infoRevealed) =>
-        set((s) => ({
-          negotiation: {
-            ...s.negotiation,
-            choicesMade: [...s.negotiation.choicesMade, choiceId],
-            trust: Math.min(100, Math.max(0, s.negotiation.trust + (effects.trust ?? 0))),
-            anger: Math.min(100, Math.max(0, s.negotiation.anger + (effects.anger ?? 0))),
-            patience: Math.min(100, Math.max(0, s.negotiation.patience + (effects.patience ?? 0))),
-            valueClaimed: s.negotiation.valueClaimed + (effects.valueClaimed ?? 0),
-            valueCreated: s.negotiation.valueCreated + (effects.valueCreated ?? 0),
-            relationshipImpact: s.negotiation.relationshipImpact + (effects.relationshipImpact ?? 0),
-            ethicalImpact: s.negotiation.ethicalImpact + (effects.ethicalImpact ?? 0),
-            clientSatisfaction: Math.min(100, Math.max(0, s.negotiation.clientSatisfaction + (effects.clientSatisfaction ?? 0))),
-            counterpartySatisfaction: Math.min(100, Math.max(0, s.negotiation.counterpartySatisfaction + (effects.counterpartySatisfaction ?? 0))),
-            informationRevealed: infoRevealed
-              ? [...new Set([...s.negotiation.informationRevealed, ...infoRevealed])]
-              : s.negotiation.informationRevealed,
-            concessionsGiven: effects.concessionMade
-              ? [...s.negotiation.concessionsGiven, effects.concessionMade]
-              : s.negotiation.concessionsGiven,
-          },
-        })),
+        set((s) => {
+          // Find the next node ID from the choice by looking at the scenario
+          let nextNodeId: string | undefined;
+          const scenarioId = s.currentScenarioId;
+          if (scenarioId) {
+            const scenario = getScenarioById(scenarioId);
+            if (scenario) {
+              for (const node of scenario.dialogueTree) {
+                if (node.choices) {
+                  const choice = node.choices.find(c => c.id === choiceId);
+                  if (choice) {
+                    nextNodeId = choice.nextNodeId;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+
+          return {
+            negotiation: {
+              ...s.negotiation,
+              choicesMade: [...s.negotiation.choicesMade, choiceId],
+              currentDialogueNodeId: nextNodeId || s.negotiation.currentDialogueNodeId,
+              trust: Math.min(100, Math.max(0, s.negotiation.trust + (effects.trust ?? 0))),
+              anger: Math.min(100, Math.max(0, s.negotiation.anger + (effects.anger ?? 0))),
+              patience: Math.min(100, Math.max(0, s.negotiation.patience + (effects.patience ?? 0))),
+              valueClaimed: s.negotiation.valueClaimed + (effects.valueClaimed ?? 0),
+              valueCreated: s.negotiation.valueCreated + (effects.valueCreated ?? 0),
+              relationshipImpact: s.negotiation.relationshipImpact + (effects.relationshipImpact ?? 0),
+              ethicalImpact: s.negotiation.ethicalImpact + (effects.ethicalImpact ?? 0),
+              clientSatisfaction: Math.min(100, Math.max(0, s.negotiation.clientSatisfaction + (effects.clientSatisfaction ?? 0))),
+              counterpartySatisfaction: Math.min(100, Math.max(0, s.negotiation.counterpartySatisfaction + (effects.counterpartySatisfaction ?? 0))),
+              informationRevealed: infoRevealed
+                ? [...new Set([...s.negotiation.informationRevealed, ...infoRevealed])]
+                : s.negotiation.informationRevealed,
+              concessionsGiven: effects.concessionMade
+                ? [...s.negotiation.concessionsGiven, effects.concessionMade]
+                : s.negotiation.concessionsGiven,
+            },
+          };
+        }),
       resetNegotiation: () =>
         set({
           negotiation: { ...defaultNegotiation },

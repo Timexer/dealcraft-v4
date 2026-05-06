@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { allScenarios, getScenarioById } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS, TIER_NAMES, TIER_DESCRIPTIONS } from '@/data/scenarios/types';
@@ -10,12 +10,34 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X, Clock, Activity, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AchievementGallery } from './AchievementGallery';
 import { ChallengeModeSelector } from './ChallengeModeSelector';
 import { Input } from '@/components/ui/input';
 import { useSound } from '@/hooks/use-sound';
+
+// Category distribution color map for mini chart
+const CATEGORY_BAR_COLORS: Record<string, string> = {
+  fundamentals: 'bg-emerald-500',
+  hidden_interests: 'bg-violet-500',
+  multi_issue: 'bg-cyan-500',
+  deadline: 'bg-orange-500',
+  deception: 'bg-red-500',
+  power_imbalance: 'bg-amber-500',
+  relationship: 'bg-pink-500',
+  ugly: 'bg-rose-500',
+  ethics: 'bg-teal-500',
+  master: 'bg-yellow-500',
+};
+
+// Stat card gradient backgrounds matching the stat theme
+const STAT_GRADIENTS = [
+  'from-amber-500/8 via-amber-500/3 to-transparent',
+  'from-cyan-500/8 via-cyan-500/3 to-transparent',
+  'from-emerald-500/8 via-emerald-500/3 to-transparent',
+  'from-violet-500/8 via-violet-500/3 to-transparent',
+];
 
 export function Dashboard() {
   const {
@@ -62,6 +84,38 @@ export function Dashboard() {
   const availableCategories = [...new Set(availableCases.map(s => s.category))];
 
   const completedCases = caseResults.length;
+
+  // Recent Activity: last 3 completed cases with scores and grade badges
+  const recentActivity = useMemo(() => {
+    return caseResults.slice(-3).reverse().map(result => {
+      const scenario = getScenarioById(result.scenarioId);
+      if (!scenario) return null;
+      const grade = getScoreGrade(result.finalScore);
+      return { result, scenario, grade };
+    }).filter(Boolean) as { result: typeof caseResults[0]; scenario: NonNullable<ReturnType<typeof getScenarioById>>; grade: ReturnType<typeof getScoreGrade> }[];
+  }, [caseResults]);
+
+  // Category distribution for mini chart
+  const categoryDistribution = useMemo(() => {
+    const dist: Record<string, number> = {};
+    caseResults.forEach(result => {
+      const scenario = getScenarioById(result.scenarioId);
+      if (scenario) {
+        dist[scenario.category] = (dist[scenario.category] || 0) + 1;
+      }
+    });
+    return Object.entries(dist).sort((a, b) => b[1] - a[1]);
+  }, [caseResults]);
+
+  // Session progress indicator - cases completed this session
+  // We use caseResults.length as a proxy since we track total completions
+  const sessionProgress = useMemo(() => {
+    return {
+      completed: caseResults.length,
+      total: allScenarios.length,
+      percentage: allScenarios.length > 0 ? Math.round((caseResults.length / allScenarios.length) * 100) : 0,
+    };
+  }, [caseResults.length]);
 
   const handleSelectCase = (scenarioId: string) => {
     // Show challenge mode selector first
@@ -112,6 +166,15 @@ export function Dashboard() {
     F: 'bg-red-500/20 text-red-400 border-red-500/40',
   };
 
+  const GRADE_ICON_MAP: Record<string, string> = {
+    S: '👑',
+    A: '🌟',
+    B: '⭐',
+    C: '✓',
+    D: '↑',
+    F: '✗',
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -141,21 +204,22 @@ export function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Stats Overview - Glassmorphism cards with animated borders */}
+        {/* Stats Overview - with gradient backgrounds matching stat theme */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {[
-            { label: 'Tier', value: tierName, icon: Briefcase, color: 'text-amber-500' },
-            { label: 'Cases Closed', value: completedCases.toString(), icon: BookOpen, color: 'text-cyan-500' },
-            { label: 'Total Score', value: totalScore.toString(), icon: Trophy, color: 'text-emerald-500' },
-            { label: 'Reputation', value: repType.label, icon: Users, color: 'text-violet-500' },
+            { label: 'Tier', value: tierName, icon: Briefcase, color: 'text-amber-500', gradient: STAT_GRADIENTS[0] },
+            { label: 'Cases Closed', value: completedCases.toString(), icon: BookOpen, color: 'text-cyan-500', gradient: STAT_GRADIENTS[1] },
+            { label: 'Total Score', value: totalScore.toString(), icon: Trophy, color: 'text-emerald-500', gradient: STAT_GRADIENTS[2] },
+            { label: 'Reputation', value: repType.label, icon: Users, color: 'text-violet-500', gradient: STAT_GRADIENTS[3] },
           ].map((stat, i) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
+              className="fade-scale-in"
             >
-              <Card className="glass-card animated-border hover:border-amber-500/20 transition-all duration-200">
+              <Card className={`glass-card animated-border hover:border-amber-500/20 transition-all duration-200 bg-gradient-to-br ${stat.gradient}`}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <stat.icon className={`h-4 w-4 ${stat.color}`} />
@@ -168,18 +232,71 @@ export function Dashboard() {
           ))}
         </div>
 
-        {/* Tier Progress - with breathing animation + animated gradient */}
-        <Card className="glass-card overflow-hidden">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Progress to {TIER_NAMES[Math.min(careerTier + 1, 5)]}</span>
-              <span className="text-sm text-muted-foreground">{casesCompleted}/{nextTierThreshold} cases</span>
-            </div>
-            <div className="tier-progress-bar rounded-full overflow-hidden breathing-animation">
-              <Progress value={tierProgress} className="h-2.5" />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Weekly Progress + Category Distribution - side by side */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Tier Progress - with breathing animation + animated gradient */}
+          <Card className="glass-card overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Zap className="h-3.5 w-3.5 text-amber-500" />
+                  Progress to {TIER_NAMES[Math.min(careerTier + 1, 5)]}
+                </span>
+                <span className="text-sm text-muted-foreground">{casesCompleted}/{nextTierThreshold} cases</span>
+              </div>
+              <div className="tier-progress-bar rounded-full overflow-hidden breathing-animation">
+                <Progress value={tierProgress} className="h-2.5" />
+              </div>
+              {/* Session Progress */}
+              <div className="mt-3 flex items-center gap-2">
+                <div className="weekly-pulse h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                <span className="text-xs text-muted-foreground">
+                  {sessionProgress.completed} of {sessionProgress.total} total cases completed ({sessionProgress.percentage}%)
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Category Distribution Mini Chart */}
+          <Card className="glass-card overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Activity className="h-3.5 w-3.5 text-amber-500" />
+                  Category Distribution
+                </span>
+                {caseResults.length > 0 && (
+                  <span className="text-xs text-muted-foreground">{caseResults.length} cases</span>
+                )}
+              </div>
+              {categoryDistribution.length > 0 ? (
+                <div className="space-y-2">
+                  {/* Mini bar chart */}
+                  <div className="category-dist-bar">
+                    {categoryDistribution.map(([cat, count]) => (
+                      <div
+                        key={cat}
+                        className={`segment ${CATEGORY_BAR_COLORS[cat] || 'bg-amber-500'}`}
+                        style={{ width: `${(count / caseResults.length) * 100}%` }}
+                      />
+                    ))}
+                  </div>
+                  {/* Legend */}
+                  <div className="flex flex-wrap gap-x-3 gap-y-1">
+                    {categoryDistribution.map(([cat, count]) => (
+                      <div key={cat} className="flex items-center gap-1.5">
+                        <div className={`h-2 w-2 rounded-full ${CATEGORY_BAR_COLORS[cat] || 'bg-amber-500'}`} />
+                        <span className="text-[10px] text-muted-foreground">{CATEGORY_LABELS[cat]} ({count})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground/60 italic">Complete cases to see distribution</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Available Cases */}
         <div className="space-y-4">
@@ -399,6 +516,55 @@ export function Dashboard() {
                   </motion.div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Activity Section */}
+        {recentActivity.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Clock className="h-5 w-5 text-amber-500" />
+              Recent Activity
+              <span className="ml-1 text-xs font-normal text-muted-foreground px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                Last {recentActivity.length}
+              </span>
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <AnimatePresence>
+                {recentActivity.map((item, i) => (
+                  <motion.div
+                    key={item.result.scenarioId}
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="fade-scale-in"
+                  >
+                    <Card className="glass-card-hover overflow-hidden">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-2xl">{item.scenario.client.avatar}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{item.scenario.title}</p>
+                            <p className="text-[10px] text-muted-foreground capitalize">{item.result.outcome.replace(/_/g, ' ')}</p>
+                          </div>
+                          <Badge variant="outline" className={`text-xs font-bold px-2 py-0.5 ${GRADE_BADGE_COLORS[item.grade.grade]}`}>
+                            {GRADE_ICON_MAP[item.grade.grade]} {item.grade.grade}
+                          </Badge>
+                        </div>
+                        {/* Mini score bar */}
+                        <div className="comparison-bar mt-2">
+                          <div
+                            className="bar-fill bg-gradient-to-r from-amber-500/60 to-amber-400/80 stat-bar-gradient"
+                            style={{ width: `${item.result.finalScore}%` }}
+                          />
+                          <span className="bar-label bar-label-left">{item.result.finalScore} pts</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </div>
         )}

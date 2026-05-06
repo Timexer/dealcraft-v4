@@ -15,16 +15,23 @@ import {
   Home,
   ChevronLeft,
   BookOpen,
+  Keyboard,
+  Zap,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { NegotiationGlossary } from '@/components/game/NegotiationGlossary';
+import { KeyboardShortcutsDialog } from '@/components/game/KeyboardShortcuts';
 import { useSound } from '@/hooks/use-sound';
 
 export function GameHeader() {
-  const { playerName, careerTier, casesCompleted, totalScore, reputation, phase, setPhase, currentScenarioId } = useGameStore();
+  const { playerName, careerTier, casesCompleted, totalScore, reputation, phase, setPhase, currentScenarioId, challengeMode } = useGameStore();
   const [showMiniStats, setShowMiniStats] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [quickStatsCollapsed, setQuickStatsCollapsed] = useState(false);
   const { soundEnabled, toggleSound } = useSound();
   const repType = getReputationType(reputation);
   const tierName = TIER_NAMES[careerTier];
@@ -93,7 +100,7 @@ export function GameHeader() {
             size="sm"
             className="h-8 gap-1.5 text-xs"
             onClick={() => setShowGlossary(true)}
-            title="Negotiation Glossary"
+            title="Negotiation Glossary (G)"
           >
             <BookOpen className="h-3.5 w-3.5 text-amber-500" />
             <span className="hidden lg:inline">Glossary</span>
@@ -104,7 +111,7 @@ export function GameHeader() {
             size="sm"
             className="h-8 w-8 p-0"
             onClick={toggleSound}
-            title={soundEnabled ? 'Mute sounds' : 'Enable sounds'}
+            title={soundEnabled ? 'Mute sounds (S)' : 'Enable sounds (S)'}
           >
             {soundEnabled ? (
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
@@ -120,6 +127,15 @@ export function GameHeader() {
           >
             <Trophy className="h-3.5 w-3.5 text-amber-500" />
             <span className="hidden sm:inline">{totalScore}</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => setShowShortcuts(true)}
+            title="Keyboard Shortcuts (?)"
+          >
+            <Keyboard className="h-3.5 w-3.5 text-amber-500/70" />
           </Button>
           <Button
             variant="ghost"
@@ -173,8 +189,55 @@ export function GameHeader() {
         )}
       </AnimatePresence>
 
+      {/* Quick Stats Bar - Desktop only */}
+      {!quickStatsCollapsed && (
+        <div className="hidden md:block border-b border-border/20 bg-card/15">
+          <div className="max-w-7xl mx-auto px-4 py-1 flex items-center gap-4 text-[11px]">
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-amber-500/25 text-amber-400 bg-amber-500/5">
+              {tierName}
+            </Badge>
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Briefcase className="h-3 w-3" />
+              {casesCompleted} case{casesCompleted !== 1 ? 's' : ''}
+            </span>
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Star className="h-3 w-3 text-amber-400" />
+              <span className="font-semibold text-foreground">{totalScore}</span> pts
+            </span>
+            {challengeMode !== 'none' && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-amber-500/20 text-amber-300 bg-amber-500/5">
+                <Zap className="h-2.5 w-2.5 mr-0.5" />
+                {challengeMode === 'speed' ? 'Speed Run' : challengeMode === 'limited_choices' ? 'Limited Choices' : 'Ethics Lock'}
+              </Badge>
+            )}
+            <button
+              onClick={() => setQuickStatsCollapsed(true)}
+              className="ml-auto text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+              aria-label="Collapse quick stats"
+            >
+              <ChevronUp className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      )}
+      {quickStatsCollapsed && (
+        <div className="hidden md:flex items-center justify-center border-b border-border/10 bg-card/5">
+          <button
+            onClick={() => setQuickStatsCollapsed(false)}
+            className="text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors py-0.5 flex items-center gap-1"
+            aria-label="Expand quick stats"
+          >
+            <ChevronDown className="h-2.5 w-2.5" />
+            Stats
+          </button>
+        </div>
+      )}
+
       {/* Negotiation Glossary Dialog */}
       <NegotiationGlossary open={showGlossary} onOpenChange={setShowGlossary} />
+
+      {/* Keyboard Shortcuts Dialog */}
+      <KeyboardShortcutsDialog open={showShortcuts} onOpenChange={setShowShortcuts} />
     </header>
   );
 }

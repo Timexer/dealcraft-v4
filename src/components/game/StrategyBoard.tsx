@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/data/scenarios/types';
@@ -13,6 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -26,6 +27,8 @@ import {
   MessageSquare,
   Handshake,
   BarChart3,
+  Info,
+  Swords,
 } from 'lucide-react';
 
 const ADVISOR_TIPS: Record<string, string> = {
@@ -45,6 +48,12 @@ const TRADEABILITY_COLORS = {
   high: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30',
   medium: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30',
   low: 'text-red-400 bg-red-500/20 border-red-500/30',
+};
+
+const TRADEABILITY_TOOLTIPS = {
+  high: 'Easily tradeable — this issue has low cost to concede but high value to the other side. Great for logrolling.',
+  medium: 'Moderately tradeable — some flexibility exists, but both sides have real interests at stake.',
+  low: 'Difficult to trade — this issue is core to your client\'s interests. Concede only for major gains elsewhere.',
 };
 
 const OPENING_STRATEGIES = [
@@ -93,11 +102,34 @@ export function StrategyBoard() {
     }
   };
 
-  // ZOPA gauge calculation
+  // BATNA and ZOPA calculations for visualization
+  const clientValue = batna.clientBATNAValue;
+  const cpValue = batna.counterpartyBATNAValue;
+  const maxVal = Math.max(clientValue, cpValue, batna.estimatedZOPAHigh) * 1.1;
   const zopaLow = batna.estimatedZOPALow;
   const zopaHigh = batna.estimatedZOPAHigh;
-  const zopaRange = zopaHigh - zopaLow;
-  const zopaMid = (zopaLow + zopaHigh) / 2;
+
+  // Calculate position percentages for ZOPA visualization
+  const clientPos = maxVal > 0 ? (clientValue / maxVal) * 100 : 0;
+  const cpPos = maxVal > 0 ? (cpValue / maxVal) * 100 : 0;
+  const zopaLeft = maxVal > 0 ? (zopaLow / maxVal) * 100 : 0;
+  const zopaWidth = maxVal > 0 ? ((zopaHigh - zopaLow) / maxVal) * 100 : 0;
+
+  // Reservation value position
+  const rvPos = reservationEstimate > 0 && maxVal > 0 ? (reservationEstimate / maxVal) * 100 : 0;
+
+  // Client BATNA vs Counterparty BATNA comparison for horizontal bar
+  const batnaComparisonMax = Math.max(clientValue, cpValue) || 1;
+  const clientBatnaPercent = (clientValue / batnaComparisonMax) * 100;
+  const cpBatnaPercent = (cpValue / batnaComparisonMax) * 100;
+
+  // Determine who has BATNA advantage
+  const batnaAdvantage = clientValue > cpValue ? 'client' : clientValue < cpValue ? 'counterparty' : 'equal';
+  const advantageLabel = batnaAdvantage === 'client' 
+    ? 'Your client has a stronger BATNA' 
+    : batnaAdvantage === 'counterparty' 
+    ? 'Counterparty has a stronger BATNA'
+    : 'BATNAs are roughly equal';
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,7 +157,7 @@ export function StrategyBoard() {
 
         <ScrollArea className="max-h-[calc(100vh-200px)]">
           <div className="space-y-6 pr-2">
-            {/* BATNA Analysis */}
+            {/* BATNA Analysis with Visual Comparison */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-3">
@@ -138,16 +170,53 @@ export function StrategyBoard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <span className="text-xs text-muted-foreground">Client&apos;s BATNA</span>
-                      <p className="text-sm font-medium">{batna.clientBATNA}</p>
-                      <span className="text-xs text-muted-foreground">Estimated value: €{batna.clientBATNAValue.toLocaleString()}</span>
+                  {/* BATNA Comparison Chart */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Swords className="h-3.5 w-3.5 text-amber-400" />
+                      <span className="text-xs font-medium">BATNA Power Comparison</span>
                     </div>
-                    <div className="space-y-1.5">
-                      <span className="text-xs text-muted-foreground">Counterparty&apos;s BATNA</span>
-                      <p className="text-sm font-medium">{batna.counterpartyBATNA}</p>
-                      <span className="text-xs text-muted-foreground">Estimated value: €{batna.counterpartyBATNAValue.toLocaleString()}</span>
+
+                    {/* Client BATNA bar */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground">Client&apos;s BATNA</span>
+                        <span className="text-[10px] font-medium">€{clientValue.toLocaleString()}</span>
+                      </div>
+                      <div className="comparison-bar">
+                        <div
+                          className="bar-fill bg-gradient-to-r from-emerald-500/50 to-emerald-400/70 stat-bar-gradient"
+                          style={{ width: `${clientBatnaPercent}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground/70 truncate">{batna.clientBATNA}</p>
+                    </div>
+
+                    {/* Counterparty BATNA bar */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground">Counterparty&apos;s BATNA</span>
+                        <span className="text-[10px] font-medium">€{cpValue.toLocaleString()}</span>
+                      </div>
+                      <div className="comparison-bar">
+                        <div
+                          className="bar-fill bg-gradient-to-r from-red-500/40 to-orange-500/60 stat-bar-gradient"
+                          style={{ width: `${cpBatnaPercent}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground/70 truncate">{batna.counterpartyBATNA}</p>
+                    </div>
+
+                    {/* Advantage indicator */}
+                    <div className={`flex items-center gap-2 p-2 rounded-md text-xs ${
+                      batnaAdvantage === 'client' 
+                        ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
+                        : batnaAdvantage === 'counterparty'
+                        ? 'bg-orange-500/10 border border-orange-500/20 text-orange-300'
+                        : 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+                    }`}>
+                      <Info className="h-3 w-3 shrink-0" />
+                      <span>{advantageLabel}</span>
                     </div>
                   </div>
 
@@ -174,36 +243,76 @@ export function StrategyBoard() {
                     </div>
                   </div>
 
-                  {/* ZOPA Gauge */}
+                  {/* ZOPA Visualization */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">Estimated ZOPA Range</span>
+                      <span className="text-xs font-medium">ZOPA Visualization</span>
                       <span className="text-xs text-muted-foreground">
                         €{zopaLow.toLocaleString()} — €{zopaHigh.toLocaleString()}
                       </span>
                     </div>
-                    <div className="relative h-8 bg-muted/30 rounded-full overflow-hidden border border-border/50">
-                      <div className="absolute inset-0 flex items-center">
-                        <div
-                          className="h-full bg-gradient-to-r from-amber-500/30 via-amber-400/50 to-emerald-500/30 rounded-full"
-                          style={{ width: '100%' }}
-                        />
+                    <div className="zopa-bar">
+                      {/* ZOPA overlap zone */}
+                      <div
+                        className="overlap-zone"
+                        style={{ left: `${zopaLeft}%`, width: `${zopaWidth}%` }}
+                      />
+                      {/* Client BATNA marker */}
+                      <div
+                        className="marker client"
+                        style={{ left: `${clientPos}%` }}
+                      >
+                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[8px] text-emerald-400 whitespace-nowrap font-medium">
+                          Client
+                        </span>
                       </div>
-                      <div className="absolute inset-0 flex items-center justify-between px-3">
-                        <span className="text-[10px] font-medium">€{(zopaLow / 1000).toFixed(0)}K</span>
-                        <span className="text-[10px] font-medium text-amber-400">ZOPA</span>
-                        <span className="text-[10px] font-medium">€{(zopaHigh / 1000).toFixed(0)}K</span>
+                      {/* Counterparty BATNA marker */}
+                      <div
+                        className="marker counterparty"
+                        style={{ left: `${cpPos}%` }}
+                      >
+                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[8px] text-orange-400 whitespace-nowrap font-medium">
+                          CP
+                        </span>
                       </div>
-                      {reservationEstimate > 0 && (
+                      {/* ZOPA label */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-[10px] font-bold text-amber-400/80">ZOPA</span>
+                      </div>
+                      {/* Reservation value marker */}
+                      {rvPos > 0 && (
                         <div
                           className="absolute top-0 h-full w-0.5 bg-red-500 z-10"
-                          style={{
-                            left: `${Math.min(100, Math.max(0, ((reservationEstimate - zopaLow) / zopaRange) * 100))}%`,
-                          }}
+                          style={{ left: `${Math.min(100, rvPos)}%` }}
                         >
-                          <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] text-red-400 whitespace-nowrap">
-                            RV
+                          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] text-red-400 whitespace-nowrap font-medium">
+                            Your RV
                           </span>
+                        </div>
+                      )}
+                      {/* Scale labels */}
+                      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-1">
+                        <span className="text-[8px] text-muted-foreground/50">€0</span>
+                        <span className="text-[8px] text-muted-foreground/50">€{Math.round(maxVal).toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 mt-1">
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                        <span className="text-[9px] text-muted-foreground">Client BATNA</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-orange-500" />
+                        <span className="text-[9px] text-muted-foreground">CP BATNA</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-amber-500/50" />
+                        <span className="text-[9px] text-muted-foreground">ZOPA Zone</span>
+                      </div>
+                      {rvPos > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-2 w-0.5 bg-red-500" />
+                          <span className="text-[9px] text-muted-foreground">Your RV</span>
                         </div>
                       )}
                     </div>
@@ -212,7 +321,7 @@ export function StrategyBoard() {
               </Card>
             </motion.div>
 
-            {/* Issue Priority Matrix */}
+            {/* Issue Priority Matrix with Tooltips */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-3">
@@ -236,9 +345,18 @@ export function StrategyBoard() {
                             <p className="text-sm font-medium">{issue.name}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">{issue.description}</p>
                           </div>
-                          <Badge variant="outline" className={`text-[10px] shrink-0 ${TRADEABILITY_COLORS[issue.tradeability]}`}>
-                            {issue.tradeability} trade
-                          </Badge>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className={`text-[10px] shrink-0 cursor-help ${TRADEABILITY_COLORS[issue.tradeability]}`}>
+                                  {issue.tradeability} trade
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[240px] text-xs">
+                                <p>{TRADEABILITY_TOOLTIPS[issue.tradeability]}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1">
@@ -264,6 +382,17 @@ export function StrategyBoard() {
                             </div>
                           </div>
                         </div>
+                        {/* Trade opportunity indicator */}
+                        {issue.clientPriority !== issue.counterpartyPriority && (
+                          <div className="flex items-center gap-1.5 pt-1">
+                            <Lightbulb className="h-3 w-3 text-amber-400" />
+                            <span className="text-[9px] text-amber-400/70">
+                              {issue.clientPriority > issue.counterpartyPriority
+                                ? 'You value this more — potential concession for the counterparty'
+                                : 'They value this more — opportunity to trade for something you want'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

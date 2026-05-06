@@ -15,15 +15,21 @@ const NEGOTIATION_TERMS = [
   'Package Offer', 'Silence as a Tool',
 ];
 
-// Particle positions for background
+// Particle positions for background - deterministic seed to avoid hydration mismatch
+function seededRandom(seed: number) {
+  const x = Math.sin(seed * 9301 + 49297) * 49297;
+  return x - Math.floor(x);
+}
+
+// Round to 4 decimal places to prevent SSR/client floating-point precision mismatch
 const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
   id: i,
-  left: `${Math.random() * 100}%`,
-  size: `${2 + Math.random() * 4}px`,
-  duration: `${8 + Math.random() * 12}s`,
-  delay: `${Math.random() * 8}s`,
-  drift: `${-30 + Math.random() * 60}px`,
-  opacity: `${0.15 + Math.random() * 0.25}`,
+  left: `${(seededRandom(i * 7 + 1) * 100).toFixed(4)}%`,
+  size: `${(2 + seededRandom(i * 13 + 2) * 4).toFixed(4)}px`,
+  duration: `${(8 + seededRandom(i * 17 + 3) * 12).toFixed(4)}s`,
+  delay: `${(seededRandom(i * 23 + 4) * 8).toFixed(4)}s`,
+  drift: `${(-30 + seededRandom(i * 29 + 5) * 60).toFixed(4)}px`,
+  opacity: `${(0.15 + seededRandom(i * 31 + 6) * 0.25).toFixed(4)}`,
 }));
 
 export function TitleScreen() {

@@ -1,13 +1,15 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useGameStore } from '@/store/game-store';
-import { getScenarioById } from '@/data/scenarios';
+import { getScenarioById, allScenarios } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/data/scenarios/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -20,11 +22,56 @@ import {
   ClipboardList,
   Target,
   FileText,
+  BarChart3,
+  User,
+  Brain,
+  Flame,
+  Shield,
+  Repeat,
 } from 'lucide-react';
 
+// Difficulty dimension labels and icons
+const DIFFICULTY_DIMENSIONS = [
+  { key: 'economicComplexity', label: 'Economic', icon: BarChart3 },
+  { key: 'emotionalComplexity', label: 'Emotional', icon: Heart },
+  { key: 'ethicalComplexity', label: 'Ethical', icon: Shield },
+  { key: 'informationAsymmetry', label: 'Information', icon: HelpCircle },
+  { key: 'powerImbalance', label: 'Power', icon: AlertTriangle },
+  { key: 'timePressure', label: 'Time', icon: Clock },
+  { key: 'relationshipStakes', label: 'Relationship', icon: Repeat },
+] as const;
+
+// Personality trait labels for the counterparty preview
+const PERSONALITY_TRAITS = [
+  { key: 'truthfulness', label: 'Truthfulness', color: 'bg-emerald-500/60' },
+  { key: 'ego', label: 'Ego', color: 'bg-amber-500/60' },
+  { key: 'riskTolerance', label: 'Risk Tolerance', color: 'bg-orange-500/60' },
+  { key: 'patience', label: 'Patience', color: 'bg-cyan-500/60' },
+  { key: 'fairnessSensitivity', label: 'Fairness', color: 'bg-violet-500/60' },
+  { key: 'emotionalVolatility', label: 'Volatility', color: 'bg-red-500/60' },
+  { key: 'preparationLevel', label: 'Preparation', color: 'bg-teal-500/60' },
+  { key: 'relationshipOrientation', label: 'Relationship', color: 'bg-pink-500/60' },
+] as const;
+
+function getDifficultyLevel(value: number): { level: string; cssClass: string } {
+  if (value <= 1) return { level: 'Low', cssClass: 'low' };
+  if (value <= 3) return { level: 'Medium', cssClass: 'medium' };
+  if (value <= 4) return { level: 'High', cssClass: 'high' };
+  return { level: 'Extreme', cssClass: 'extreme' };
+}
+
 export function CaseIntake() {
-  const { currentScenarioId, setPhase, setCaseAccepted, setCurrentScenarioId } = useGameStore();
+  const { currentScenarioId, setPhase, setCaseAccepted, setCurrentScenarioId, caseResults } = useGameStore();
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
+
+  // Check for similar cases in same category
+  const similarCasesDone = useMemo(() => {
+    if (!scenario) return [];
+    return caseResults.filter(result => {
+      const s = getScenarioById(result.scenarioId);
+      return s && s.category === scenario.category && s.id !== scenario.id;
+    });
+  }, [scenario, caseResults]);
 
   if (!scenario) {
     return (
@@ -37,7 +84,7 @@ export function CaseIntake() {
     );
   }
 
-  const { briefing, client, counterparty } = scenario;
+  const { briefing, client, counterparty, difficulty } = scenario;
 
   const handleAccept = () => {
     setCaseAccepted(true);
@@ -114,8 +161,144 @@ export function CaseIntake() {
           </Card>
         </motion.div>
 
+        {/* Difficulty Preview Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <Card className="bg-card/50 border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-amber-500" />
+                Difficulty Preview
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
+                {DIFFICULTY_DIMENSIONS.map((dim) => {
+                  const value = difficulty[dim.key as keyof typeof difficulty];
+                  const { level, cssClass } = getDifficultyLevel(value);
+                  const DimIcon = dim.icon;
+                  return (
+                    <div key={dim.key} className="flex items-center gap-2.5">
+                      <DimIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-xs text-muted-foreground w-24 shrink-0">{dim.label}</span>
+                      <div className="flex-1 difficulty-bar">
+                        <div
+                          className={`fill ${cssClass}`}
+                          style={{ width: `${(value / 5) * 100}%` }}
+                        />
+                      </div>
+                      <span className={`text-[10px] font-medium w-12 text-right ${
+                        cssClass === 'low' ? 'text-emerald-400' :
+                        cssClass === 'medium' ? 'text-amber-400' :
+                        cssClass === 'high' ? 'text-orange-400' :
+                        'text-red-400'
+                      }`}>
+                        {level}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Counterparty Personality Preview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="bg-card/50 border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Brain className="h-4 w-4 text-violet-400" />
+                Counterparty Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Avatar card */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-border/30 shrink-0">
+                  <div className="text-4xl">{counterparty.avatar}</div>
+                  <div>
+                    <p className="text-sm font-semibold">{counterparty.name}</p>
+                    <p className="text-xs text-muted-foreground">{counterparty.role}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Flame className={`h-3 w-3 ${counterparty.personality.emotionalVolatility > 3 ? 'text-red-400' : 'text-emerald-400'}`} />
+                      <span className="text-[10px] text-muted-foreground">
+                        {counterparty.personality.emotionalVolatility > 3 ? 'Volatile' : 'Calm'}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground mx-1">•</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {counterparty.personality.riskTolerance > 3 ? 'Risk-taker' : 'Risk-averse'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Personality trait bars */}
+                <div className="flex-1 grid grid-cols-2 gap-x-4 gap-y-2">
+                  {PERSONALITY_TRAITS.map((trait) => {
+                    const value = counterparty.personality[trait.key as keyof typeof counterparty.personality];
+                    return (
+                      <div key={trait.key} className="flex items-center gap-2">
+                        <span className="text-[10px] text-muted-foreground w-20 shrink-0 truncate">{trait.label}</span>
+                        <div className="flex-1 personality-bar">
+                          <div
+                            className="fill"
+                            style={{ width: `${(value / 5) * 100}%`, background: trait.color }}
+                          />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground w-4 text-right">{value}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Similar Cases Hint */}
+        {similarCasesDone.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <Card className="bg-amber-500/10 border-amber-500/20">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <User className="h-4.5 w-4.5 text-amber-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-amber-400 mb-1">Similar Cases Experience</p>
+                    <p className="text-xs text-amber-200/70">
+                      You&apos;ve completed {similarCasesDone.length} case{similarCasesDone.length > 1 ? 's' : ''} in the{' '}
+                      <span className="font-medium text-amber-300">{CATEGORY_LABELS[scenario.category]}</span> category.
+                      Your experience with{' '}
+                      {similarCasesDone.slice(0, 2).map((r, i) => {
+                        const s = getScenarioById(r.scenarioId);
+                        return s ? (
+                          <span key={r.scenarioId}>
+                            {i > 0 ? ' and ' : ''}<span className="font-medium text-amber-300">{s.title}</span>
+                          </span>
+                        ) : null;
+                      })}
+                      {' '}may give you insight into this case.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Case Briefing Sections */}
-        <ScrollArea className="max-h-[calc(100vh-320px)]">
+        <ScrollArea className="max-h-[calc(100vh-600px)]">
           <div className="space-y-4 pr-2">
             {/* Situation */}
             <motion.div custom={0} variants={sectionVariants} initial="hidden" animate="visible">
@@ -243,27 +426,6 @@ export function CaseIntake() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <p className="text-sm text-muted-foreground">{briefing.clientEmotionalState}</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Counterparty Info */}
-            <motion.div custom={7} variants={sectionVariants} initial="hidden" animate="visible">
-              <Card className="bg-card/50 border-border/50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <ClipboardList className="h-4 w-4 text-cyan-400" />
-                    Counterparty
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{counterparty.avatar}</span>
-                    <div>
-                      <p className="text-sm font-medium">{counterparty.name}</p>
-                      <p className="text-xs text-muted-foreground">{counterparty.role}</p>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </motion.div>

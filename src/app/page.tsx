@@ -13,9 +13,13 @@ import { GameHeader } from '@/components/game/GameHeader';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeToggle } from '@/components/game/ThemeToggle';
 import { TutorialOverlay, TutorialHelpButton } from '@/components/game/TutorialOverlay';
+import { KeyboardShortcutsDialog, useKeyboardShortcuts } from '@/components/game/KeyboardShortcuts';
 
 export default function Home() {
   const phase = useGameStore((s) => s.phase);
+
+  // Global keyboard shortcuts handler
+  const { showShortcuts, setShowShortcuts, showGlossary, setShowGlossary } = useKeyboardShortcuts();
 
   const renderPhase = () => {
     switch (phase) {
@@ -70,12 +74,15 @@ export default function Home() {
           <span className="hidden sm:inline text-border/50">·</span>
           <span>Season 1</span>
           <span className="hidden sm:inline text-border/50">·</span>
-          <span>v2.0</span>
+          <span>v3.0</span>
           <span className="hidden sm:inline text-border/50">·</span>
           <span>30 Cases · 8 Endings</span>
         </div>
       </footer>
       <TutorialOverlay />
+
+      {/* Global Keyboard Shortcuts Dialog */}
+      <KeyboardShortcutsDialog open={showShortcuts} onOpenChange={setShowShortcuts} />
     </div>
   );
 }

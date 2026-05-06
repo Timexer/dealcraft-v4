@@ -890,3 +890,276 @@
   animation: trailParticle 1s ease-out infinite;
   pointer-events: none;
 }
+
+/* ===== TASK 8 - STYLING IMPROVEMENTS ===== */
+
+/* Glass card with enhanced hover effect - slight scale + glow */
+.glass-card-hover {
+  background: oklch(1 0 0 / 5%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid oklch(1 0 0 / 10%);
+  border-radius: 0.75rem;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.3s ease,
+              border-color 0.3s ease;
+}
+.dark .glass-card-hover {
+  background: oklch(1 0 0 / 4%);
+  border: 1px solid oklch(1 0 0 / 8%);
+}
+.glass-card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px oklch(0.77 0.16 75 / 15%), 0 8px 32px oklch(0 0 0 / 10%);
+  border-color: oklch(0.77 0.16 75 / 25%);
+}
+
+/* Animated gradient background for stat bars */
+@keyframes statBarGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.stat-bar-gradient {
+  background-size: 200% 100%;
+  animation: statBarGradient 4s ease-in-out infinite;
+}
+
+/* Side-by-side comparison bar style */
+.comparison-bar {
+  position: relative;
+  height: 28px;
+  background: oklch(1 0 0 / 5%);
+  border-radius: 0.375rem;
+  overflow: hidden;
+  border: 1px solid oklch(1 0 0 / 8%);
+}
+.dark .comparison-bar {
+  background: oklch(1 0 0 / 4%);
+  border: 1px solid oklch(1 0 0 / 6%);
+}
+.comparison-bar .bar-fill {
+  height: 100%;
+  border-radius: 0.375rem;
+  transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+.comparison-bar .bar-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.comparison-bar .bar-label-left {
+  left: 8px;
+  color: oklch(1 0 0 / 90%);
+}
+.comparison-bar .bar-label-right {
+  right: 8px;
+  color: oklch(0.77 0.16 75);
+}
+
+/* Thin difficulty indicator bar with color coding */
+.difficulty-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: oklch(1 0 0 / 8%);
+  overflow: hidden;
+  position: relative;
+}
+.difficulty-bar .fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.difficulty-bar .fill.low {
+  background: linear-gradient(90deg, oklch(0.72 0.19 155), oklch(0.7 0.22 155));
+}
+.difficulty-bar .fill.medium {
+  background: linear-gradient(90deg, oklch(0.77 0.16 75), oklch(0.75 0.18 70));
+}
+.difficulty-bar .fill.high {
+  background: linear-gradient(90deg, oklch(0.65 0.22 50), oklch(0.6 0.24 40));
+}
+.difficulty-bar .fill.extreme {
+  background: linear-gradient(90deg, oklch(0.6 0.24 27), oklch(0.55 0.26 20));
+}
+
+/* Slide in right animation for mobile panels */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.slide-in-right {
+  animation: slideInRight 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Slide in left animation for mobile panels */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.slide-in-left {
+  animation: slideInLeft 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Fade scale in animation for cards appearing */
+@keyframes fadeScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+.fade-scale-in {
+  animation: fadeScaleIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* ZOPA visualization range bar */
+.zopa-bar {
+  position: relative;
+  height: 32px;
+  background: oklch(1 0 0 / 5%);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid oklch(1 0 0 / 10%);
+}
+.dark .zopa-bar {
+  background: oklch(1 0 0 / 3%);
+  border: 1px solid oklch(1 0 0 / 6%);
+}
+.zopa-bar .overlap-zone {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, oklch(0.77 0.16 75 / 20%), oklch(0.77 0.16 75 / 35%), oklch(0.72 0.19 155 / 20%));
+  border-left: 2px solid oklch(0.77 0.16 75 / 60%);
+  border-right: 2px solid oklch(0.72 0.19 155 / 60%);
+  transition: left 0.6s ease, width 0.6s ease;
+}
+.zopa-bar .marker {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: calc(100% + 4px);
+  transition: left 0.6s ease;
+  z-index: 2;
+}
+.zopa-bar .marker.client {
+  background: oklch(0.72 0.19 155);
+}
+.zopa-bar .marker.counterparty {
+  background: oklch(0.65 0.22 50);
+}
+
+/* Expandable toggle animation for bias traps */
+.expand-toggle {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 0.3s ease;
+  opacity: 0;
+}
+.expand-toggle.expanded {
+  max-height: 300px;
+  opacity: 1;
+}
+
+/* Personality trait mini bar */
+.personality-bar {
+  height: 3px;
+  border-radius: 1.5px;
+  background: oklch(1 0 0 / 8%);
+  overflow: hidden;
+}
+.personality-bar .fill {
+  height: 100%;
+  border-radius: 1.5px;
+  background: oklch(0.77 0.16 75 / 60%);
+  transition: width 0.6s ease;
+}
+
+/* Tooltip style for strategy board */
+.strategy-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: oklch(0.2 0 0);
+  color: oklch(0.9 0 0);
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  box-shadow: 0 4px 12px oklch(0 0 0 / 30%);
+}
+.strategy-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: oklch(0.2 0 0);
+}
+.group:hover .strategy-tooltip {
+  opacity: 1;
+}
+
+/* Weekly progress pulse indicator */
+@keyframes weeklyPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 oklch(0.77 0.16 75 / 30%);
+  }
+  50% {
+    box-shadow: 0 0 0 6px oklch(0.77 0.16 75 / 0%);
+  }
+}
+.weekly-pulse {
+  animation: weeklyPulse 2s ease-in-out infinite;
+}
+
+/* Category distribution bar */
+.category-dist-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: oklch(1 0 0 / 5%);
+  overflow: hidden;
+  display: flex;
+}
+.category-dist-bar .segment {
+  height: 100%;
+  transition: width 0.8s ease;
+  min-width: 2px;
+}
+.category-dist-bar .segment:first-child {
+  border-radius: 3px 0 0 3px;
+}
+.category-dist-bar .segment:last-child {
+  border-radius: 0 3px 3px 0;
+}
