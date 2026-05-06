@@ -27,6 +27,7 @@ import {
   Eye,
   ChevronRight,
   ShieldAlert,
+  GitBranch,
 } from 'lucide-react';
 
 interface DialogueEntry {
@@ -592,6 +593,39 @@ export function NegotiationTable() {
     return { current: currentIndex + 1, total };
   }, [scenario, currentNode]);
 
+  // Calculate phase progress
+  const progressPercent = dialogueProgress.total > 0 ? (dialogueProgress.current / dialogueProgress.total) * 100 : 0;
+  const PHASES = ['Opening', 'Discovery', 'Bargaining', 'Closing'] as const;
+  const currentPhase = progressPercent <= 25 ? 'Opening' : progressPercent <= 50 ? 'Discovery' : progressPercent <= 75 ? 'Bargaining' : 'Closing';
+
+  // Build choice timeline from dialogue history
+  const choiceTimeline = useMemo(() => {
+    if (!scenario) return [];
+    const timeline: Array<{ choiceText: string; choiceType: string; choiceIcon: string; choiceLabel: string }> = [];
+    for (const entry of dialogueHistory) {
+      if (entry.chosenChoiceId && entry.chosenChoiceText) {
+        let choiceType = 'diagnostic';
+        for (const node of scenario.dialogueTree) {
+          if (node.choices) {
+            const found = node.choices.find(c => c.id === entry.chosenChoiceId);
+            if (found) {
+              choiceType = found.type;
+              break;
+            }
+          }
+        }
+        const style = CHOICE_TYPE_STYLES[choiceType] || CHOICE_TYPE_STYLES.diagnostic;
+        timeline.push({
+          choiceText: entry.chosenChoiceText,
+          choiceType,
+          choiceIcon: style.icon,
+          choiceLabel: style.label,
+        });
+      }
+    }
+    return timeline;
+  }, [scenario, dialogueHistory]);
+
   if (!scenario) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -636,7 +670,7 @@ export function NegotiationTable() {
       <div className="absolute inset-0 grid-pattern opacity-40 pointer-events-none" />
 
       {/* Mobile Trust/Anger Mini-Bars - always visible on mobile */}
-      <div className="lg:hidden border-b border-border/30 bg-card/20 backdrop-blur-sm px-4 py-1.5">
+      <div className="lg:hidden border-b border-border/30 bg-card/20 backdrop-blur-sm px-4 py-1.5 space-y-1">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 flex-1">
             <Heart className="h-3 w-3 text-emerald-400 shrink-0" />
@@ -658,6 +692,19 @@ export function NegotiationTable() {
             </div>
             <span className="text-[10px] font-bold tabular-nums text-muted-foreground w-5 text-right">{negotiation.anger}</span>
           </div>
+        </div>
+        {/* Mobile Phase Progress Bar */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-1 rounded-full bg-muted/50 overflow-hidden relative">
+            <div className="absolute top-0 bottom-0 left-1/4 w-px bg-border/30" />
+            <div className="absolute top-0 bottom-0 left-1/2 w-px bg-border/30" />
+            <div className="absolute top-0 bottom-0 left-3/4 w-px bg-border/30" />
+            <div
+              className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <span className="text-[9px] font-bold text-amber-400 shrink-0 tabular-nums">{currentPhase}</span>
         </div>
       </div>
 
@@ -705,6 +752,63 @@ export function NegotiationTable() {
                 {emotion.label}
               </Badge>
             </div>
+          </div>
+        </div>
+
+        {/* Negotiation Phase Progress Bar */}
+        <div className="max-w-6xl mx-auto mt-2 pt-2 border-t border-border/20">
+          <div className="flex items-center justify-between mb-1.5">
+            {PHASES.map((phase) => {
+              const isActive = phase === currentPhase;
+              const phaseIndex = PHASES.indexOf(phase);
+              const isPast = progressPercent > (phaseIndex + 1) * 25;
+              return (
+                <span key={phase} className={`text-[9px] font-medium transition-all duration-500 ${
+                  isActive
+                    ? 'text-amber-400 font-bold'
+                    : isPast
+                      ? 'text-amber-500/50'
+                      : 'text-muted-foreground/40'
+                }`}>
+                  {isActive && (
+                    <motion.span
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="inline-block mr-0.5"
+                    >
+                      ▸
+                    </motion.span>
+                  )}
+                  {phase}
+                </span>
+              );
+            })}
+          </div>
+          <div className="relative h-1.5 rounded-full bg-muted/50 overflow-hidden">
+            {/* Phase boundary markers */}
+            <div className="absolute top-0 bottom-0 left-1/4 w-px bg-border/30 z-10" />
+            <div className="absolute top-0 bottom-0 left-1/2 w-px bg-border/30 z-10" />
+            <div className="absolute top-0 bottom-0 left-3/4 w-px bg-border/30 z-10" />
+            {/* Progress fill with amber gradient */}
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercent}%` }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            />
+            {/* Current position glow dot */}
+            {progressPercent > 0 && (
+              <motion.div
+                className="absolute top-1/2 -translate-y-1/2 h-2.5 w-2.5 -ml-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_oklch(0.77_0.16_75/60%)] z-20"
+                style={{ left: `${progressPercent}%` }}
+                animate={{ scale: [1, 1.3, 1], opacity: [0.8, 1, 0.8] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            )}
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-[8px] text-muted-foreground/40">{dialogueProgress.current} of {dialogueProgress.total} nodes</span>
+            <span className="text-[8px] text-muted-foreground/40">{Math.round(progressPercent)}%</span>
           </div>
         </div>
       </div>
@@ -1004,6 +1108,39 @@ export function NegotiationTable() {
               </div>
             ) : (
               <p className="text-[10px] text-muted-foreground">No bias traps triggered yet</p>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Choice Timeline */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+              <GitBranch className="h-3.5 w-3.5" />
+              Choice Timeline
+            </h4>
+            {choiceTimeline.length > 0 ? (
+              <div className="relative pl-4 max-h-48 overflow-y-auto">
+                {/* Vertical line */}
+                <div className="absolute left-1.5 top-1 bottom-1 w-px bg-border/40" />
+                <div className="space-y-2">
+                  {choiceTimeline.map((choice, i) => (
+                    <div key={i} className="relative flex items-start gap-2">
+                      {/* Dot on the line */}
+                      <div className="absolute -left-[10px] top-1 w-2 h-2 rounded-full bg-amber-500/70 ring-2 ring-card" />
+                      {/* Icon */}
+                      <span className="text-xs shrink-0 mt-px">{choice.choiceIcon}</span>
+                      {/* Text */}
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-muted-foreground leading-tight line-clamp-2">{choice.choiceText}</p>
+                        <p className="text-[8px] text-muted-foreground/50 mt-0.5">{choice.choiceLabel}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-[10px] text-muted-foreground">No choices made yet</p>
             )}
           </div>
         </div>

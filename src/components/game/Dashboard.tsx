@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { allScenarios, getScenarioById } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS, TIER_NAMES, TIER_DESCRIPTIONS } from '@/data/scenarios/types';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X, Clock, Activity, Zap, History, FileText } from 'lucide-react';
+import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X, Clock, Activity, Zap, History, FileText, Crown, Handshake, Shield, AlertTriangle, Footprints, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AchievementGallery } from './AchievementGallery';
 import { ChallengeModeSelector } from './ChallengeModeSelector';
@@ -35,11 +35,106 @@ const CATEGORY_BAR_COLORS: Record<string, string> = {
 
 // Stat card gradient backgrounds matching the stat theme
 const STAT_GRADIENTS = [
-  'from-amber-500/8 via-amber-500/3 to-transparent',
   'from-cyan-500/8 via-cyan-500/3 to-transparent',
   'from-emerald-500/8 via-emerald-500/3 to-transparent',
   'from-violet-500/8 via-violet-500/3 to-transparent',
 ];
+
+// Outcome badge configuration
+const OUTCOME_BADGE_CONFIG: Record<string, { color: string; icon: typeof Crown; label: string }> = {
+  master: { color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40', icon: Crown, label: 'Master' },
+  cooperative: { color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40', icon: Handshake, label: 'Cooperative' },
+  hard_bargain: { color: 'bg-amber-500/20 text-amber-400 border-amber-500/40', icon: Shield, label: 'Hard Bargain' },
+  bad_deal: { color: 'bg-red-500/20 text-red-400 border-red-500/40', icon: AlertTriangle, label: 'Bad Deal' },
+  strategic_no_deal: { color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40', icon: Footprints, label: 'Strategic No Deal' },
+  ethical_failure: { color: 'bg-rose-500/20 text-rose-400 border-rose-500/40', icon: AlertTriangle, label: 'Ethical Failure' },
+  no_deal_bad: { color: 'bg-orange-500/20 text-orange-400 border-orange-500/40', icon: AlertTriangle, label: 'No Deal (Bad)' },
+};
+
+// SVG Circular Progress Ring Component
+function CircularProgress({ value, size = 80, strokeWidth = 4, color = '#f59e0b', animate = true }: { value: number; size?: number; strokeWidth?: number; color?: string; animate?: boolean }) {
+  const [animatedValue, setAnimatedValue] = useState(0);
+
+  useEffect(() => {
+    if (!animate) return;
+    const timer = setTimeout(() => setAnimatedValue(value), 100);
+    return () => clearTimeout(timer);
+  }, [value, animate]);
+
+  // If not animating, just use the value directly
+  const displayValue = animate ? animatedValue : value;
+
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - displayValue / 100);
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke="hsl(var(--muted))"
+        strokeWidth={strokeWidth}
+        opacity={0.3}
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        className="transition-all duration-1000 ease-out"
+      />
+    </svg>
+  );
+}
+
+// Score Trend Indicator Component
+function ScoreTrend({ currentScore, previousScore }: { currentScore: number; previousScore?: number }) {
+  if (previousScore === undefined) return null;
+  const diff = currentScore - previousScore;
+  if (diff === 0) {
+    return (
+      <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+        <Minus className="h-3 w-3" />
+        <span>0</span>
+      </span>
+    );
+  }
+  const isUp = diff > 0;
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
+      {isUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+      <span>{isUp ? '+' : ''}{diff}</span>
+    </span>
+  );
+}
+
+// Outcome Badge Component
+function OutcomeBadge({ outcome }: { outcome: string }) {
+  const config = OUTCOME_BADGE_CONFIG[outcome];
+  if (!config) {
+    return (
+      <Badge variant="outline" className="text-[10px] px-2 py-0 capitalize">
+        {outcome.replace(/_/g, ' ')}
+      </Badge>
+    );
+  }
+  const IconComponent = config.icon;
+  return (
+    <Badge variant="outline" className={`text-[10px] px-2 py-0.5 gap-1 ${config.color}`}>
+      <IconComponent className="h-3 w-3" />
+      {config.label}
+    </Badge>
+  );
+}
 
 export function Dashboard() {
   const {
@@ -219,19 +314,48 @@ export function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Stats Overview - with gradient backgrounds matching stat theme */}
+        {/* Stats Overview - Visual Tier Badge + stat cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          {/* Visual Tier Badge - replacing plain Tier card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0 }}
+            className="fade-scale-in"
+          >
+            <Card className="glass-card animated-border hover:border-amber-500/20 transition-all duration-200 bg-gradient-to-br from-amber-500/10 via-amber-500/4 to-transparent">
+              <CardContent className="p-4 flex items-center gap-3">
+                {/* Circular progress ring showing tier progress */}
+                <div className="relative shrink-0">
+                  <CircularProgress value={tierProgress} size={56} strokeWidth={4} color="#f59e0b" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-lg font-bold bg-gradient-to-br from-amber-400 to-amber-600 bg-clip-text text-transparent">
+                      {careerTier}
+                    </span>
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Tier</span>
+                  <p className="text-sm font-semibold truncate bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+                    {tierName}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">{Math.round(tierProgress)}% to next</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Remaining stat cards */}
           {[
-            { label: 'Tier', value: tierName, icon: Briefcase, color: 'text-amber-500', gradient: STAT_GRADIENTS[0] },
-            { label: 'Cases Closed', value: completedCases.toString(), icon: BookOpen, color: 'text-cyan-500', gradient: STAT_GRADIENTS[1] },
-            { label: 'Total Score', value: totalScore.toString(), icon: Trophy, color: 'text-emerald-500', gradient: STAT_GRADIENTS[2] },
-            { label: 'Reputation', value: repType.label, icon: Users, color: 'text-violet-500', gradient: STAT_GRADIENTS[3] },
+            { label: 'Cases Closed', value: completedCases.toString(), icon: BookOpen, color: 'text-cyan-500', gradient: STAT_GRADIENTS[0] },
+            { label: 'Total Score', value: totalScore.toString(), icon: Trophy, color: 'text-emerald-500', gradient: STAT_GRADIENTS[1] },
+            { label: 'Reputation', value: repType.label, icon: Users, color: 'text-violet-500', gradient: STAT_GRADIENTS[2] },
           ].map((stat, i) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: (i + 1) * 0.1 }}
               className="fade-scale-in"
             >
               <Card className={`glass-card animated-border hover:border-amber-500/20 transition-all duration-200 bg-gradient-to-br ${stat.gradient}`}>
@@ -249,7 +373,7 @@ export function Dashboard() {
 
         {/* Weekly Progress + Category Distribution - side by side */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Tier Progress - with breathing animation + animated gradient */}
+          {/* Tier Progress + Completion Ring - with breathing animation + animated gradient */}
           <Card className="glass-card overflow-hidden">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -262,12 +386,20 @@ export function Dashboard() {
               <div className="tier-progress-bar rounded-full overflow-hidden breathing-animation">
                 <Progress value={tierProgress} className="h-2.5" />
               </div>
-              {/* Session Progress */}
-              <div className="mt-3 flex items-center gap-2">
-                <div className="weekly-pulse h-2 w-2 rounded-full bg-amber-500 shrink-0" />
-                <span className="text-xs text-muted-foreground">
-                  {sessionProgress.completed} of {sessionProgress.total} total cases completed ({sessionProgress.percentage}%)
-                </span>
+              {/* Session Progress + Completion Ring */}
+              <div className="mt-3 flex items-center gap-3">
+                <div className="relative shrink-0">
+                  <CircularProgress value={sessionProgress.percentage} size={36} strokeWidth={3} color="#f59e0b" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-amber-500">{sessionProgress.percentage}%</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="weekly-pulse h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                  <span className="text-xs text-muted-foreground">
+                    {sessionProgress.completed} of {sessionProgress.total} total cases completed
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -499,7 +631,7 @@ export function Dashboard() {
                           <span className="text-xl shrink-0">{scenario.client.avatar}</span>
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate">{scenario.title}</p>
-                            <p className="text-xs text-muted-foreground capitalize">{result.outcome.replace(/_/g, ' ')}</p>
+                            <OutcomeBadge outcome={result.outcome} />
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
@@ -574,11 +706,14 @@ export function Dashboard() {
                           <span className="text-2xl">{item.scenario.client.avatar}</span>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{item.scenario.title}</p>
-                            <p className="text-[10px] text-muted-foreground capitalize">{item.result.outcome.replace(/_/g, ' ')}</p>
+                            <OutcomeBadge outcome={item.result.outcome} />
                           </div>
-                          <Badge variant="outline" className={`text-xs font-bold px-2 py-0.5 ${GRADE_BADGE_COLORS[item.grade.grade]}`}>
-                            {GRADE_ICON_MAP[item.grade.grade]} {item.grade.grade}
-                          </Badge>
+                          <div className="flex flex-col items-end gap-1">
+                            <Badge variant="outline" className={`text-xs font-bold px-2 py-0.5 ${GRADE_BADGE_COLORS[item.grade.grade]}`}>
+                              {GRADE_ICON_MAP[item.grade.grade]} {item.grade.grade}
+                            </Badge>
+                            <ScoreTrend currentScore={item.result.finalScore} previousScore={caseResults.length > 1 ? caseResults[caseResults.length - 2 - i]?.finalScore : undefined} />
+                          </div>
                         </div>
                         {/* Mini score bar */}
                         <div className="comparison-bar mt-2">

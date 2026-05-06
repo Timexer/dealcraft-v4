@@ -1293,3 +1293,236 @@
 .theme-transition *::after {
   transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
 }
+
+/* ===== ROUND 11 - NEW MICRO-INTERACTIONS & ENHANCEMENTS ===== */
+
+/* Ripple click effect for buttons */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: oklch(0.77 0.16 75 / 30%);
+  top: 50%;
+  left: 50%;
+  transform: scale(0);
+  pointer-events: none;
+}
+.ripple-effect:active::after {
+  animation: ripple 0.6s ease-out;
+}
+
+/* Gradient border animation for featured cards */
+@keyframes gradientBorderSpin {
+  0% { --gradient-angle: 0deg; }
+  100% { --gradient-angle: 360deg; }
+}
+@property --gradient-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.gradient-border-animated {
+  position: relative;
+  border: none !important;
+  background-clip: padding-box;
+}
+.gradient-border-animated::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--gradient-angle),
+    oklch(0.77 0.16 75 / 0%),
+    oklch(0.77 0.16 75 / 60%),
+    oklch(0.77 0.16 75 / 0%),
+    oklch(0.65 0.2 50 / 40%),
+    oklch(0.77 0.16 75 / 0%)
+  );
+  z-index: -1;
+  animation: gradientBorderSpin 4s linear infinite;
+}
+.gradient-border-animated::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--background);
+  z-index: -1;
+}
+
+/* Phase progress bar glow effect */
+.phase-progress-glow {
+  position: relative;
+}
+.phase-progress-glow::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -2px;
+  width: 12px;
+  height: calc(100% + 4px);
+  background: radial-gradient(ellipse at center, oklch(0.77 0.16 75 / 40%), transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: phaseGlow 1.5s ease-in-out infinite;
+}
+@keyframes phaseGlow {
+  0%, 100% { opacity: 0.6; transform: scaleX(1); }
+  50% { opacity: 1; transform: scaleX(1.5); }
+}
+
+/* Expandable card with spring animation */
+@keyframes expandSpring {
+  0% { max-height: 0; opacity: 0; }
+  60% { max-height: 400px; opacity: 1; }
+  80% { max-height: 350px; }
+  100% { max-height: 400px; opacity: 1; }
+}
+.expand-spring {
+  animation: expandSpring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  overflow: hidden;
+}
+
+/* Score quality badge bounce */
+@keyframes badgeBounce {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.2); }
+  80% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.badge-bounce {
+  animation: badgeBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Tier ring fill animation */
+@keyframes ringFill {
+  from { stroke-dashoffset: var(--ring-circumference, 100); }
+  to { stroke-dashoffset: var(--ring-offset, 0); }
+}
+.tier-ring-animate {
+  animation: ringFill 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Choice timeline entry appear */
+@keyframes timelineSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.timeline-entry {
+  animation: timelineSlideIn 0.3s ease-out forwards;
+}
+
+/* Focus ring animation for interactive elements */
+.focus-ring-animate {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.focus-ring-animate:focus-visible {
+  box-shadow: 0 0 0 2px oklch(0.77 0.16 75 / 40%), 0 0 0 4px oklch(0.77 0.16 75 / 15%);
+  border-color: oklch(0.77 0.16 75 / 50%);
+  outline: none;
+}
+
+/* Hover glow for stat cards */
+.stat-card-glow {
+  transition: all 0.3s ease;
+}
+.stat-card-glow:hover {
+  box-shadow: 0 0 20px oklch(0.77 0.16 75 / 10%), 0 4px 16px oklch(0 0 0 / 8%);
+  border-color: oklch(0.77 0.16 75 / 20%);
+  transform: translateY(-1px);
+}
+
+/* Progress dot pulse for active phase */
+@keyframes activePhasePulse {
+  0%, 100% {
+    box-shadow: 0 0 4px oklch(0.77 0.16 75 / 60%);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 8px oklch(0.77 0.16 75 / 80%), 0 0 16px oklch(0.77 0.16 75 / 30%);
+    transform: scale(1.2);
+  }
+}
+.active-phase-dot {
+  animation: activePhasePulse 2s ease-in-out infinite;
+}
+
+/* Subtle shake for error/warning states */
+@keyframes subtleShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+.shake-warning {
+  animation: subtleShake 0.5s ease-in-out;
+}
+
+/* Outcome badge glow per type */
+.outcome-master {
+  box-shadow: 0 0 8px oklch(0.85 0.18 85 / 30%);
+  border-color: oklch(0.85 0.18 85 / 40%);
+}
+.outcome-cooperative {
+  box-shadow: 0 0 8px oklch(0.72 0.19 155 / 30%);
+  border-color: oklch(0.72 0.19 155 / 40%);
+}
+.outcome-hard_bargain {
+  box-shadow: 0 0 8px oklch(0.77 0.16 75 / 30%);
+  border-color: oklch(0.77 0.16 75 / 40%);
+}
+.outcome-bad_deal {
+  box-shadow: 0 0 8px oklch(0.6 0.24 27 / 30%);
+  border-color: oklch(0.6 0.24 27 / 40%);
+}
+
+/* Circular progress ring text */
+.ring-text {
+  dominant-baseline: central;
+  text-anchor: middle;
+  fill: oklch(0.77 0.16 75);
+  font-weight: 700;
+}
+
+/* Smooth dimension card expand */
+.dimension-card {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  cursor: pointer;
+}
+.dimension-card:hover {
+  border-color: oklch(0.77 0.16 75 / 30%);
+  background: oklch(0.77 0.16 75 / 5%);
+}
+
+/* Score trend arrow animation */
+@keyframes trendArrow {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.trend-arrow {
+  animation: trendArrow 0.4s ease-out forwards;
+}

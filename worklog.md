@@ -1,4 +1,79 @@
 ---
+Task ID: 11
+Agent: Main Developer (Round 11)
+Task: QA testing, major feature additions (Negotiation Phase Indicator, Interactive Score Breakdown, Dashboard Visual Enhancements, CSS Micro-interactions)
+
+Work Log:
+- Read worklog.md to understand project progress (10+ previous rounds of development)
+- Performed QA testing via agent-browser: full game loop verified end-to-end, no runtime errors
+- Confirmed known issue: some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- Added Negotiation Phase Progress Bar to NegotiationTable:
+  - Mobile: thin amber gradient progress bar with phase boundary markers at 25%/50%/75%
+  - Desktop: full phase labels row (Opening, Discovery, Bargaining, Closing) with active phase glow + animated marker
+  - Amber gradient fill with glowing position dot at current progress
+  - Phase determination: Opening (0-25%), Discovery (25-50%), Bargaining (50-75%), Closing (75-100%)
+- Added Choice Timeline to NegotiationTable sidebar:
+  - Vertical timeline with left border line and amber dots
+  - Each entry shows choice type icon + choice text + type label
+  - Scrollable with max-h-48
+- Added Interactive Score Breakdown to Postmortem:
+  - 6 score dimensions now expandable cards with quality indicators (🌟/✓/⚠/✗)
+  - Clicking expands to show: explanation, mini comparison bars (your score vs master), score gap, improvement tip
+  - Tips contextual to each dimension from "Negotiation Genius" book
+  - Smooth Framer Motion AnimatePresence for expand/collapse
+- Enhanced Dashboard with visual elements:
+  - Visual Tier Badge with circular SVG progress ring and amber gradient text
+  - Completion Percentage Ring (SVG) showing overall game completion
+  - Score Trend Indicators in Recent Activity (green up/red down arrows)
+  - Outcome Badges: master (gold/Crown), cooperative (emerald/Handshake), hard_bargain (amber/Shield), bad_deal (red/AlertTriangle), strategic_no_deal (cyan/Footprints)
+- Added 15+ new CSS micro-interactions:
+  - Ripple click effect for buttons
+  - Animated gradient border (conic-gradient spinning)
+  - Phase progress glow effect
+  - Spring expand animation for cards
+  - Score quality badge bounce
+  - Tier ring fill animation
+  - Timeline entry slide-in
+  - Focus ring animation
+  - Stat card hover glow
+  - Active phase dot pulse
+  - Subtle shake for warnings
+  - Outcome badge glow per type
+  - Dimension card hover effect
+  - Trend arrow animation
+- All lint checks pass cleanly
+- Full QA testing confirms all features working without errors
+
+Stage Summary:
+- Negotiation Phase Progress Bar: visual indicator showing Opening/Discovery/Bargaining/Closing phases with animated progress
+- Choice Timeline: vertical timeline in sidebar showing choices made with type icons
+- Interactive Score Breakdown: expandable dimension cards with quality indicators, explanations, comparisons, and improvement tips
+- Dashboard Visual Enhancements: tier badge with SVG ring, completion percentage ring, score trends, outcome badges
+- 15+ new CSS micro-interactions and animations
+- Game is fully playable end-to-end with significantly enhanced visual feedback
+
+Current Project Status:
+- Dealcraft is a fully playable, feature-rich negotiation career simulator
+- 30 cases with RICH dialogue trees (all expanded)
+- Complete game loop with scoring, reputation, achievements, career progression, replay
+- LLM AI Advisor, Challenge Mode, Sound Effects, Keyboard Shortcuts
+- Enhanced mobile experience with swipe gestures, mini-bars, haptic feedback
+- Quick Stats Bar for desktop users
+- NEW: Negotiation Phase Progress Bar and Choice Timeline
+- NEW: Interactive Score Breakdown with quality indicators and improvement tips
+- NEW: Visual tier badge with SVG ring, completion percentage, score trends, outcome badges
+- NEW: 15+ CSS micro-interactions and animations
+- Premium visual design with 35+ CSS animations and micro-interactions
+- All core features working: BATNA analysis, issue matrix, investigation, branching dialogue, multiple endings
+
+Unresolved Issues / Risks:
+- Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- AI Advisor response time varies (3-8 seconds)
+- Could add social sharing of scores
+- Could add multiplayer/competitive negotiation mode
+- Could add case difficulty scaling based on player skill
+
+---
 Task ID: 2
 Agent: Cron Review
 Task: QA testing, bug fixes, and feature enhancements for Dealcraft
@@ -963,3 +1038,137 @@ Unresolved Issues / Risks:
 - Could add case difficulty scaling based on player skill
 - Could add multiplayer/competitive negotiation mode
 - Could expand achievement system for challenge mode completions and theme milestones
+
+---
+Task ID: 9-b
+Agent: Feature Developer
+Task: Add Interactive Score Breakdown with expandable categories to Postmortem component
+
+Work Log:
+- Read worklog.md to understand project progress from 9+ previous agents
+- Read Postmortem.tsx to understand existing Score Breakdown section structure
+- Added `SCORE_DIMENSION_DETAILS` constant with explanation and improvement tip for each of the 6 score dimensions (clientEconomicValue, jointValueCreated, infoDiscovered, relationshipPreserved, ethicalIntegrity, strategicDiscipline)
+- Added `getScoreQuality()` function that returns icon, label, and color class based on score ranges:
+  - 80-100: Star icon (emerald) — "Great"
+  - 60-79: CheckCircle2 icon (cyan) — "Good"
+  - 40-59: AlertTriangle icon (amber) — "Needs Work"
+  - 0-39: XCircle icon (red) — "Critical"
+- Added `expandedDimensions` state and `toggleDimension` callback to track which dimensions are expanded
+- Added XCircle and BookOpen icon imports from lucide-react
+- Transformed the Score Breakdown section from flat ComparisonBar list into interactive expandable cards:
+  - Each dimension is a clickable card with smooth Framer Motion animations
+  - Collapsed state shows: Score Quality Indicator icon, dimension label, score with badge, mini progress bar, and expand chevron
+  - Expanded state (via AnimatePresence + motion.div height animation) shows:
+    - Detailed explanation of what the dimension measures
+    - Mini comparison section: "Your Score" vs "Master" with animated progress bars side by side
+    - Score gap indicator showing points away from master deal
+    - Improvement Tip card with BookOpen icon, contextual tip from "Negotiation Genius", and attribution
+  - ChevronDown rotates 180° when expanded via motion.div animation
+- All Postmortem.tsx lint checks pass cleanly (zero errors)
+- Dev server compiles successfully
+
+Stage Summary:
+- Score Breakdown is now interactive with expandable dimension cards
+- Score Quality Indicators provide at-a-glance assessment (Star/Check/Warning/X icons)
+- Mini comparison bars show player vs master deal score per dimension
+- Contextual improvement tips from "Negotiation Genius" appear when expanded
+- Smooth Framer Motion expand/collapse animations
+- Existing functionality preserved — no breaking changes
+
+---
+Task ID: 9-c
+Agent: Dashboard Enhancer
+Task: Enhance Dashboard component with visual tier badges, completion percentage ring, and stat trend indicators
+
+Work Log:
+- Read worklog.md to understand project progress from 10+ previous agents
+- Read current Dashboard.tsx to understand existing implementation
+- Read types.ts for TIER_NAMES/TIER_DESCRIPTIONS and CaseResult interface
+- Read CaseHistory.tsx for reference on outcome badge patterns (OUTCOME_COLORS, OUTCOME_ICON)
+- Added CircularProgress SVG component:
+  - Uses inline SVG with `<circle>` elements (background track + progress arc)
+  - Calculates circumference = 2 * Math.PI * radius, dashoffset = circumference * (1 - progress)
+  - Animates from 0 to value on mount using useState + useEffect with 100ms delay
+  - Supports customizable size, strokeWidth, color, and animate props
+  - Amber color scheme (#f59e0b)
+- Replaced plain "Tier" stat card with Visual Tier Badge:
+  - Large tier number centered inside circular progress ring with amber gradient text
+  - Tier name displayed below with amber gradient text
+  - Percentage to next tier shown below tier name
+  - Circular progress ring shows tier progress visually
+  - Card uses amber gradient background
+- Added Completion Percentage Ring next to "Progress to [next tier]" card:
+  - Small (36px) SVG circular progress ring showing overall game completion %
+  - Percentage number displayed in center of ring
+  - Amber color scheme matching the game theme
+  - Animate on mount from 0 to current completion
+  - Placed inline next to session progress text
+- Added Score Trend Indicators to Recent Activity cards:
+  - ScoreTrend component compares current score to previous case score
+  - Green ArrowUpRight icon with "+N" for improved scores
+  - Red ArrowDownRight icon with "-N" for declined scores
+  - Minus icon with "0" for unchanged scores
+  - Placed below grade badge in Recent Activity cards
+  - Compares each recent case with the case before it in caseResults
+- Added Outcome Badges to both Completed Cases and Recent Activity sections:
+  - master: gold/yellow badge with Crown icon
+  - cooperative: emerald badge with Handshake icon
+  - hard_bargain: amber badge with Shield icon
+  - bad_deal: red badge with AlertTriangle icon
+  - strategic_no_deal: cyan badge with Footprints (walk) icon
+  - ethical_failure: rose badge with AlertTriangle icon
+  - no_deal_bad: orange badge with AlertTriangle icon
+  - Replaced plain "capitalize outcome text" with colored icon badges
+- All lint checks pass cleanly with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- Visual Tier Badge: circular progress ring with tier number, amber gradient text, progress to next tier
+- Completion Percentage Ring: small SVG ring showing overall game completion % with number in center
+- Score Trend Indicators: green up / red down arrows with score difference in Recent Activity
+- Outcome Badges: colored icon badges (Crown, Handshake, Shield, AlertTriangle, Footprints) replacing plain text
+- All 4 requested features fully implemented
+- Existing functionality preserved — no breaking changes
+
+---
+Task ID: 9-a
+Agent: Feature Developer (Negotiation Phase Progress Bar)
+Task: Add Negotiation Phase Progress Bar and Choice Timeline to NegotiationTable component
+
+Work Log:
+- Read worklog.md to understand project progress from 8+ previous agents
+- Read NegotiationTable.tsx (1151 lines) to understand the full component structure
+- Read types.ts to confirm CHOICE_TYPE_STYLES format (10 choice types with color, icon, label)
+- Added GitBranch icon to lucide-react imports
+- Added phase progress computation:
+  - progressPercent: calculated from dialogueProgress (current/total * 100)
+  - PHASES constant: ['Opening', 'Discovery', 'Bargaining', 'Closing']
+  - currentPhase: Opening (0-25%), Discovery (25-50%), Bargaining (50-75%), Closing (75-100%)
+- Added choiceTimeline useMemo: builds timeline entries from dialogueHistory by looking up choice types in scenario.dialogueTree, maps to CHOICE_TYPE_STYLES icons/labels
+- Added Mobile Phase Progress Bar to mobile mini-bars area (lg:hidden):
+  - Thin h-1 amber gradient progress bar with phase boundary markers at 25%/50%/75%
+  - Current phase label in amber-400 on the right
+  - Responsive - compact on mobile
+- Added Desktop Phase Progress Bar to Top Bar area (after existing content):
+  - Phase labels row: "Opening", "Discovery", "Bargaining", "Closing" with active phase glowing amber + animated ▸ marker
+  - Past phases shown in amber-500/50, future phases in muted-foreground/40
+  - h-1.5 rounded-full progress track with phase boundary lines at 25%/50%/75%
+  - Amber gradient fill (from-amber-600 via-amber-500 to-amber-400) animated with motion.div
+  - Glowing position dot at current progress with pulsing animation
+  - Node count and percentage below the bar
+- Added Choice Timeline to Right Sidebar (desktop only):
+  - Section header with GitBranch icon
+  - Vertical timeline with left border line and amber dots
+  - Each choice shows emoji icon from CHOICE_TYPE_STYLES + choice text (line-clamp-2) + choice label
+  - max-h-48 overflow-y-auto for scrollable timeline
+  - "No choices made yet" empty state
+- All lint checks pass cleanly with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- Negotiation Phase Progress Bar: visual indicator showing dialogue progression through 4 phases (Opening, Discovery, Bargaining, Closing)
+- Desktop: full progress bar with phase labels, animated glow dot, amber gradient fill, boundary markers
+- Mobile: thin compact progress bar with phase label in mini-bars area
+- Choice Timeline: vertical timeline in right sidebar showing all choices made with icons from CHOICE_TYPE_STYLES
+- All changes confined to NegotiationTable.tsx - no new files, no game store changes
+- Existing functionality fully preserved

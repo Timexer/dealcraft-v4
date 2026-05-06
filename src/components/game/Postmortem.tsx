@@ -44,6 +44,8 @@ import {
   Sparkles,
   Flame,
   FileText,
+  XCircle,
+  BookOpen,
 } from 'lucide-react';
 
 const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string; maxColor: string }[] = [
@@ -54,6 +56,61 @@ const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string;
   { key: 'ethicalIntegrity', label: 'Ethical Integrity', color: 'bg-teal-500', maxColor: 'bg-teal-500/30' },
   { key: 'strategicDiscipline', label: 'Strategic Discipline', color: 'bg-cyan-500', maxColor: 'bg-cyan-500/30' },
 ];
+
+const SCORE_DIMENSION_DETAILS: Record<string, { explanation: string; tip: string }> = {
+  clientEconomicValue: {
+    explanation: "How well you protected and advanced your client's financial interests in the deal",
+    tip: "Always quantify your BATNA before negotiating. A strong alternative gives you leverage to claim more value."
+  },
+  jointValueCreated: {
+    explanation: "How much additional value you created through logrolling, contingency contracts, and creative problem-solving",
+    tip: "Look for differences in risk preferences, time preferences, and assessments to create value that both sides can share."
+  },
+  infoDiscovered: {
+    explanation: "How effectively you uncovered hidden information and used it to make better decisions",
+    tip: "Ask diagnostic questions before making offers. The more you know about the other side's interests, the more value you can create."
+  },
+  relationshipPreserved: {
+    explanation: "How well you maintained the relationship with the counterparty for future dealings",
+    tip: "Separate the people from the problem. Face-saving concessions and empathetic listening preserve relationships without sacrificing value."
+  },
+  ethicalIntegrity: {
+    explanation: "Whether you maintained ethical standards or used deception and manipulation",
+    tip: "Ethical negotiation builds long-term reputation. Deception may win a single deal but destroys future opportunities."
+  },
+  strategicDiscipline: {
+    explanation: "How well you stuck to your strategy and avoided common biases and traps",
+    tip: "Watch for anchoring bias, fixed-pie assumptions, and escalation of commitment. Discipline prevents costly mistakes."
+  }
+};
+
+function getScoreQuality(score: number): { icon: React.ReactNode; label: string; colorClass: string } {
+  if (score >= 80) {
+    return {
+      icon: <Star className="h-4 w-4" />,
+      label: 'Great',
+      colorClass: 'text-emerald-400',
+    };
+  } else if (score >= 60) {
+    return {
+      icon: <CheckCircle2 className="h-4 w-4" />,
+      label: 'Good',
+      colorClass: 'text-cyan-400',
+    };
+  } else if (score >= 40) {
+    return {
+      icon: <AlertTriangle className="h-4 w-4" />,
+      label: 'Needs Work',
+      colorClass: 'text-amber-400',
+    };
+  } else {
+    return {
+      icon: <XCircle className="h-4 w-4" />,
+      label: 'Critical',
+      colorClass: 'text-red-400',
+    };
+  }
+}
 
 const GRADE_COLORS: Record<string, string> = {
   S: 'text-yellow-400 border-yellow-500/50 bg-yellow-500/10',
@@ -201,6 +258,21 @@ export function Postmortem() {
         next.delete(trapId);
       } else {
         next.add(trapId);
+      }
+      return next;
+    });
+  }, []);
+
+  // Expanded score dimensions state
+  const [expandedDimensions, setExpandedDimensions] = useState<Set<string>>(new Set());
+
+  const toggleDimension = useCallback((dimKey: string) => {
+    setExpandedDimensions(prev => {
+      const next = new Set(prev);
+      if (next.has(dimKey)) {
+        next.delete(dimKey);
+      } else {
+        next.add(dimKey);
       }
       return next;
     });
@@ -407,29 +479,173 @@ export function Postmortem() {
               </Card>
             </motion.div>
 
-            {/* Score Dimensions with Animated Comparison Bars */}
+            {/* Score Dimensions with Expandable Cards */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <BarChart3 className="h-4 w-4 text-cyan-400" />
                     Score Breakdown
+                    <span className="text-[10px] font-normal text-muted-foreground ml-1">Click to expand</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 space-y-4">
+                <CardContent className="pt-0 space-y-2">
                   {SCORE_DIMENSIONS.map((dim, i) => {
                     const playerScore = latestResult.scores[dim.key];
                     const maxScore = masterScores ? masterScores[dim.key] : 100;
+                    const isExpanded = expandedDimensions.has(dim.key);
+                    const quality = getScoreQuality(playerScore);
+                    const details = SCORE_DIMENSION_DETAILS[dim.key];
+                    const scoreGap = maxScore - playerScore;
+
                     return (
-                      <ComparisonBar
+                      <motion.div
                         key={dim.key}
-                        playerScore={playerScore}
-                        maxScore={maxScore}
-                        label={dim.label}
-                        playerColor={dim.color}
-                        maxColor={dim.maxColor}
-                        delay={500 + i * 100}
-                      />
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.6 + i * 0.08 }}
+                        className={`rounded-lg border transition-colors duration-200 cursor-pointer ${
+                          isExpanded
+                            ? 'bg-card/80 border-border/60'
+                            : 'bg-card/30 border-border/30 hover:bg-card/50 hover:border-border/50'
+                        }`}
+                        onClick={() => toggleDimension(dim.key)}
+                      >
+                        {/* Collapsed header row */}
+                        <div className="flex items-center gap-3 p-3">
+                          {/* Score Quality Indicator */}
+                          <div className={`shrink-0 flex items-center justify-center ${quality.colorClass}`}>
+                            {quality.icon}
+                          </div>
+
+                          {/* Label and score bar */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-medium truncate">{dim.label}</span>
+                              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                                <span className="text-xs font-bold">{playerScore}</span>
+                                <span className="text-[10px] text-muted-foreground">/</span>
+                                <span className="text-[10px] text-muted-foreground">{maxScore}</span>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[9px] px-1.5 py-0 border-0 ${
+                                    playerScore >= 80
+                                      ? 'bg-emerald-500/15 text-emerald-400'
+                                      : playerScore >= 60
+                                      ? 'bg-cyan-500/15 text-cyan-400'
+                                      : playerScore >= 40
+                                      ? 'bg-amber-500/15 text-amber-400'
+                                      : 'bg-red-500/15 text-red-400'
+                                  }`}
+                                >
+                                  {quality.label}
+                                </Badge>
+                              </div>
+                            </div>
+                            {/* Mini progress bar */}
+                            <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                              <motion.div
+                                className={`h-full rounded-full ${dim.color}`}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${playerScore}%` }}
+                                transition={{ duration: 0.8, delay: 0.7 + i * 0.08, ease: 'easeOut' }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Expand/collapse chevron */}
+                          <motion.div
+                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="shrink-0 text-muted-foreground"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </motion.div>
+                        </div>
+
+                        {/* Expandable detail section */}
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3, ease: 'easeInOut' }}
+                              className="overflow-hidden"
+                            >
+                              <div className="px-3 pb-3 pt-0 space-y-3 border-t border-border/20">
+                                {/* Explanation */}
+                                <div className="mt-3">
+                                  <p className="text-xs text-muted-foreground leading-relaxed">
+                                    {details?.explanation}
+                                  </p>
+                                </div>
+
+                                {/* Mini comparison: you vs master */}
+                                <div className="flex items-center gap-3 p-2.5 rounded-md bg-muted/20">
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className="text-[10px] text-muted-foreground">Your Score</span>
+                                      <span className="text-[10px] font-bold">{playerScore}</span>
+                                    </div>
+                                    <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full ${dim.color} stat-bar-gradient`}
+                                        style={{ width: `${playerScore}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className="text-[10px] text-yellow-300 flex items-center gap-1">
+                                        <Crown className="h-2.5 w-2.5" />
+                                        Master
+                                      </span>
+                                      <span className="text-[10px] font-bold text-yellow-300">{maxScore}</span>
+                                    </div>
+                                    <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full rounded-full bg-yellow-500/50 stat-bar-gradient"
+                                        style={{ width: `${maxScore}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Score gap indicator */}
+                                {scoreGap > 0 && (
+                                  <div className="flex items-center gap-1.5 text-[10px] text-amber-400/70">
+                                    <TrendingUp className="h-3 w-3" />
+                                    <span>{scoreGap} points away from master deal in this dimension</span>
+                                  </div>
+                                )}
+                                {scoreGap <= 0 && (
+                                  <div className="flex items-center gap-1.5 text-[10px] text-emerald-400">
+                                    <Star className="h-3 w-3" />
+                                    <span>You matched or exceeded the master deal in this dimension!</span>
+                                  </div>
+                                )}
+
+                                {/* Improvement Tip */}
+                                <div className="p-2.5 rounded-md bg-amber-500/10 border border-amber-500/15">
+                                  <div className="flex items-center gap-1.5 mb-1">
+                                    <BookOpen className="h-3 w-3 text-amber-400" />
+                                    <p className="text-[10px] text-amber-400 font-semibold uppercase tracking-wider">
+                                      Improvement Tip
+                                    </p>
+                                  </div>
+                                  <p className="text-xs text-amber-200/80 leading-relaxed italic">
+                                    {details?.tip}
+                                  </p>
+                                  <p className="text-[9px] text-amber-400/40 mt-1">
+                                    — From &ldquo;Negotiation Genius&rdquo; by Malhotra & Bazerman
+                                  </p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
                     );
                   })}
                 </CardContent>
