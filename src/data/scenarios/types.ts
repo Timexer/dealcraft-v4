@@ -1,0 +1,279 @@
+export interface DifficultyRating {
+  economicComplexity: number;
+  emotionalComplexity: number;
+  ethicalComplexity: number;
+  informationAsymmetry: number;
+  powerImbalance: number;
+  timePressure: number;
+  relationshipStakes: number;
+}
+
+export interface PersonalityTraits {
+  truthfulness: number;
+  ego: number;
+  riskTolerance: number;
+  patience: number;
+  trustSensitivity: number;
+  fairnessSensitivity: number;
+  authorityLevel: number;
+  emotionalVolatility: number;
+  preparationLevel: number;
+  relationshipOrientation: number;
+}
+
+export interface CharacterProfile {
+  name: string;
+  role: string;
+  personality: PersonalityTraits;
+  avatar: string;
+}
+
+export interface NegotiableIssue {
+  id: string;
+  name: string;
+  description: string;
+  clientPriority: number;
+  counterpartyPriority: number;
+  tradeability: 'low' | 'medium' | 'high';
+  possibleValues: string[];
+  resolved?: boolean;
+  resolvedValue?: string;
+}
+
+export interface BATNAInfo {
+  clientBATNA: string;
+  clientBATNAValue: number;
+  clientReservationValue: number;
+  counterpartyBATNA: string;
+  counterpartyBATNAValue: number;
+  counterpartyReservationValue: number;
+  estimatedZOPALow: number;
+  estimatedZOPAHigh: number;
+  trueZOPALow: number;
+  trueZOPAHigh: number;
+}
+
+export interface InvestigationAction {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  reveals: string[];
+  riskLevel: 'low' | 'medium' | 'high';
+  responseText: string;
+}
+
+export interface StateEffect {
+  trust?: number;
+  anger?: number;
+  patience?: number;
+  informationRevealed?: string[];
+  concessionMade?: string;
+  valueClaimed?: number;
+  valueCreated?: number;
+  relationshipImpact?: number;
+  ethicalImpact?: number;
+  reputationImpact?: number;
+  clientSatisfaction?: number;
+  counterpartySatisfaction?: number;
+}
+
+export interface DialogueChoice {
+  id: string;
+  text: string;
+  type: 'diagnostic' | 'aggressive_anchor' | 'face_saving' | 'concession' | 'silence' | 'investigative' | 'threat' | 'empathy' | 'walk_away' | 'package_offer';
+  nextNodeId: string;
+  effects: StateEffect[];
+  requirement?: { type: 'info_discovered'; factId: string } | { type: 'min_trust'; value: number } | { type: 'max_anger'; value: number };
+  disabledReason?: string;
+}
+
+export interface DialogueNode {
+  id: string;
+  speaker: 'client' | 'counterparty' | 'narrator' | 'advisor';
+  text: string;
+  choices?: DialogueChoice[];
+  isAuto?: boolean;
+  effects?: StateEffect[];
+  nextNodeId?: string;
+}
+
+export interface EndingScores {
+  clientEconomicValue: number;
+  jointValueCreated: number;
+  infoDiscovered: number;
+  relationshipPreserved: number;
+  ethicalIntegrity: number;
+  strategicDiscipline: number;
+}
+
+export interface CaseEnding {
+  id: string;
+  type: 'bad_deal' | 'no_deal_bad' | 'hard_bargain' | 'cooperative' | 'master' | 'ethical_failure' | 'strategic_no_deal';
+  title: string;
+  description: string;
+  scores: EndingScores;
+  longTermConsequence: string;
+}
+
+export interface PostmortemInfo {
+  masterSolution: string;
+  keyHiddenFact: string;
+  missedOpportunity: string;
+  lesson: string;
+  bestPossibleDeal: string;
+}
+
+export interface BiasEvent {
+  id: string;
+  type: 'fixed_pie' | 'escalation' | 'vividness' | 'egocentrism' | 'overconfidence' | 'regret_aversion' | 'anchor_shock';
+  triggerDialogueNodeId?: string;
+  description: string;
+  warningText: string;
+  countermeasure: string;
+}
+
+export interface CaseBriefing {
+  clientName: string;
+  clientRole: string;
+  situation: string;
+  clientDemands: string[];
+  knownFacts: string[];
+  missingInformation: string[];
+  timePressure: string;
+  stakes: string;
+  clientEmotionalState: string;
+}
+
+export interface Scenario {
+  id: string;
+  title: string;
+  subtitle: string;
+  category: 'fundamentals' | 'hidden_interests' | 'multi_issue' | 'deadline' | 'deception' | 'power_imbalance' | 'relationship' | 'ugly' | 'ethics' | 'master';
+  tier: number;
+  difficulty: DifficultyRating;
+  client: CharacterProfile;
+  counterparty: CharacterProfile;
+  briefing: CaseBriefing;
+  surfaceDemand: string;
+  hiddenTruth: string;
+  issues: NegotiableIssue[];
+  batna: BATNAInfo;
+  investigationActions: InvestigationAction[];
+  dialogueTree: DialogueNode[];
+  endings: CaseEnding[];
+  postmortem: PostmortemInfo;
+  biasTraps: BiasEvent[];
+  fee: number;
+  stakesLabel: string;
+}
+
+export interface PlayerStats {
+  preparation: number;
+  valueClaiming: number;
+  valueCreation: number;
+  investigation: number;
+  emotionalControl: number;
+  ethicalJudgment: number;
+  powerStrategy: number;
+  relationshipMgmt: number;
+  crisisHandling: number;
+  culturalAwareness: number;
+}
+
+export interface ReputationScores {
+  shark: number;
+  architect: number;
+  detective: number;
+  diplomat: number;
+  closer: number;
+  ethicist: number;
+  fixer: number;
+}
+
+export type GamePhase = 'title' | 'dashboard' | 'intake' | 'strategy' | 'investigation' | 'negotiation' | 'postmortem' | 'career';
+
+export interface NegotiationState {
+  trust: number;
+  anger: number;
+  patience: number;
+  currentDialogueNodeId: string;
+  choicesMade: string[];
+  informationRevealed: string[];
+  valueClaimed: number;
+  valueCreated: number;
+  relationshipImpact: number;
+  ethicalImpact: number;
+  clientSatisfaction: number;
+  counterpartySatisfaction: number;
+  concessionsGiven: string[];
+  concessionsReceived: string[];
+  biasTrapsTriggered: string[];
+  issuesResolved: Record<string, string>;
+  endingTriggered?: string;
+}
+
+export interface CaseResult {
+  scenarioId: string;
+  outcome: string;
+  scores: EndingScores;
+  finalScore: number;
+  choicesMade: string[];
+  hiddenFactsFound: string[];
+  postmortemRead: boolean;
+}
+
+export const CATEGORY_COLORS: Record<string, string> = {
+  fundamentals: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  hidden_interests: 'bg-violet-500/20 text-violet-400 border-violet-500/30',
+  multi_issue: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+  deadline: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  deception: 'bg-red-500/20 text-red-400 border-red-500/30',
+  power_imbalance: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  relationship: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
+  ugly: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+  ethics: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+  master: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+};
+
+export const CATEGORY_LABELS: Record<string, string> = {
+  fundamentals: 'Fundamentals',
+  hidden_interests: 'Hidden Interests',
+  multi_issue: 'Multi-Issue Deals',
+  deadline: 'Deadline Pressure',
+  deception: 'Deception',
+  power_imbalance: 'Power Imbalance',
+  relationship: 'Relationship & Reputation',
+  ugly: 'Ugly Negotiations',
+  ethics: 'Ethics',
+  master: 'Master Cases',
+};
+
+export const CHOICE_TYPE_STYLES: Record<string, { color: string; icon: string; label: string }> = {
+  diagnostic: { color: 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/30', icon: '🔍', label: 'Diagnostic' },
+  aggressive_anchor: { color: 'bg-amber-500/20 border-amber-500/40 text-amber-300 hover:bg-amber-500/30', icon: '💪', label: 'Assertive' },
+  face_saving: { color: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30', icon: '🤝', label: 'Face-saving' },
+  concession: { color: 'bg-slate-500/20 border-slate-500/40 text-slate-300 hover:bg-slate-500/30', icon: '↩️', label: 'Concession' },
+  silence: { color: 'bg-slate-600/20 border-slate-600/40 text-slate-400 hover:bg-slate-600/30', icon: '😐', label: 'Silence' },
+  investigative: { color: 'bg-violet-500/20 border-violet-500/40 text-violet-300 hover:bg-violet-500/30', icon: '🔎', label: 'Investigative' },
+  threat: { color: 'bg-red-500/20 border-red-500/40 text-red-300 hover:bg-red-500/30', icon: '⚠️', label: 'Threat' },
+  empathy: { color: 'bg-pink-500/20 border-pink-500/40 text-pink-300 hover:bg-pink-500/30', icon: '💙', label: 'Empathy' },
+  walk_away: { color: 'bg-red-600/20 border-red-600/40 text-red-400 hover:bg-red-600/30', icon: '🚪', label: 'Walk Away' },
+  package_offer: { color: 'bg-purple-500/20 border-purple-500/40 text-purple-300 hover:bg-purple-500/30', icon: '📦', label: 'Package' },
+};
+
+export const TIER_NAMES: Record<number, string> = {
+  1: 'Junior Associate',
+  2: 'Deal Associate',
+  3: 'Senior Negotiator',
+  4: 'Crisis Partner',
+  5: 'Master Negotiator',
+};
+
+export const TIER_DESCRIPTIONS: Record<number, string> = {
+  1: 'Small disputes, simple BATNA/ZOPA, one or two issues',
+  2: 'Corporate clients, multi-issue contracts, hidden interests',
+  3: 'Higher stakes, deception, aggressive counterparts, internal politics',
+  4: 'Public pressure, moral ambiguity, multiple parties',
+  5: 'Global, historical-scale, multi-party, high-consequence negotiations',
+};

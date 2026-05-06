@@ -1,0 +1,58 @@
+import { Scenario } from './types';
+
+export const case17: Scenario = {
+  id: 'case-17',
+  title: 'Small Nation Debt Talks',
+  subtitle: 'Desperation is the worst negotiating position',
+  category: 'power_imbalance',
+  tier: 4,
+  fee: 25000,
+  stakesLabel: '€800M debt',
+  difficulty: { economicComplexity: 5, emotionalComplexity: 3, ethicalComplexity: 4, informationAsymmetry: 4, powerImbalance: 5, timePressure: 4, relationshipStakes: 3 },
+  client: { name: 'Republic of Verdana', role: 'Island nation government', avatar: '🏝️', personality: { truthfulness: 55, ego: 40, riskTolerance: 25, patience: 30, trustSensitivity: 60, fairnessSensitivity: 65, authorityLevel: 50, emotionalVolatility: 50, preparationLevel: 35, relationshipOrientation: 50 } },
+  counterparty: { name: 'Creditors Alliance', role: 'International creditor consortium', avatar: '🏦', personality: { truthfulness: 35, ego: 55, riskTolerance: 50, patience: 60, trustSensitivity: 25, fairnessSensitivity: 30, authorityLevel: 85, emotionalVolatility: 15, preparationLevel: 80, relationshipOrientation: 15 } },
+  briefing: { clientName: 'Republic of Verdana', clientRole: 'Island nation — Ministry of Finance', situation: 'After a devastating hurricane, Verdana cannot service its €800M debt. Creditors demand austerity measures and full repayment. Verdana needs debt relief to rebuild. The power imbalance is enormous.', clientDemands: ['Debt restructuring with significant reduction', 'Austerity relief to allow rebuilding', 'Reasonable repayment timeline'], knownFacts: ['Verdana was current on payments before the hurricane', 'Hurricane destroyed 40% of GDP', 'Creditors demand full repayment with austerity conditions', 'IMF is monitoring the situation'], missingInfo: ['Do creditors actually expect full repayment?', 'What\'s the creditors\' real motivation?', 'Are there alternative restructuring options?'], timePressure: 'Reconstruction must begin before the next storm season — 4 months.', stakes: 'National survival. 800M debt vs. devastated economy.', clientEmotionalState: 'Desperate, feeling powerless, under immense pressure from citizens' },
+  surfaceDemand: 'Creditors demand austerity measures and full repayment of €800M debt from a hurricane-devastated island nation.',
+  hiddenTruth: 'Creditors know Verdana can\'t pay in full and will eventually default. Their real goal is to extract maximum concessions now while the crisis is urgent, negotiating against Verdana\'s desperation. But creditors fear setting a precedent and need ESG PR — a structured default with IMF backing and an ESG-labeled restructuring would give creditors better optics than punitive austerity.',
+  issues: [
+    { id: 'debt_reduction', name: 'Debt Reduction', description: 'Percentage of debt to be written off', clientPriority: 10, counterpartyPriority: 8, tradeability: 'medium', possibleValues: ['0%', '20%', '40%', '60%'] },
+    { id: 'timeline', name: 'Repayment Timeline', description: 'Years to complete repayment', clientPriority: 8, counterpartyPriority: 7, tradeability: 'high', possibleValues: ['5 years', '10 years', '20 years', '30 years'] },
+    { id: 'austerity', name: 'Austerity Conditions', description: 'Required spending cuts and reforms', clientPriority: 9, counterpartyPriority: 9, tradeability: 'medium', possibleValues: ['Full austerity package', 'Reduced austerity', 'Growth-focused conditions', 'Rebuilding-focused conditions'] },
+    { id: 'esg_label', name: 'ESG Designation', description: 'Whether the restructuring gets ESG/ethical investment labeling', clientPriority: 5, counterpartyPriority: 8, tradeability: 'high', possibleValues: ['No ESG label', 'Standard ESG', 'Climate resilience ESG', 'Model ESG restructuring'] },
+  ],
+  batna: { clientBATNA: 'Unilateral default (economic isolation, credit destruction)', clientBATNAValue: 100000000, clientReservationValue: 400000000, counterpartyBATNA: 'Foreclosure and asset seizure (reputation damage, practical difficulty)', counterpartyBATNAValue: 300000000, counterpartyReservationValue: 500000000, estimatedZOPALow: 350000000, estimatedZOPAHigh: 550000000, trueZOPALow: 300000000, trueZOPAHigh: 600000000 },
+  investigationActions: [
+    { id: 'inv_creditor_motives', name: 'Analyze Creditor Motivations', description: 'Understand what creditors really need from this restructuring', cost: 1, reveals: ['esg_pressure', 'precedent_fear'], riskLevel: 'low', responseText: 'Creditors are under ESG pressure from their own investors. A punitive restructuring looks bad. They need a deal they can label as "responsible" and "climate-aware." They also fear setting a precedent — if Verdana gets generous terms, every indebted nation will demand the same. They need the deal to look unique.' },
+    { id: 'inv_imf', name: 'Explore IMF Backing', description: 'Investigate IMF support options for debt restructuring', cost: 1, reveals: ['imf_option', 'structured_default'], riskLevel: 'low', responseText: 'The IMF is willing to support a "Climate Resilience Restructuring" — a first-of-its-kind framework that links debt relief to hurricane preparedness investments. This gives creditors ESG credibility and makes the deal unique, addressing their precedent concerns.' },
+  ],
+  dialogueTree: [
+    { id: 'start', speaker: 'narrator', text: 'The creditors\' lead negotiator sits in a conference room in Geneva. The power imbalance is palpable — a devastated nation across from a consortium of financial institutions.', isAuto: true, nextNodeId: 'creditor_opening' },
+    { id: 'creditor_opening', speaker: 'counterparty', text: '"The debt is €800M. We\'re prepared to offer a 5-year extension in exchange for a comprehensive austerity package. This is generous given the circumstances."', choices: [
+      { id: 'c1', text: '"Your nation is devastated. Austerity will kill more people than the hurricane did. We need a different framework."', type: 'empathy', nextNodeId: 'creditor_dismissive', effects: { trust: 5 } },
+      { id: 'c2', text: '"What if we proposed a Climate Resilience Restructuring? ESG-labeled, IMF-backed, first of its kind. You get better optics than austerity."', type: 'package_offer', nextNodeId: 'creditor_interested', effects: { trust: 15, valueCreated: 20, informationRevealed: ['esg_pressure'] } },
+      { id: 'c3', text: '"Verdana cannot pay €800M. Full stop. Let\'s discuss realistic terms."', type: 'aggressive_anchor', nextNodeId: 'creditor_firm', effects: { anger: 10, trust: -5 } },
+    ] },
+    { id: 'creditor_dismissive', speaker: 'counterparty', text: '"We understand the humanitarian situation. But debt is debt. Our investors expect repayment."', choices: [
+      { id: 'c4', text: '"Your investors also expect ESG compliance. A Climate Resilience Restructuring gives you both."', type: 'package_offer', nextNodeId: 'creditor_interested', effects: { trust: 10, valueCreated: 15, informationRevealed: ['esg_pressure'] } },
+    ] },
+    { id: 'creditor_firm', speaker: 'counterparty', text: '"We\'ve been down this road before. Nations promise reform and default anyway. We need guarantees."', choices: [
+      { id: 'c5', text: '"What if the guarantee was an IMF-backed Climate Resilience framework? Unique structure, ESG-labeled, precedent-setting in a good way."', type: 'package_offer', nextNodeId: 'creditor_interested', effects: { trust: 10, valueCreated: 15, informationRevealed: ['imf_option'] } },
+    ] },
+    { id: 'creditor_interested', speaker: 'counterparty', text: '"ESG-labeled restructuring... *considers* Our investors have been asking about our ESG commitments. And if the IMF is involved, that addresses our credibility concerns. What terms?"', choices: [
+      { id: 'c6', text: '"40% debt reduction, 25-year repayment, growth-focused conditions instead of austerity, IMF oversight, ESG Climate Resilience designation. First of its kind — your investors will love it."', type: 'package_offer', nextNodeId: 'creditor_hooked', effects: { trust: 15, valueCreated: 25, valueClaimed: 20 } },
+    ] },
+    { id: 'creditor_hooked', speaker: 'counterparty', text: '"A model restructuring... that could actually work for everyone. We get ESG credibility, you get relief, and it\'s structured as unique rather than precedent-setting."', choices: [
+      { id: 'c7', text: '"Exactly. Climate Resilience Restructuring — a new framework for a new reality. Deal?"', type: 'concession', nextNodeId: 'ending_master', effects: { trust: 15, valueClaimed: 15, valueCreated: 15 } },
+    ] },
+    { id: 'ending_master', speaker: 'narrator', text: '👑 MASTER OUTCOME: 40% debt reduction + 25-year repayment + growth-focused conditions + IMF oversight + ESG Climate Resilience designation. When you\'re desperate, the other side negotiates against your urgency — create alternatives before you need them.', isAuto: true },
+    { id: 'ending_cooperative', speaker: 'narrator', text: '🤝 COOPERATIVE WIN: 20% reduction with some austerity relief. Better than nothing but still painful.', isAuto: true },
+    { id: 'ending_hard_bargain', speaker: 'narrator', text: '⚡ HARD BARGAIN: Default. Economic isolation. Long recovery ahead.', isAuto: true },
+  ],
+  endings: [
+    { id: 'ending_master', type: 'master', title: 'Climate Resilience Model', description: 'Created a first-of-its-kind ESG restructuring that gives creditors better optics than punitive terms.', scores: { clientEconomicValue: 90, jointValueCreated: 85, infoDiscovered: 85, relationshipPreserved: 80, ethicalIntegrity: 90, strategicDiscipline: 85 }, longTermConsequence: 'Verdana rebuilds with IMF support. The Climate Resilience Restructuring becomes a model for other climate-vulnerable nations. Creditors get ESG credibility.' },
+    { id: 'ending_cooperative', type: 'cooperative', title: 'Reduced Burden', description: 'Partial debt relief with some austerity easing.', scores: { clientEconomicValue: 60, jointValueCreated: 45, infoDiscovered: 45, relationshipPreserved: 60, ethicalIntegrity: 65, strategicDiscipline: 55 }, longTermConsequence: 'Manageable but still painful. Verdana recovers slowly under continued austerity pressure.' },
+    { id: 'ending_hard_bargain', type: 'hard_bargain', title: 'Default Crisis', description: 'Unilateral default. Economic isolation.', scores: { clientEconomicValue: 20, jointValueCreated: -10, infoDiscovered: 30, relationshipPreserved: 5, ethicalIntegrity: 40, strategicDiscipline: 20 }, longTermConsequence: 'Economic isolation. Credit destroyed. Recovery takes a decade.' },
+  ],
+  postmortem: { masterSolution: 'Reframe as Climate Resilience Restructuring with IMF backing and ESG designation. Creditors get better optics than austerity; Verdana gets real relief.', keyHiddenFact: 'Creditors need ESG credibility and fear precedent. A unique, labeled restructuring addresses both concerns.', missedOpportunity: 'Accepting austerity terms out of desperation means rebuilding is impossible, leading to further defaults.', lesson: 'When you\'re desperate, the other side negotiates against your urgency. Create alternatives before you need them.', bestPossibleDeal: '40% debt reduction + 25-year repayment + growth conditions + IMF oversight + ESG designation.' },
+  biasTraps: [{ id: 'bias_fixed_pie', type: 'fixed_pie', description: 'You may think the only options are paying or defaulting.', warningText: '⚠️ FIXED-PIE BIAS: This isn\'t just about how much debt to forgive. ESG labeling, IMF involvement, and restructuring frameworks create value that makes debt relief palatable for creditors.', countermeasure: 'Consider what creditors need beyond repayment — ESG optics and precedent management are tradeable.' }],
+};
