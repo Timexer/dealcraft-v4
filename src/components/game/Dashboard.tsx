@@ -52,7 +52,7 @@ export function Dashboard() {
         >
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Welcome back, <span className="text-amber-500">{playerName}</span>
+              Welcome back, <span className="gradient-text">{playerName}</span>
             </h1>
             <p className="text-muted-foreground mt-1">{tierName} — {tierDesc}</p>
           </div>
@@ -64,7 +64,7 @@ export function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Stats Overview */}
+        {/* Stats Overview - Glassmorphism cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {[
             { label: 'Tier', value: tierName, icon: Briefcase, color: 'text-amber-500' },
@@ -78,7 +78,7 @@ export function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <Card className="bg-card/50 border-border/50">
+              <Card className="glass-card hover:border-amber-500/20 transition-all duration-200">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <stat.icon className={`h-4 w-4 ${stat.color}`} />
@@ -91,14 +91,16 @@ export function Dashboard() {
           ))}
         </div>
 
-        {/* Tier Progress */}
-        <Card className="bg-card/50 border-border/50">
+        {/* Tier Progress - with animated gradient */}
+        <Card className="glass-card overflow-hidden">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Progress to {TIER_NAMES[Math.min(careerTier + 1, 5)]}</span>
               <span className="text-sm text-muted-foreground">{casesCompleted}/{nextTierThreshold} cases</span>
             </div>
-            <Progress value={tierProgress} className="h-2" />
+            <div className="tier-progress-bar rounded-full overflow-hidden">
+              <Progress value={tierProgress} className="h-2.5" />
+            </div>
           </CardContent>
         </Card>
 
@@ -108,8 +110,10 @@ export function Dashboard() {
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Star className="h-5 w-5 text-amber-500" />
               Available Cases
+              <span className="ml-1 text-xs font-normal text-muted-foreground px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                {availableCases.length} available
+              </span>
             </h2>
-            <span className="text-sm text-muted-foreground">{availableCases.length} cases available</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -121,7 +125,7 @@ export function Dashboard() {
                 transition={{ delay: i * 0.05 }}
               >
                 <Card
-                  className="bg-card/50 border-border/50 hover:border-amber-500/30 transition-all cursor-pointer group"
+                  className="game-card cursor-pointer group hover:scale-[1.01] hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200"
                   onClick={() => handleSelectCase(scenario.id)}
                 >
                   <CardHeader className="pb-3">
@@ -129,7 +133,7 @@ export function Dashboard() {
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">{scenario.client.avatar}</span>
                         <div>
-                          <CardTitle className="text-base leading-tight">{scenario.title}</CardTitle>
+                          <CardTitle className="text-base leading-tight group-hover:text-amber-500 transition-colors duration-200">{scenario.title}</CardTitle>
                           <CardDescription className="text-xs mt-0.5">{scenario.subtitle}</CardDescription>
                         </div>
                       </div>
@@ -143,9 +147,31 @@ export function Dashboard() {
                       <Badge variant="outline" className="text-[10px] px-2 py-0">
                         Tier {scenario.tier}
                       </Badge>
-                      <span className={`text-[10px] font-medium ${getDifficultyColor(getDifficultyLabel(scenario.difficulty))}`}>
-                        {getDifficultyLabel(scenario.difficulty)}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className={`text-[10px] font-medium ${getDifficultyColor(getDifficultyLabel(scenario.difficulty))}`}>
+                          {getDifficultyLabel(scenario.difficulty)}
+                        </span>
+                        <div className="flex items-center">
+                          {(() => {
+                            const avgDifficulty = (
+                              scenario.difficulty.economicComplexity +
+                              scenario.difficulty.emotionalComplexity +
+                              scenario.difficulty.ethicalComplexity +
+                              scenario.difficulty.informationAsymmetry +
+                              scenario.difficulty.powerImbalance +
+                              scenario.difficulty.timePressure +
+                              scenario.difficulty.relationshipStakes
+                            ) / 7;
+                            const starRating = Math.round(avgDifficulty);
+                            return Array.from({ length: 5 }).map((_, starIdx) => (
+                              <Star
+                                key={starIdx}
+                                className={`h-3 w-3 ${starIdx < starRating ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground/30'}`}
+                              />
+                            ));
+                          })()}
+                        </div>
+                      </div>
                     </div>
 
                     {scenario.stakesLabel && (
@@ -157,7 +183,7 @@ export function Dashboard() {
 
                     <div className="flex items-center justify-between pt-1">
                       <span className="text-xs text-muted-foreground">Fee: €{scenario.fee.toLocaleString()}</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-amber-500 transition-colors" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all duration-200" />
                     </div>
                   </CardContent>
                 </Card>
@@ -166,7 +192,7 @@ export function Dashboard() {
           </div>
 
           {availableCases.length === 0 && (
-            <Card className="bg-card/50 border-border/50">
+            <Card className="glass-card">
               <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground">No cases available. Complete career progression to unlock more!</p>
               </CardContent>
@@ -180,27 +206,37 @@ export function Dashboard() {
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Trophy className="h-5 w-5 text-emerald-500" />
               Completed Cases
+              <span className="ml-1 text-xs font-normal text-muted-foreground px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                {caseResults.length} closed
+              </span>
             </h2>
-            <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+            <div className="space-y-2 max-h-64 overflow-y-auto">
               {caseResults.map((result, i) => {
                 const scenario = getScenarioById(result.scenarioId);
                 if (!scenario) return null;
                 return (
-                  <Card key={i} className="bg-card/30 border-border/30">
-                    <CardContent className="p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">{scenario.client.avatar}</span>
-                        <div>
-                          <p className="text-sm font-medium">{scenario.title}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{result.outcome.replace(/_/g, ' ')}</p>
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                  >
+                    <Card className="bg-card/30 border-border/30 hover:bg-card/50 hover:border-amber-500/15 transition-all duration-200 cursor-default">
+                      <CardContent className="p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">{scenario.client.avatar}</span>
+                          <div>
+                            <p className="text-sm font-medium">{scenario.title}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{result.outcome.replace(/_/g, ' ')}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-amber-500">{result.finalScore}</p>
-                        <p className="text-xs text-muted-foreground">points</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-amber-500">{result.finalScore}</p>
+                          <p className="text-xs text-muted-foreground">points</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 );
               })}
             </div>

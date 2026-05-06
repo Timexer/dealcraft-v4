@@ -286,9 +286,9 @@ export function NegotiationTable() {
 
   const speakerStyles: Record<string, string> = {
     narrator: 'italic text-muted-foreground bg-muted/20 border-l-2 border-muted-foreground/30',
-    counterparty: 'text-foreground bg-card/50 border-l-2 border-cyan-500/40',
-    client: 'text-foreground bg-amber-500/10 border-l-2 border-amber-500/40',
-    advisor: 'text-amber-200 bg-amber-500/10 border-l-2 border-amber-400/50',
+    counterparty: 'text-foreground bg-card/50 border-l-2 border-cyan-500/40 shadow-sm shadow-cyan-500/5',
+    client: 'text-foreground bg-amber-500/10 border-l-2 border-amber-500/40 shadow-sm shadow-amber-500/5',
+    advisor: 'text-amber-200 bg-amber-500/10 border-l-2 border-amber-400/50 shadow-sm shadow-amber-400/5',
   };
 
   const speakerLabels: Record<string, { label: string; icon: string }> = {
@@ -299,9 +299,12 @@ export function NegotiationTable() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 grid-pattern opacity-40 pointer-events-none" />
+
       {/* Top Bar */}
-      <div className="border-b border-border/50 bg-card/30 backdrop-blur-sm px-4 py-3">
+      <div className="relative border-b border-border/50 bg-card/30 backdrop-blur-sm px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="text-2xl">{counterparty.avatar}</div>
@@ -322,7 +325,7 @@ export function NegotiationTable() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex max-w-6xl w-full mx-auto">
+      <div className="relative flex-1 flex max-w-6xl w-full mx-auto">
         {/* Dialogue Area */}
         <div className="flex-1 flex flex-col">
           <ScrollArea className="flex-1 p-4 sm:p-6">
@@ -373,10 +376,10 @@ export function NegotiationTable() {
                       {speakerLabels[currentNode.speaker]?.label}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-amber-400 rounded-full typing-dot" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 bg-amber-400 rounded-full typing-dot" style={{ animationDelay: '200ms' }} />
+                    <span className="w-2 h-2 bg-amber-400 rounded-full typing-dot" style={{ animationDelay: '400ms' }} />
                   </div>
                 </motion.div>
               )}
@@ -406,14 +409,14 @@ export function NegotiationTable() {
                           <Tooltip key={choice.id}>
                             <TooltipTrigger asChild>
                               <motion.button
-                                whileHover={!disabled ? { scale: 1.01 } : {}}
-                                whileTap={!disabled ? { scale: 0.99 } : {}}
+                                whileHover={!disabled ? { scale: 1.015, boxShadow: '0 0 16px oklch(0.77 0.16 75 / 12%)' } : {}}
+                                whileTap={!disabled ? { scale: 0.985 } : {}}
                                 onClick={() => !disabled && handleChoiceClick(choice)}
                                 disabled={disabled}
-                                className={`w-full text-left p-3 rounded-lg border transition-all flex items-center gap-3 ${
+                                className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center gap-3 ${
                                   disabled
                                     ? 'opacity-40 cursor-not-allowed bg-muted/20 border-border/20'
-                                    : `${style.color} cursor-pointer`
+                                    : `${style.color} cursor-pointer hover:border-amber-500/30`
                                 }`}
                               >
                                 <span className="text-lg shrink-0">{style.icon}</span>
@@ -441,22 +444,31 @@ export function NegotiationTable() {
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center py-4"
+                    className="text-center py-6"
                   >
                     <motion.div
                       initial={{ scale: 0.8 }}
                       animate={{ scale: 1 }}
                       transition={{ type: 'spring', stiffness: 200 }}
                     >
-                      <p className="text-lg font-bold mb-3">The negotiation has concluded.</p>
-                      <Button
-                        onClick={handleViewResults}
-                        size="lg"
-                        className="bg-amber-600 hover:bg-amber-700 text-white gap-2"
+                      <p className="text-lg font-bold mb-4">The negotiation has concluded.</p>
+                      <motion.div
+                        animate={{ boxShadow: [
+                          '0 0 20px oklch(0.77 0.16 75 / 15%)',
+                          '0 0 30px oklch(0.77 0.16 75 / 25%)',
+                          '0 0 20px oklch(0.77 0.16 75 / 15%)',
+                        ] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                       >
-                        View Results
-                        <TrendingUp className="h-4 w-4" />
-                      </Button>
+                        <Button
+                          onClick={handleViewResults}
+                          size="lg"
+                          className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold gap-2 text-base px-8 h-12 premium-button"
+                        >
+                          View Results
+                          <TrendingUp className="h-5 w-5" />
+                        </Button>
+                      </motion.div>
                     </motion.div>
                   </motion.div>
                 )}
@@ -466,7 +478,7 @@ export function NegotiationTable() {
         </div>
 
         {/* Right Sidebar - Desktop only */}
-        <div className="hidden lg:block w-72 border-l border-border/50 bg-card/20 p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-120px)]">
+        <div className="hidden lg:block w-72 border-l border-border/50 bg-card/20 backdrop-blur-sm p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-120px)]">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Live Metrics</h3>
 
           {/* Trust Meter */}

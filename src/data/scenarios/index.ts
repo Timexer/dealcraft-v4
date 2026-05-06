@@ -4,10 +4,14 @@ import { case02 } from './case-02';
 import { case03 } from './case-03';
 import { case04 } from './case-04';
 import { case05 } from './case-05';
+import { case06 } from './case-06';
+import { case07 } from './case-07';
+import { case08 } from './case-08';
+import { case09 } from './case-09';
+import { case10 } from './case-10';
 
-// Compact scenario data for cases 6-30
-// These have essential metadata and shorter dialogue trees
-// Full dialogue trees can be expanded in future updates
+// Cases 06-10 are imported from their own files with rich dialogue trees
+// Cases 11-30 use makeCompactScenario with essential metadata and shorter dialogue trees
 
 function makeCompactScenario(partial: Partial<Scenario> & { id: string; title: string; tier: number; category: Scenario['category'] }): Scenario {
   const feeMap: Record<number, number> = { 1: 2000, 2: 5000, 3: 12000, 4: 25000, 5: 50000 };
@@ -55,91 +59,6 @@ function makeCompactScenario(partial: Partial<Scenario> & { id: string; title: s
     ...partial,
   };
 }
-
-const case06 = makeCompactScenario({
-  id: 'case-06', title: 'The Founder Who Won\'t Sell', subtitle: 'When price isn\'t the problem', tier: 2, category: 'hidden_interests',
-  stakesLabel: '€45M acquisition',
-  client: { name: 'Northbridge Capital', role: 'Private Equity Buyer', avatar: '🏦', personality: { truthfulness: 60, ego: 65, riskTolerance: 70, patience: 45, trustSensitivity: 40, fairnessSensitivity: 50, authorityLevel: 80, emotionalVolatility: 25, preparationLevel: 75, relationshipOrientation: 35 } },
-  counterparty: { name: 'Karl Weiss', role: 'Founder, Weiss Manufacturing', avatar: '🏭', personality: { truthfulness: 70, ego: 80, riskTolerance: 30, patience: 55, trustSensitivity: 75, fairnessSensitivity: 70, authorityLevel: 90, emotionalVolatility: 60, preparationLevel: 60, relationshipOrientation: 45 } },
-  briefing: { clientName: 'Northbridge Capital', clientRole: 'Private Equity Fund', situation: 'Northbridge wants to acquire Weiss Manufacturing, a family-owned precision parts company. Founder Karl Weiss has rejected every offer, even above market valuation.', clientDemands: ['Acquire Weiss Manufacturing at fair market price'], knownFacts: ['Company valued at €38-45M', 'Karl founded the company 35 years ago', 'Two previous offers rejected', 'Company is profitable and stable'], missingInformation: ['Why Karl keeps refusing', 'What Karl actually wants', 'Are there family dynamics at play?'], timePressure: 'Moderate — fund deployment deadline in 6 months', stakes: '€45M acquisition plus fund reputation', clientEmotionalState: 'Frustrated, confused by irrational refusal' },
-  surfaceDemand: 'Northbridge wants to close the acquisition at a fair market price.',
-  hiddenTruth: 'Karl fears layoffs of lifelong employees, loss of the Weiss family name on the building, and seeing his life\'s work dissolved into a portfolio. He doesn\'t care about getting more money.',
-  issues: [
-    { id: 'price', name: 'Purchase Price', description: 'Total acquisition price', clientPriority: 9, counterpartyPriority: 5, tradeability: 'low', possibleValues: ['€38M', '€40M', '€42M', '€45M'] },
-    { id: 'brand', name: 'Brand Preservation', description: 'Whether the Weiss name is retained', clientPriority: 3, counterpartyPriority: 10, tradeability: 'high', possibleValues: ['Rebranded', 'Weiss Division', 'Weiss Manufacturing (unchanged)'] },
-    { id: 'employees', name: 'Employee Protection', description: 'Job security guarantees for existing staff', clientPriority: 4, counterpartyPriority: 10, tradeability: 'high', possibleValues: ['No guarantees', '1-year protection', '3-year protection', 'Full tenure protection'] },
-    { id: 'founder_role', name: 'Founder Role', description: 'Karl\'s post-acquisition involvement', clientPriority: 5, counterpartyPriority: 8, tradeability: 'high', possibleValues: ['No role', 'Advisory', 'Board observer', 'Board seat'] },
-    { id: 'community', name: 'Community Investment', description: 'Investment in local community', clientPriority: 2, counterpartyPriority: 7, tradeability: 'high', possibleValues: ['None', 'Small fund', 'Major community fund'] },
-  ],
-  batna: { clientBATNA: 'Acquire another manufacturer', clientBATNAValue: 35000000, clientReservationValue: 45000000, counterpartyBATNA: 'Continue operating independently', counterpartyBATNAValue: 30000000, counterpartyReservationValue: 38000000, estimatedZOPALow: 38000000, estimatedZOPAHigh: 45000000, trueZOPALow: 35000000, trueZOPAHigh: 50000000 },
-  postmortem: { masterSolution: 'Slightly lower price + full employee protection + founder board observer + brand retained + community fund + performance earnout', keyHiddenFact: 'Karl is not refusing price — he is refusing identity loss and abandonment of his people.', missedOpportunity: 'If you only negotiate price, you miss that Karl values legacy and loyalty above money.', lesson: 'Some parties are not refusing price; they are refusing identity loss.', bestPossibleDeal: '€40M + 3yr employee protection + founder board observer + brand retained + €2M community fund + earnout' },
-  biasTraps: [{ id: 'overconfidence', type: 'overconfidence', description: 'PE fund assumes every seller has a price.', warningText: '⚠️ OVERCONFIDENCE: Not everyone is motivated by money. Ask what they would lose, not what they would gain.', countermeasure: 'Investigate the counterparty\'s non-financial priorities before assuming price is the lever.' }],
-});
-
-const case07 = makeCompactScenario({
-  id: 'case-07', title: 'Streaming Rights', subtitle: 'The art of the package deal', tier: 2, category: 'multi_issue',
-  stakesLabel: '€15M licensing',
-  client: { name: 'SilverArc Studios', role: 'Content Studio', avatar: '🎬', personality: { truthfulness: 65, ego: 55, riskTolerance: 50, patience: 55, trustSensitivity: 50, fairnessSensitivity: 60, authorityLevel: 70, emotionalVolatility: 35, preparationLevel: 70, relationshipOrientation: 50 } },
-  counterparty: { name: 'Diana Cross', role: 'VP Content, StreamVista', avatar: '📺', personality: { truthfulness: 55, ego: 60, riskTolerance: 65, patience: 45, trustSensitivity: 45, fairnessSensitivity: 50, authorityLevel: 75, emotionalVolatility: 40, preparationLevel: 80, relationshipOrientation: 55 } },
-  briefing: { clientName: 'SilverArc Studios', clientRole: 'Content Studio', situation: 'StreamVista wants regional streaming rights to SilverArc\'s cult comedy series "Night Markets." SilverArc wants the highest licensing fee possible.', clientDemands: ['Maximum licensing fee', 'Protect sequel value', 'Maintain creative control'], knownFacts: ['Series has devoted fanbase', 'StreamVista is the #2 platform', 'Previous season performed well'], missingInformation: ['What StreamVista values most', 'Whether there are competing offers', 'StreamVista\'s content strategy'], timePressure: 'Moderate — licensing window open for 3 months', stakes: '€15M+ licensing revenue', clientEmotionalState: 'Confident but cautious about undervaluing IP' },
-  surfaceDemand: 'SilverArc wants the highest possible upfront licensing fee.',
-  hiddenTruth: 'StreamVista values repeat runs and promotional exclusivity far more than SilverArc realizes. They would trade almost anything for extra runs and exclusive marketing rights.',
-  issues: [
-    { id: 'fee', name: 'Upfront Fee', description: 'Initial licensing payment', clientPriority: 9, counterpartyPriority: 6, tradeability: 'medium', possibleValues: ['€8M', '€10M', '€12M', '€15M'] },
-    { id: 'runs', name: 'Number of Runs', description: 'How many times the series can be streamed', clientPriority: 4, counterpartyPriority: 10, tradeability: 'high', possibleValues: ['2 runs', '4 runs', '6 runs', 'Unlimited'] },
-    { id: 'promo', name: 'Promotion Commitment', description: 'Marketing spend by platform', clientPriority: 5, counterpartyPriority: 7, tradeability: 'high', possibleValues: ['None', 'Basic', 'Major campaign', 'Exclusive promotion'] },
-    { id: 'sequel', name: 'Sequel Option', description: 'Rights to future seasons', clientPriority: 8, counterpartyPriority: 5, tradeability: 'medium', possibleValues: ['No option', 'First look', 'Right of first refusal', 'Co-production'] },
-    { id: 'revenue', name: 'Ad Revenue Share', description: 'Share of advertising revenue', clientPriority: 6, counterpartyPriority: 4, tradeability: 'high', possibleValues: ['No share', '5%', '10%', '15%'] },
-  ],
-  batna: { clientBATNA: 'License to competing platform', clientBATNAValue: 8000000, clientReservationValue: 10000000, counterpartyBATNA: 'License different content', counterpartyBATNAValue: 7000000, counterpartyReservationValue: 14000000, estimatedZOPALow: 10000000, estimatedZOPAHigh: 14000000, trueZOPALow: 10000000, trueZOPAHigh: 18000000 },
-  postmortem: { masterSolution: 'High upfront fee + expanded runs + mandatory promotion + sequel co-marketing + revenue share kicker', keyHiddenFact: 'StreamVista values repeat runs and promotional exclusivity more than the upfront fee discount they\'d save.', missedOpportunity: 'If you negotiate only the fee, you leave massive value on the table from trading issues with different priorities.', lesson: 'Splitting the difference destroys value when parties value issues differently.', bestPossibleDeal: '€15M upfront + unlimited runs + major promotion + sequel co-marketing + 12% ad revenue share' },
-});
-
-const case08 = makeCompactScenario({
-  id: 'case-08', title: 'The Logistics Contract', subtitle: 'Who controls the risk?', tier: 2, category: 'multi_issue',
-  stakesLabel: '€5M annual contract',
-  client: { name: 'MedSure Hospitals', role: 'Healthcare Network', avatar: '🏥', personality: { truthfulness: 70, ego: 45, riskTolerance: 35, patience: 30, trustSensitivity: 55, fairnessSensitivity: 70, authorityLevel: 65, emotionalVolatility: 50, preparationLevel: 55, relationshipOrientation: 60 } },
-  counterparty: { name: 'Raj Patel', role: 'CEO, MedRoute Logistics', avatar: '🚚', personality: { truthfulness: 60, ego: 50, riskTolerance: 55, patience: 50, trustSensitivity: 60, fairnessSensitivity: 65, authorityLevel: 70, emotionalVolatility: 40, preparationLevel: 65, relationshipOrientation: 55 } },
-  briefing: { clientName: 'MedSure Hospitals', clientRole: 'Regional Hospital Network', situation: 'MedSure is renegotiating its medical supply logistics contract after repeated delivery delays. They want lower prices and stricter penalties.', clientDemands: ['Lower base price', 'Stricter delay penalties', 'Guaranteed delivery windows'], knownFacts: ['Multiple delayed shipments in past year', 'Contract up for renewal', 'MedRoute is the incumbent provider'], missingInformation: ['Root cause of delays', 'Whether vendor controls the delay factors', 'Alternative providers available'], timePressure: 'Moderate — contract expires in 60 days', stakes: '€5M annual contract', clientEmotionalState: 'Frustrated by delays, wants accountability' },
-  surfaceDemand: 'MedSure wants lower prices and harsher penalties for late deliveries.',
-  hiddenTruth: 'The delays are caused by unpredictable hospital ordering patterns, not vendor incompetence. MedRoute performs well on deliveries they control, but hospitals change orders at the last minute.',
-  postmortem: { masterSolution: 'Shared forecasting portal + emergency inventory buffer + lower base price + bonus for forecast compliance + penalties only for controllable failures', keyHiddenFact: 'Delays are caused by hospital ordering chaos, not vendor performance.', missedOpportunity: 'Punitive penalties without fixing the root cause will only raise prices.', lesson: 'Before punishing poor performance, diagnose who controls the risk.', bestPossibleDeal: '8% price reduction + shared forecasting + bonus system + smart penalties' },
-});
-
-const case09 = makeCompactScenario({
-  id: 'case-09', title: 'The Impossible Delivery Date', subtitle: 'A deadline problem in disguise', tier: 3, category: 'deadline',
-  stakesLabel: '€1.8M launch risk',
-  client: { name: 'Northline Robotics', role: 'Robotics Manufacturer', avatar: '🤖', personality: { truthfulness: 70, ego: 55, riskTolerance: 40, patience: 25, trustSensitivity: 50, fairnessSensitivity: 55, authorityLevel: 70, emotionalVolatility: 60, preparationLevel: 60, relationshipOrientation: 45 } },
-  counterparty: { name: 'Viktor Varga', role: 'CEO, Varga Precision', avatar: '⚙️', personality: { truthfulness: 65, ego: 50, riskTolerance: 50, patience: 55, trustSensitivity: 60, fairnessSensitivity: 65, authorityLevel: 75, emotionalVolatility: 35, preparationLevel: 70, relationshipOrientation: 50 } },
-  briefing: { clientName: 'Northline Robotics', clientRole: 'Robotics Manufacturer', situation: 'Northline needs custom sensor housings within 45 days or they miss their product launch. Supplier Varga Precision says it\'s possible but requires a 22% expedite premium.', clientDemands: ['Delivery in 45 days', 'Remove or reduce expedite premium'], knownFacts: ['Launch date is critical', '22% premium requested', 'Varga is the only qualified supplier'], missingInformation: ['Why the premium is so high', 'Whether there are alternatives', 'What the real bottleneck is'], timePressure: 'Extremely high — 45 days until launch', stakes: '€1.8M estimated loss if launch delayed', clientEmotionalState: 'Anxious, feels supplier is exploiting urgency' },
-  surfaceDemand: 'Northline wants the 22% expedite premium removed.',
-  hiddenTruth: 'Varga\'s manufacturing can handle the timeline easily. The real cost is expedited international freight insurance — Varga lacks preferred logistics contracts. Northline has its own global shipping contract that could solve this.',
-  issues: [
-    { id: 'premium', name: 'Expedite Premium', description: 'Additional charge for rushed delivery', clientPriority: 8, counterpartyPriority: 6, tradeability: 'medium', possibleValues: ['22%', '15%', '10%', '0%'] },
-    { id: 'delivery', name: 'Delivery Date', description: 'When parts arrive', clientPriority: 10, counterpartyPriority: 7, tradeability: 'high', possibleValues: ['45 days', '40 days', '35 days', '30 days'] },
-    { id: 'shipping', name: 'Shipping Responsibility', description: 'Who handles logistics', clientPriority: 3, counterpartyPriority: 8, tradeability: 'high', possibleValues: ['Supplier handles', 'Client handles', 'Shared'] },
-    { id: 'future', name: 'Future Volume', description: 'Commitment to future orders', clientPriority: 4, counterpartyPriority: 9, tradeability: 'high', possibleValues: ['No commitment', 'Preferred supplier', '2-year contract'] },
-  ],
-  investigationActions: [
-    { id: 'ask_why_premium', name: 'Ask Why Premium Exists', description: 'Inquire about the cost breakdown of the expedite premium', cost: 1, reveals: ['freight_is_issue'], riskLevel: 'low', responseText: 'Viktor explains: "Manufacturing is not the problem. The issue is freight insurance and priority shipping on the international route. We don\'t have favorable terms."' },
-    { id: 'check_client_logistics', name: 'Review Client\'s Shipping Contracts', description: 'Check if Northline has logistics capabilities that could help', cost: 1, reveals: ['client_has_logistics'], riskLevel: 'low', responseText: 'Northline has a global logistics contract with preferred rates. They could ship the parts faster and cheaper than Varga.' },
-    { id: 'research_alternatives', name: 'Research Alternative Suppliers', description: 'Check if other suppliers could meet the deadline', cost: 1, reveals: ['no_viable_alternative'], riskLevel: 'low', responseText: 'No other supplier can meet the quality specs in the timeline. Varga is genuinely the only option.' },
-  ],
-  batna: { clientBATNA: 'Delay launch, estimated loss €1.8M', clientBATNAValue: 400000, clientReservationValue: 800000, counterpartyBATNA: 'Sell to smaller buyer at standard price', counterpartyBATNAValue: 400000, counterpartyReservationValue: 500000, estimatedZOPALow: 500000, estimatedZOPAHigh: 800000, trueZOPALow: 400000, trueZOPAHigh: 1000000 },
-  postmortem: { masterSolution: 'Use client\'s logistics network → delivery in 35 days + no expedite premium + supplier price reduced 4% + future preferred supplier option', keyHiddenFact: 'The premium is for freight insurance, not manufacturing. Northline can solve the logistics problem.', missedOpportunity: 'If you never ask why the premium exists, you miss the chance to solve the real problem and create value.', lesson: 'A deadline problem may be a logistics problem in disguise.', bestPossibleDeal: '35-day delivery + 0% premium + 4% price reduction + 2-year preferred supplier agreement' },
-  biasTraps: [{ id: 'anger_under_pressure', type: 'escalation', description: 'Time pressure makes both sides more aggressive.', warningText: '⚠️ ESCALATION TRAP: Urgency breeds anger. Step back and ask why the problem exists before fighting the number.', countermeasure: 'Ask diagnostic questions instead of making accusations.' }],
-});
-
-const case10 = makeCompactScenario({
-  id: 'case-10', title: 'The Stadium Opening', subtitle: 'Demands reveal fears', tier: 3, category: 'deadline',
-  stakesLabel: '€200M project',
-  client: { name: 'CivicBuild Consortium', role: 'Construction Consortium', avatar: '🏟️', personality: { truthfulness: 65, ego: 55, riskTolerance: 45, patience: 40, trustSensitivity: 50, fairnessSensitivity: 55, authorityLevel: 70, emotionalVolatility: 45, preparationLevel: 65, relationshipOrientation: 50 } },
-  counterparty: { name: 'Mayor Helena Torres', role: 'City Mayor', avatar: '🏛️', personality: { truthfulness: 50, ego: 75, riskTolerance: 35, patience: 30, trustSensitivity: 65, fairnessSensitivity: 55, authorityLevel: 90, emotionalVolatility: 55, preparationLevel: 70, relationshipOrientation: 40 } },
-  briefing: { clientName: 'CivicBuild Consortium', clientRole: 'Construction Consortium', situation: 'The city has inserted harsh delay penalty clauses into the final stadium construction contract just before signing. CivicBuild sees this as a last-minute squeeze.', clientDemands: ['Remove or reduce delay penalties', 'Sign the contract on original terms'], knownFacts: ['Penalty clause is unusually harsh', 'Contract was agreed in principle months ago', 'Stadium is on schedule'], missingInformation: ['Why the city added penalties now', 'Political pressures on the mayor', 'What the mayor actually fears'], timePressure: 'High — construction season closing', stakes: '€200M stadium project', clientEmotionalState: 'Suspicious, feels ambushed' },
-  surfaceDemand: 'CivicBuild wants the harsh delay penalties removed.',
-  hiddenTruth: 'The mayor needs the stadium open before a major international sporting event. She fears political humiliation if it\'s late. The penalties are about her political survival, not squeezing the contractor.',
-  postmortem: { masterSolution: 'Accept stronger penalties + early completion bonus + city-funded site access improvements + expedited permits + force majeure protocol', keyHiddenFact: 'The mayor is terrified of political embarrassment, not contractor profiteering.', missedOpportunity: 'If you fight the penalties instead of understanding the fear behind them, you miss the chance to trade penalties for valuable concessions.', lesson: 'A new demand reveals what the other side fears.', bestPossibleDeal: 'Strong penalties with high early completion bonus + city-funded access + fast-track permits' },
-});
 
 // Cases 11-30 — concise entries
 const case11 = makeCompactScenario({

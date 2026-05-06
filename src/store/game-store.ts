@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { GamePhase, NegotiationState, PlayerStats, ReputationScores, CaseResult } from '@/data/scenarios/types';
+import { getScenariosByCategory } from '@/data/scenarios';
 
 export interface Achievement {
   id: string;
@@ -77,6 +78,10 @@ export interface GameState {
   assumptions: string[];
   addAssumption: (assumption: string) => void;
   removeAssumption: (index: number) => void;
+
+  // Tutorial
+  tutorialCompleted: boolean;
+  setTutorialCompleted: () => void;
 
   // New game
   startNewGame: (name: string) => void;
@@ -307,6 +312,150 @@ export const useGameStore = create<GameState>()(
             });
           }
 
+          // 10 cases achievement
+          if (newCasesCompleted >= 10 && !newAchievements.find(a => a.id === 'ten_cases')) {
+            newAchievements.push({ id: 'ten_cases', title: 'Deal Maker', description: 'Complete 10 negotiation cases', icon: '🎯', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-ten-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Deal Maker - 10 cases completed!',
+              icon: '🎯',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // 20 cases achievement
+          if (newCasesCompleted >= 20 && !newAchievements.find(a => a.id === 'twenty_cases')) {
+            newAchievements.push({ id: 'twenty_cases', title: 'Veteran Negotiator', description: 'Complete 20 negotiation cases', icon: '🏅', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-twenty-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Veteran Negotiator - 20 cases completed!',
+              icon: '🏅',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // All fundamentals achievement
+          const fundamentalsIds = getScenariosByCategory('fundamentals').map(s => s.id);
+          const allFundamentalsComplete = fundamentalsIds.length > 0 && fundamentalsIds.every(id => newResults.some(r => r.scenarioId === id));
+          if (allFundamentalsComplete && !newAchievements.find(a => a.id === 'all_fundamentals')) {
+            newAchievements.push({ id: 'all_fundamentals', title: 'Fundamentals Master', description: 'Complete all fundamentals cases', icon: '📚', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-fundamentals-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Fundamentals Master - All fundamentals cases completed!',
+              icon: '📚',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Perfect score achievement
+          if (result.finalScore >= 90 && !newAchievements.find(a => a.id === 'perfect_score')) {
+            newAchievements.push({ id: 'perfect_score', title: 'Perfect Deal', description: 'Score 90+ on a case', icon: '💎', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-perfect-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Perfect Deal - Scored 90+ on a case!',
+              icon: '💎',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Shark reputation achievement
+          if (s.reputation.shark >= 15 && !newAchievements.find(a => a.id === 'shark_rep')) {
+            newAchievements.push({ id: 'shark_rep', title: 'The Shark', description: 'Reach shark reputation 15+', icon: '🦈', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-shark-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'The Shark - Shark reputation reached 15+!',
+              icon: '🦈',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Diplomat reputation achievement
+          if (s.reputation.diplomat >= 15 && !newAchievements.find(a => a.id === 'diplomat_rep')) {
+            newAchievements.push({ id: 'diplomat_rep', title: 'The Peacemaker', description: 'Reach diplomat reputation 15+', icon: '🕊️', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-diplomat-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'The Peacemaker - Diplomat reputation reached 15+!',
+              icon: '🕊️',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Detective reputation achievement
+          if (s.reputation.detective >= 15 && !newAchievements.find(a => a.id === 'detective_rep')) {
+            newAchievements.push({ id: 'detective_rep', title: 'Truth Seeker', description: 'Reach detective reputation 15+', icon: '🔍', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-detective-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Truth Seeker - Detective reputation reached 15+!',
+              icon: '🔍',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // 5 cooperative outcomes achievement
+          const cooperativeCount = newResults.filter(r => r.outcome === 'cooperative').length;
+          if (cooperativeCount >= 5 && !newAchievements.find(a => a.id === 'five_cooperative')) {
+            newAchievements.push({ id: 'five_cooperative', title: 'Cooperative Champion', description: 'Get 5 cooperative outcomes', icon: '🤝', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-coop-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Cooperative Champion - 5 cooperative outcomes!',
+              icon: '🤝',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Strategic no-deal achievement
+          if (result.outcome === 'strategic_no_deal' && !newAchievements.find(a => a.id === 'no_deal_strategist')) {
+            newAchievements.push({ id: 'no_deal_strategist', title: 'Strategic Walker', description: 'Get a strategic no-deal outcome', icon: '🚶', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-nodeal-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Strategic Walker - Achieved a strategic no-deal!',
+              icon: '🚶',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Comeback kid achievement
+          const previousResult = s.caseResults.length > 0 ? s.caseResults[s.caseResults.length - 1] : null;
+          if (previousResult && previousResult.outcome === 'bad_deal' && result.outcome === 'master' && !newAchievements.find(a => a.id === 'comeback_kid')) {
+            newAchievements.push({ id: 'comeback_kid', title: 'Comeback Kid', description: 'Get a master outcome after a bad deal on previous case', icon: '🔄', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-comeback-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Comeback Kid - Master deal after a bad deal!',
+              icon: '🔄',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
           return {
             caseResults: newResults,
             casesCompleted: newCasesCompleted,
@@ -331,6 +480,9 @@ export const useGameStore = create<GameState>()(
         set((s) => ({ assumptions: [...s.assumptions, assumption] })),
       removeAssumption: (index) =>
         set((s) => ({ assumptions: s.assumptions.filter((_, i) => i !== index) })),
+
+      tutorialCompleted: false,
+      setTutorialCompleted: () => set({ tutorialCompleted: true }),
 
       startNewGame: (name) =>
         set({
@@ -431,6 +583,7 @@ export const useGameStore = create<GameState>()(
         phase: state.phase,
         achievements: state.achievements,
         notifications: state.notifications.slice(0, 50), // Keep last 50 notifications
+        tutorialCompleted: state.tutorialCompleted,
       }),
     }
   )

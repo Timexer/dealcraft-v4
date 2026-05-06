@@ -12,6 +12,7 @@ import { CareerProgression } from '@/components/game/CareerProgression';
 import { GameHeader } from '@/components/game/GameHeader';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeToggle } from '@/components/game/ThemeToggle';
+import { TutorialOverlay, TutorialHelpButton } from '@/components/game/TutorialOverlay';
 
 export default function Home() {
   const phase = useGameStore((s) => s.phase);
@@ -42,7 +43,8 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <GameHeader />
-      <div className="fixed top-2 right-2 z-50">
+      <div className="fixed top-2 right-2 z-50 flex items-center gap-1">
+        <TutorialHelpButton />
         <ThemeToggle />
       </div>
       <main className="flex-1 flex flex-col">
@@ -59,9 +61,21 @@ export default function Home() {
           </motion.div>
         </AnimatePresence>
       </main>
-      <footer className="mt-auto border-t border-border/50 bg-background/80 backdrop-blur-sm py-2.5 px-4 text-center text-[11px] text-muted-foreground/60">
-        Dealcraft — Negotiation Career Simulator · Season 1 · 30 Cases
+      <footer className="mt-auto bg-background/80 backdrop-blur-sm py-3 px-4 text-center">
+        <div className="h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent mb-3" />
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-[11px] text-muted-foreground/60">
+          <span className="font-medium text-muted-foreground/80">DEALCRAFT</span>
+          <span className="hidden sm:inline">·</span>
+          <span>Negotiation Career Simulator</span>
+          <span className="hidden sm:inline">·</span>
+          <span>Season 1</span>
+          <span className="hidden sm:inline">·</span>
+          <span>v1.0</span>
+          <span className="hidden sm:inline">·</span>
+          <span>30 Cases</span>
+        </div>
       </footer>
+      <TutorialOverlay />
     </div>
   );
 }

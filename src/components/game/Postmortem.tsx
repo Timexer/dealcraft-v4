@@ -13,6 +13,15 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion } from 'framer-motion';
 import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
+import {
   ArrowRight,
   Trophy,
   Star,
@@ -23,6 +32,7 @@ import {
   TrendingDown,
   Target,
   BarChart3,
+  Hexagon,
 } from 'lucide-react';
 
 const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string }[] = [
@@ -172,8 +182,78 @@ export function Postmortem() {
               </Card>
             </motion.div>
 
-            {/* Score Dimensions */}
+            {/* Radar Chart */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <Card className="bg-card/50 border-border/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Hexagon className="h-4 w-4 text-amber-400" />
+                    Performance Profile
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="w-full h-[300px] sm:h-[340px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart
+                        cx="50%"
+                        cy="50%"
+                        outerRadius="70%"
+                        data={SCORE_DIMENSIONS.map(dim => ({
+                          dimension: dim.label,
+                          score: latestResult.scores[dim.key],
+                          fullMark: 100,
+                        }))}
+                      >
+                        <PolarGrid
+                          stroke="hsl(var(--border))"
+                          strokeOpacity={0.4}
+                          gridType="polygon"
+                        />
+                        <PolarAngleAxis
+                          dataKey="dimension"
+                          tick={{
+                            fill: 'hsl(var(--muted-foreground))',
+                            fontSize: 10,
+                            fontWeight: 500,
+                          }}
+                        />
+                        <PolarRadiusAxis
+                          angle={90}
+                          domain={[0, 100]}
+                          tick={{
+                            fill: 'hsl(var(--muted-foreground))',
+                            fontSize: 9,
+                          }}
+                          tickCount={5}
+                          axisLine={false}
+                        />
+                        <Radar
+                          name="Score"
+                          dataKey="score"
+                          stroke="#f59e0b"
+                          fill="#f59e0b"
+                          fillOpacity={0.2}
+                          strokeWidth={2}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            color: 'hsl(var(--card-foreground))',
+                          }}
+                          formatter={(value: number) => [`${value}/100`, 'Score']}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Score Dimensions */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">

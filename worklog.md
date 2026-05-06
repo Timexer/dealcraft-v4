@@ -30,9 +30,57 @@ Stage Summary:
 
 Unresolved Issues / Next Steps:
 - Some button clicks don't register via agent-browser (motion.button elements) - works fine in manual testing
-- Could add more achievements (10+ case milestones, reputation milestones, perfect score)
-- Could add tutorial/help overlays for first-time players
-- Could enhance Postmortem with radar chart visualization using recharts
 - Could add sound effects system
 - Could add more detailed mobile sidebar for negotiation metrics
-- Could add case difficulty stars visualization on dashboard
+- Could expand dialogue trees for cases 11-30 (currently using compact/generic dialogues)
+- Could add LLM-powered advisor system for dynamic negotiation tips
+- Could add case replay mode for improving scores
+- Could add challenge mode with special constraints
+
+---
+Task ID: 3
+Agent: Cron Review (Round 2)
+Task: QA testing, feature enhancements, and premium visual polish for Dealcraft
+
+Work Log:
+- Ran lint check: passes cleanly with no errors
+- Performed QA testing via agent-browser: full game loop works end-to-end (Title → Dashboard → Intake → Strategy → Investigation → Negotiation → Ending → Postmortem → Dashboard)
+- Added radar chart visualization to Postmortem using recharts (Performance Profile card with 6-dimension radar, amber/gold color scheme, theme-aware styling, interactive tooltips)
+- Added 10 new achievements to game store: ten_cases, twenty_cases, all_fundamentals, perfect_score, shark_rep, diplomat_rep, detective_rep, five_cooperative, no_deal_strategist, comeback_kid
+- Added difficulty stars visualization on Dashboard case cards (1-5 stars based on average difficulty, amber filled/muted empty)
+- Created TutorialOverlay system with phase-specific tutorials for dashboard, intake, strategy, investigation, negotiation, and postmortem
+- TutorialOverlay features: animated backdrop, amber accent card, keyboard support (Escape/Enter/Space), "Don't show tutorials" checkbox, session-based tracking
+- Created TutorialHelpButton component (?) to re-show tutorials on demand via custom events
+- Added tutorialCompleted state to game store with persistence
+- Expanded scenario dialogue trees for cases 6-10 by importing existing rich dialogue files (case-06.ts through case-10.ts) instead of using makeCompactScenario()
+- Enhanced premium visual styling across all components:
+  - globals.css: Added float, glowPulse, negotiationPulse animations; glass-card glassmorphism; gradient-text animated gradient; typing-dot pulse; animated-line divider; premium-button hover glow; grid-pattern background; tier-progress-bar shimmer
+  - TitleScreen: Grid background, corner accents, animated CRAFT gradient text, glow-pulse logo, premium-button, glass-card feature badges, animated divider
+  - Dashboard: gradient-text name, glass-card stats, shimmer tier progress, hover scale on case cards, styled section headers with count badges
+  - NegotiationTable: Grid pattern overlay, shadow per speaker type, amber typing dots, premium hover on choices, celebratory View Results button with glow
+  - Footer: Gradient top border, structured content with brand/name/season/version
+
+Stage Summary:
+- All lint checks pass cleanly
+- Full game loop works end-to-end
+- Postmortem now has radar chart + bar breakdown for comprehensive score visualization
+- 13 total achievements (3 original + 10 new) covering milestones, reputation, and special outcomes
+- Tutorial system guides new players through each game phase
+- Cases 6-10 now have rich, thematic dialogue trees with multiple paths and endings
+- Premium visual polish across title, dashboard, negotiation, and postmortem screens
+- Game feels significantly more polished and professional
+
+Current Project Status:
+- Dealcraft is a fully playable negotiation career simulator
+- 30 cases available (cases 1-10 with rich dialogue trees, cases 11-30 with compact dialogues)
+- Complete game loop with scoring, reputation, achievements, and career progression
+- Tutorial system, notification system, and help overlays
+- Premium dark-mode-first design with amber/gold accent colors
+- All core features working: BATNA analysis, issue priority matrix, investigation, branching dialogue, multiple endings
+
+Unresolved Issues / Risks:
+- Cases 11-30 still use compact/generic dialogue trees (could be expanded for richer gameplay)
+- No sound effects system yet
+- Mobile sidebar for negotiation metrics could be more detailed
+- Negotiation state not persisted (page refresh loses negotiation progress but keeps career state)
+- Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
