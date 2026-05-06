@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
-import { CHOICE_TYPE_STYLES, type DialogueNode, type DialogueChoice } from '@/data/scenarios/types';
+import { CHOICE_TYPE_STYLES, type DialogueNode, type DialogueChoice, type BiasEvent } from '@/data/scenarios/types';
 import { getEndingFromNegotiation, calculateFinalScore, getScoreGrade, calculateReputationDelta, calculateStatsDelta } from '@/lib/game-engine';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { BiasTrapAlertContainer } from '@/components/game/BiasTrapAlert';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart,
@@ -23,6 +24,7 @@ import {
   Info,
   Eye,
   ChevronRight,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface DialogueEntry {
@@ -39,8 +41,8 @@ function getStartNode(scenario: ReturnType<typeof getScenarioById>): DialogueNod
 export function NegotiationTable() {
   const {
     currentScenarioId, setPhase,
-    negotiation, updateNegotiation, makeChoice, addCaseResult,
-    discoveredFacts, addStats, addReputation,
+    negotiation, updateNegotiation, makeChoice, addCaseResult, replayCaseResult,
+    discoveredFacts, addStats, addReputation, isReplay,
   } = useGameStore();
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
@@ -55,6 +57,7 @@ export function NegotiationTable() {
   const [currentNode, setCurrentNode] = useState<DialogueNode | null>(() => getStartNode(scenario));
   const [isTyping, setIsTyping] = useState(false);
   const [showChoices, setShowChoices] = useState(false);
+  const [activeBiasAlerts, setActiveBiasAlerts] = useState<BiasEvent[]>([]);
   const dialogueEndRef = useRef<HTMLDivElement>(null);
   const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
   const currentNodeIdRef = useRef<string | null>(currentNode?.id || null);
@@ -64,6 +67,26 @@ export function NegotiationTable() {
     currentNodeIdRef.current = currentNode?.id || null;
   }, [currentNode?.id]);
 
+  const triggerBiasTrap = useCallback((biasEvent: BiasEvent) => {
+    const neg = useGameStore.getState().negotiation;
+    if (neg.biasTrapsTriggered.includes(biasEvent.id)) return;
+
+    // Add to negotiation state
+    updateNegotiation({
+      biasTrapsTriggered: [...neg.biasTrapsTriggered, biasEvent.id],
+    });
+
+    // Show the alert
+    setActiveBiasAlerts(prev => {
+      if (prev.find(a => a.id === biasEvent.id)) return prev;
+      return [...prev, biasEvent];
+    });
+  }, [updateNegotiation]);
+
+  const dismissBiasAlert = useCallback((id: string) => {
+    setActiveBiasAlerts(prev => prev.filter(a => a.id !== id));
+  }, []);
+
   const advanceToNode = useCallback((nodeId: string) => {
     if (!scenario) return;
     const nextNode = scenario.dialogueTree.find(n => n.id === nodeId);
@@ -72,6 +95,31 @@ export function NegotiationTable() {
       setDialogueHistory(prev => [...prev, { node: nextNode }]);
     }
   }, [scenario]);
+
+  // Check for bias traps triggered by dialogue node
+  useEffect(() => {
+    if (!scenario || !currentNode) return;
+
+    const neg = useGameStore.getState().negotiation;
+    const trapsToTrigger: BiasEvent[] = [];
+    for (const biasTrap of scenario.biasTraps) {
+      if (biasTrap.triggerDialogueNodeId && biasTrap.triggerDialogueNodeId === currentNode.id) {
+        if (!neg.biasTrapsTriggered.includes(biasTrap.id)) {
+          trapsToTrigger.push(biasTrap);
+        }
+      }
+    }
+
+    if (trapsToTrigger.length > 0) {
+      // Defer setState calls to avoid synchronous setState in effect
+      const rafId = requestAnimationFrame(() => {
+        for (const trap of trapsToTrigger) {
+          triggerBiasTrap(trap);
+        }
+      });
+      return () => cancelAnimationFrame(rafId);
+    }
+  }, [currentNode?.id, scenario, triggerBiasTrap]);
 
   // Apply node effects when entering a new node
   useEffect(() => {
@@ -176,6 +224,42 @@ export function NegotiationTable() {
 
     makeChoice(choice.id, effects, infoRevealed.length > 0 ? infoRevealed : undefined);
 
+    // Check for pattern-based bias traps
+    if (scenario) {
+      const updatedChoices = [...neg.choicesMade, choice.id];
+
+      // Re-scan all choices to count aggressive_anchor choices
+      // We need to look at the dialogue tree to find the choice types
+      let aggressiveAnchorCount = 0;
+      for (const choiceId of updatedChoices) {
+        for (const node of scenario.dialogueTree) {
+          if (node.choices) {
+            const found = node.choices.find(c => c.id === choiceId);
+            if (found && found.type === 'aggressive_anchor') {
+              aggressiveAnchorCount++;
+              break;
+            }
+          }
+        }
+      }
+
+      // Fixed-pie bias: 3+ aggressive_anchor choices
+      if (aggressiveAnchorCount >= 3) {
+        const fixedPieTrap = scenario.biasTraps.find(b => b.type === 'fixed_pie' && !b.triggerDialogueNodeId);
+        if (fixedPieTrap && !neg.biasTrapsTriggered.includes(fixedPieTrap.id)) {
+          triggerBiasTrap(fixedPieTrap);
+        }
+      }
+
+      // Escalation bias: anger > 70 and another aggressive_anchor
+      if (neg.anger > 70 && choice.type === 'aggressive_anchor') {
+        const escalationTrap = scenario.biasTraps.find(b => b.type === 'escalation' && !b.triggerDialogueNodeId);
+        if (escalationTrap && !neg.biasTrapsTriggered.includes(escalationTrap.id)) {
+          triggerBiasTrap(escalationTrap);
+        }
+      }
+    }
+
     // Update history entry with chosen choice
     setDialogueHistory(prev => {
       const updated = [...prev];
@@ -193,7 +277,7 @@ export function NegotiationTable() {
     if (choice.nextNodeId) {
       setTimeout(() => advanceToNode(choice.nextNodeId), 300);
     }
-  }, [advanceToNode, makeChoice]);
+  }, [advanceToNode, makeChoice, scenario, triggerBiasTrap]);
 
   const isChoiceDisabled = (choice: DialogueChoice): boolean => {
     if (!choice.requirement) return false;
@@ -243,7 +327,11 @@ export function NegotiationTable() {
       postmortemRead: false,
     };
 
-    addCaseResult(caseResult);
+    if (isReplay) {
+      replayCaseResult(caseResult);
+    } else {
+      addCaseResult(caseResult);
+    }
 
     // Apply reputation and stats
     const repDelta = calculateReputationDelta(scenario, endingType);
@@ -581,8 +669,48 @@ export function NegotiationTable() {
               )}
             </div>
           </div>
+
+          <Separator />
+
+          {/* Bias Traps Triggered */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+              <ShieldAlert className="h-3.5 w-3.5" />
+              Bias Traps
+            </h4>
+            {negotiation.biasTrapsTriggered.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {negotiation.biasTrapsTriggered.map((trapId) => {
+                  const trap = scenario?.biasTraps.find(b => b.id === trapId);
+                  const BIAS_SIDEBAR_ICONS: Record<string, string> = {
+                    anchor_shock: '⚠️',
+                    fixed_pie: '🎯',
+                    escalation: '🔥',
+                    vividness: '👁️',
+                    egocentrism: '🧠',
+                    overconfidence: '💎',
+                    regret_aversion: '😰',
+                  };
+                  return (
+                    <Badge key={trapId} variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/10 text-amber-300 border-amber-500/20">
+                      {BIAS_SIDEBAR_ICONS[trap?.type || ''] || '⚠️'}
+                      <span className="ml-1">{trap?.type.replace(/_/g, ' ') || trapId}</span>
+                    </Badge>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-[10px] text-muted-foreground">No bias traps triggered yet</p>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Bias Trap Alerts */}
+      <BiasTrapAlertContainer
+        activeAlerts={activeBiasAlerts}
+        onDismiss={dismissBiasAlert}
+      />
 
       {/* Mobile Sidebar Toggle */}
       <div className="lg:hidden fixed bottom-4 right-4 z-50">

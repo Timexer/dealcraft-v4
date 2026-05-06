@@ -33,6 +33,9 @@ import {
   Target,
   BarChart3,
   Hexagon,
+  ShieldAlert,
+  CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 
 const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string }[] = [
@@ -107,7 +110,9 @@ export function Postmortem() {
   } = useGameStore();
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
-  const latestResult = caseResults[caseResults.length - 1];
+  const latestResult = currentScenarioId
+    ? caseResults.find(r => r.scenarioId === currentScenarioId)
+    : caseResults[caseResults.length - 1];
 
   if (!scenario || !latestResult) {
     return (
@@ -418,6 +423,91 @@ export function Postmortem() {
                       </div>
                     );
                   })}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Bias Traps */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}>
+              <Card className="bg-amber-500/10 border-amber-500/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-300">
+                    <ShieldAlert className="h-4 w-4" />
+                    Bias Traps
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0 space-y-3">
+                  {scenario.biasTraps.length > 0 ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-amber-400/70">
+                          {negotiation.biasTrapsTriggered.length} of {scenario.biasTraps.length} traps triggered
+                        </span>
+                        <div className="flex-1 h-1.5 bg-amber-500/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-amber-500/50 rounded-full transition-all duration-500"
+                            style={{ width: `${scenario.biasTraps.length > 0 ? (negotiation.biasTrapsTriggered.length / scenario.biasTraps.length) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                      {scenario.biasTraps.map((trap, i) => {
+                        const wasTriggered = negotiation.biasTrapsTriggered.includes(trap.id);
+                        const BIAS_POSTMORTEM_ICONS: Record<string, string> = {
+                          anchor_shock: '⚠️',
+                          fixed_pie: '🎯',
+                          escalation: '🔥',
+                          vividness: '👁️',
+                          egocentrism: '🧠',
+                          overconfidence: '💎',
+                          regret_aversion: '😰',
+                        };
+                        return (
+                          <motion.div
+                            key={trap.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 1.6 + i * 0.1 }}
+                            className={`p-3 rounded-lg border ${
+                              wasTriggered
+                                ? 'bg-amber-500/10 border-amber-500/30'
+                                : 'bg-emerald-500/5 border-emerald-500/20'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <span className="text-lg shrink-0">{BIAS_POSTMORTEM_ICONS[trap.type] || '⚠️'}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className={`text-xs font-semibold uppercase tracking-wider ${wasTriggered ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                    {trap.type.replace(/_/g, ' ')}
+                                  </span>
+                                  {wasTriggered ? (
+                                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/20 text-amber-400 border-amber-500/30">
+                                      <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                                      Triggered
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                                      <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
+                                      Avoided
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-xs text-amber-200/70 mb-1">{trap.description}</p>
+                                {wasTriggered && (
+                                  <div className="mt-2 p-2 rounded bg-emerald-500/10 border border-emerald-500/20">
+                                    <p className="text-[10px] text-emerald-400 font-semibold mb-0.5">Countermeasure:</p>
+                                    <p className="text-xs text-emerald-300/80">{trap.countermeasure}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <p className="text-xs text-amber-300/50 text-center py-2">No bias traps defined for this case.</p>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>

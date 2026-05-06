@@ -363,3 +363,28 @@
   background: linear-gradient(90deg, transparent, oklch(1 0 0 / 30%), transparent);
   animation: shimmer 2.5s ease-in-out infinite;
 }
+
+/* Subtle float animation for achievement icons */
+@keyframes subtleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.animate-subtle-float {
+  animation: subtleFloat 3s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* Custom scrollbar for completed cases list */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0.12 75 / 15%);
+  border-radius: 2px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.7 0.12 75 / 30%);
+}

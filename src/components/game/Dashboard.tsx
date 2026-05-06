@@ -1,20 +1,24 @@
 'use client';
 
+import { useState } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { allScenarios, getScenarioById } from '@/data/scenarios';
-import { CATEGORY_COLORS, CATEGORY_LABELS, TIER_NAMES, TIER_DESCRIPTIONS, type Scenario } from '@/data/scenarios/types';
-import { getReputationType, getDifficultyLabel, getDifficultyColor } from '@/lib/game-engine';
+import { CATEGORY_COLORS, CATEGORY_LABELS, TIER_NAMES, TIER_DESCRIPTIONS } from '@/data/scenarios/types';
+import { getReputationType, getDifficultyLabel, getDifficultyColor, getScoreGrade } from '@/lib/game-engine';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { AchievementGallery } from './AchievementGallery';
 
 export function Dashboard() {
   const {
     playerName, careerTier, casesCompleted, totalScore, stats,
-    reputation, caseResults, unlockedCases, setPhase, setCurrentScenarioId, setCaseAccepted
+    reputation, caseResults, unlockedCases, setPhase, setCurrentScenarioId, setCaseAccepted,
+    setIsReplay, achievements,
   } = useGameStore();
   const repType = getReputationType(reputation);
   const tierName = TIER_NAMES[careerTier];
@@ -22,7 +26,10 @@ export function Dashboard() {
   const nextTierThreshold = [3, 8, 15, 22, 30][careerTier - 1] || 30;
   const tierProgress = Math.min(100, (casesCompleted / nextTierThreshold) * 100);
 
-  // Available cases for current tier
+  // Achievement gallery dialog state
+  const [showAchievements, setShowAchievements] = useState(false);
+
+  // Available cases for current tier (excluding completed ones)
   const availableCases = allScenarios.filter(
     s => s.tier <= careerTier && !caseResults.some(r => r.scenarioId === s.id)
   );
@@ -32,6 +39,7 @@ export function Dashboard() {
   const handleSelectCase = (scenarioId: string) => {
     setCurrentScenarioId(scenarioId);
     setCaseAccepted(false);
+    setIsReplay(false);
     useGameStore.getState().resetInvestigation();
     useGameStore.getState().resetNegotiation();
     useGameStore.getState().setBatnaEstimate(0);
@@ -39,6 +47,28 @@ export function Dashboard() {
     useGameStore.getState().setOpeningStrategy('');
     useGameStore.getState().assumptions = [];
     setPhase('intake');
+  };
+
+  const handleReplayCase = (scenarioId: string) => {
+    setCurrentScenarioId(scenarioId);
+    setCaseAccepted(false);
+    setIsReplay(true);
+    useGameStore.getState().resetInvestigation();
+    useGameStore.getState().resetNegotiation();
+    useGameStore.getState().setBatnaEstimate(0);
+    useGameStore.getState().setReservationEstimate(0);
+    useGameStore.getState().setOpeningStrategy('');
+    useGameStore.getState().assumptions = [];
+    setPhase('intake');
+  };
+
+  const GRADE_BADGE_COLORS: Record<string, string> = {
+    S: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
+    A: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
+    B: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40',
+    C: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+    D: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
+    F: 'bg-red-500/20 text-red-400 border-red-500/40',
   };
 
   return (
@@ -56,10 +86,16 @@ export function Dashboard() {
             </h1>
             <p className="text-muted-foreground mt-1">{tierName} — {tierDesc}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => setPhase('career')} className="gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="outline" size="sm" onClick={() => setShowAchievements(true)} className="gap-1.5 sm:gap-2">
+              <Award className="h-4 w-4" />
+              <span className="hidden sm:inline">Achievements</span>
+              <span className="sm:hidden">{achievements.length}</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPhase('career')} className="gap-1.5 sm:gap-2">
               <BarChart3 className="h-4 w-4" />
-              Career Stats
+              <span className="hidden sm:inline">Career Stats</span>
+              <span className="sm:hidden">Stats</span>
             </Button>
           </div>
         </motion.div>
@@ -194,7 +230,7 @@ export function Dashboard() {
           {availableCases.length === 0 && (
             <Card className="glass-card">
               <CardContent className="p-8 text-center">
-                <p className="text-muted-foreground">No cases available. Complete career progression to unlock more!</p>
+                <p className="text-muted-foreground">No new cases available. Complete career progression to unlock more, or replay completed cases!</p>
               </CardContent>
             </Card>
           )}
@@ -210,29 +246,50 @@ export function Dashboard() {
                 {caseResults.length} closed
               </span>
             </h2>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
               {caseResults.map((result, i) => {
                 const scenario = getScenarioById(result.scenarioId);
                 if (!scenario) return null;
+                const grade = getScoreGrade(result.finalScore);
                 return (
                   <motion.div
-                    key={i}
+                    key={result.scenarioId}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.03 }}
                   >
-                    <Card className="bg-card/30 border-border/30 hover:bg-card/50 hover:border-amber-500/15 transition-all duration-200 cursor-default">
-                      <CardContent className="p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl">{scenario.client.avatar}</span>
-                          <div>
-                            <p className="text-sm font-medium">{scenario.title}</p>
+                    <Card className="bg-card/30 border-border/30 hover:bg-card/50 hover:border-amber-500/15 transition-all duration-200">
+                      <CardContent className="p-3 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <span className="text-xl shrink-0">{scenario.client.avatar}</span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{scenario.title}</p>
                             <p className="text-xs text-muted-foreground capitalize">{result.outcome.replace(/_/g, ' ')}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-amber-500">{result.finalScore}</p>
-                          <p className="text-xs text-muted-foreground">points</p>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="text-right">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-bold text-amber-500">{result.finalScore}</p>
+                              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 font-bold ${GRADE_BADGE_COLORS[grade.grade]}`}>
+                                {grade.grade}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">points</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReplayCase(result.scenarioId);
+                            }}
+                            className="h-8 px-2 gap-1 text-xs text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
+                            title="Replay this case"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Replay</span>
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -243,6 +300,22 @@ export function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Achievement Gallery Dialog */}
+      <Dialog open={showAchievements} onOpenChange={setShowAchievements}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto sm:max-w-[calc(100%-2rem)]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-amber-500" />
+              Achievement Gallery
+            </DialogTitle>
+            <DialogDescription>
+              Track your negotiation milestones and accomplishments
+            </DialogDescription>
+          </DialogHeader>
+          <AchievementGallery />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -79,8 +79,83 @@ Current Project Status:
 - All core features working: BATNA analysis, issue priority matrix, investigation, branching dialogue, multiple endings
 
 Unresolved Issues / Risks:
-- Cases 11-30 still use compact/generic dialogue trees (could be expanded for richer gameplay)
+- Cases 16-30 still use compact/generic dialogue trees (could be expanded for richer gameplay)
 - No sound effects system yet
 - Mobile sidebar for negotiation metrics could be more detailed
 - Negotiation state not persisted (page refresh loses negotiation progress but keeps career state)
 - Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- Could add challenge mode with special constraints
+- Could add LLM-powered advisor for dynamic tips
+
+---
+Task ID: 4
+Agent: Cron Review (Round 3)
+Task: QA testing, major feature additions (Case Replay, Achievement Gallery, Bias Trap Alerts, Enhanced Career, Dialogue Trees 11-15)
+
+Work Log:
+- Ran lint check: passes cleanly with no errors
+- Performed QA testing via agent-browser: full game loop verified end-to-end
+- Created Case Replay feature:
+  - Added `isReplay` flag and `replayCaseResult` method to game store
+  - Replay replaces existing result for same scenario, adjusts totalScore if improved
+  - Added "↻ Replay" button on completed case cards in Dashboard
+  - Score grade badge (S/A/B/C/D/F) shown on completed cases
+  - NegotiationTable uses replayCaseResult for replayed cases
+  - Postmortem correctly looks up result by scenarioId (not array index)
+- Created Achievement Gallery component:
+  - Modal dialog showing all 13 achievements (locked and unlocked)
+  - Unlocked: amber/gold styling with icon, description, unlock date, glow animation
+  - Locked: muted styling with lock icon, title, hint text
+  - Progress bar at top showing percentage unlocked
+  - Responsive grid: 2/3/4 columns across breakpoints
+  - Accessible from Dashboard "Achievements" button
+- Created Bias Trap Warning System:
+  - BiasTrapAlert component: slide-in panel from top-right with glassmorphism
+  - Bias type icons: ⚠️ anchor_shock, 🎯 fixed_pie, 🔥 escalation, 👁️ vividness, 🧠 egocentrism, 💎 overconfidence, 😰 regret_aversion
+  - "View Countermeasure" button with expand animation
+  - Auto-dismiss after 15 seconds, pauses on hover
+  - BiasTrapAlertContainer for multiple simultaneous alerts
+  - Integrated into NegotiationTable: fires on triggerDialogueNodeId match and pattern detection
+  - Pattern detection: 3+ aggressive_anchor = fixed_pie, anger>70 + aggressive = escalation
+  - Sidebar shows "Bias Traps" section with triggered trap indicators
+  - Postmortem shows "Bias Traps" card with Triggered/Avoided badges and countermeasures
+- Enhanced Career Progression page:
+  - Visual Tier Map: vertical timeline with connected nodes, amber glow for current tier, ✅ for completed, 🔒 for future
+  - Stats grouped into 3 categories: Core Skills, Soft Skills, Advanced with color-coded bars
+  - Stat bars change color by value: red (<30), amber (30-60), emerald (60+)
+  - Reputation visualization: horizontal bars with unique colors, dominant type glow, top 2 profile summary
+  - Glass-card styling, gradient headers, gradient-text player name
+- Expanded dialogue trees for cases 11-15:
+  - Created case-11.ts through case-15.ts with 15-17 dialogue nodes each
+  - 4 distinct endings per case (master, cooperative, hard_bargain, bad_deal)
+  - Investigation actions with info_discovered requirements
+  - Bias trap moments with warning text and countermeasures
+  - Rich counterparty personalities reflected in dialogue
+  - Updated index.ts to import cases 11-15, removed compact definitions
+
+Stage Summary:
+- All lint checks pass cleanly
+- Full game loop works end-to-end with all new features
+- Case Replay: players can replay completed cases to improve their scores
+- Achievement Gallery: visual showcase of all 13 achievements (locked/unlocked)
+- Bias Trap Alerts: real-time warnings during negotiation when cognitive biases are triggered
+- Enhanced Career page: visual tier map, categorized stats, reputation profile
+- Cases 11-15 now have rich dialogue trees (was compact/generic before)
+- Cases 6-15 all now have dedicated files with rich dialogues (10 of 30 cases)
+- Game significantly more feature-rich and polished
+
+Current Project Status:
+- Dealcraft is a fully playable, feature-rich negotiation career simulator
+- 30 cases total: cases 1-15 with rich dialogues, cases 16-30 with compact dialogues
+- Complete game loop with scoring, reputation, achievements, career progression, replay
+- Tutorial, notifications, achievement gallery, bias trap alerts, career visualization
+- Premium dark-mode-first design with amber/gold accent colors
+- All core features working: BATNA analysis, issue matrix, investigation, branching dialogue, multiple endings
+
+Unresolved Issues / Risks:
+- Cases 16-30 still use compact/generic dialogue trees (top priority for next round)
+- No sound effects system yet
+- Mobile negotiation experience could be enhanced
+- Negotiation state not persisted across page refreshes
+- Could add challenge mode with special constraints
+- Could add LLM-powered advisor for dynamic negotiation tips

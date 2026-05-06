@@ -9,9 +9,14 @@ import { case07 } from './case-07';
 import { case08 } from './case-08';
 import { case09 } from './case-09';
 import { case10 } from './case-10';
+import { case11 } from './case-11';
+import { case12 } from './case-12';
+import { case13 } from './case-13';
+import { case14 } from './case-14';
+import { case15 } from './case-15';
 
-// Cases 06-10 are imported from their own files with rich dialogue trees
-// Cases 11-30 use makeCompactScenario with essential metadata and shorter dialogue trees
+// Cases 06-15 are imported from their own files with rich dialogue trees
+// Cases 16-30 use makeCompactScenario with essential metadata and shorter dialogue trees
 
 function makeCompactScenario(partial: Partial<Scenario> & { id: string; title: string; tier: number; category: Scenario['category'] }): Scenario {
   const feeMap: Record<number, number> = { 1: 2000, 2: 5000, 3: 12000, 4: 25000, 5: 50000 };
@@ -60,62 +65,7 @@ function makeCompactScenario(partial: Partial<Scenario> & { id: string; title: s
   };
 }
 
-// Cases 11-30 — concise entries
-const case11 = makeCompactScenario({
-  id: 'case-11', title: 'The Product Launch Clause', subtitle: 'Risk clauses as weapons', tier: 3, category: 'deadline',
-  stakesLabel: '€8M holiday sales',
-  client: { name: 'AsterWear', role: 'Wearable Device Company', avatar: '📱', personality: { truthfulness: 65, ego: 50, riskTolerance: 45, patience: 40, trustSensitivity: 50, fairnessSensitivity: 55, authorityLevel: 65, emotionalVolatility: 50, preparationLevel: 60, relationshipOrientation: 50 } },
-  counterparty: { name: 'RetailMax', role: 'Major Retail Partner', avatar: '🛍️', personality: { truthfulness: 55, ego: 65, riskTolerance: 40, patience: 35, trustSensitivity: 45, fairnessSensitivity: 50, authorityLevel: 80, emotionalVolatility: 45, preparationLevel: 70, relationshipOrientation: 40 } },
-  briefing: { clientName: 'AsterWear', clientRole: 'Wearable Device Company', situation: 'Retail partner demands cancellation rights if the product ships even two weeks late. This could kill the entire product launch.', clientDemands: ['Remove cancellation clause', 'Protect holiday launch window'], knownFacts: ['Retailer wants cancellation rights for any delay', 'Holiday season is critical for sales', 'Product is on track for launch'], missingInformation: ['Why the retailer is so risk-averse', 'Whether there are competing products', 'What the retailer fears most'], timePressure: 'Very high — holiday season approaching', stakes: '€8M in holiday sales', clientEmotionalState: 'Alarmed, feels the clause is unfair' },
-  surfaceDemand: 'AsterWear wants no cancellation clause.',
-  hiddenTruth: 'Retailer has limited shelf space and fears missing holiday inventory windows more than any specific product. They want protection against being left with empty shelves.',
-  postmortem: { masterSolution: 'Tiered clause: discounts for minor delay, marketing credit for moderate delay, cancellation only after hard deadline, retailer commits shelf placement if on time.', keyHiddenFact: 'The retailer fears empty shelves, not your specific product being late.', missedOpportunity: 'Binary cancellation clauses create lose-lose outcomes.', lesson: 'Risk clauses should motivate performance, not create opportunism.', bestPossibleDeal: 'Tiered delay clause + shelf commitment + shared marketing' },
-});
-
-const case12 = makeCompactScenario({
-  id: 'case-12', title: 'The Missing Shipment', subtitle: 'Truth behind the delay', tier: 3, category: 'deception',
-  stakesLabel: '€2M in lost revenue',
-  client: { name: 'BlueHarbor Retail', role: 'Consumer Goods Company', avatar: '🚢', personality: { truthfulness: 70, ego: 50, riskTolerance: 45, patience: 30, trustSensitivity: 55, fairnessSensitivity: 65, authorityLevel: 65, emotionalVolatility: 55, preparationLevel: 60, relationshipOrientation: 50 } },
-  counterparty: { name: 'Kenji Tanaka', role: 'VP Operations, PacificTraders', avatar: '📦', personality: { truthfulness: 35, ego: 55, riskTolerance: 55, patience: 50, trustSensitivity: 40, fairnessSensitivity: 40, authorityLevel: 70, emotionalVolatility: 45, preparationLevel: 65, relationshipOrientation: 35 } },
-  briefing: { clientName: 'BlueHarbor Retail', clientRole: 'Consumer Goods Retailer', situation: 'A major shipment is 3 weeks late. Supplier PacificTraders claims a port strike caused the delay and wants force majeure protection.', clientDemands: ['Compensation for delayed shipment', 'Future delivery guarantees'], knownFacts: ['Shipment is 3 weeks late', 'Supplier claims port strike', 'Contract has force majeure clause'], missingInformation: ['Was there really a port strike?', 'What caused the actual delay?', 'Can production logs verify the claim?'], timePressure: 'High — seasonal inventory needs', stakes: '€2M in lost seasonal revenue', clientEmotionalState: 'Suspicious, feels deceived' },
-  surfaceDemand: 'BlueHarbor wants compensation for the delayed shipment.',
-  hiddenTruth: 'The supplier missed their own production deadlines and is blaming logistics to avoid penalties. There was no port strike affecting their specific route.',
-  postmortem: { masterSolution: 'Offer contract extension if delay was external, but steep discount if production logs show internal failure. Create a truth-revealing incentive structure.', keyHiddenFact: 'There was no port strike. The supplier missed production deadlines.', missedOpportunity: 'Accusing the supplier directly makes them defensive. Structure the deal to reveal the truth.', lesson: 'Do not accuse first. Create a truth-revealing structure.', bestPossibleDeal: 'Contingent contract: full compensation if internal failure proven, moderate adjustment if external cause verified' },
-});
-
-const case13 = makeCompactScenario({
-  id: 'case-13', title: 'The Inflated Valuation', subtitle: 'The customer who isn\'t signed', tier: 3, category: 'deception',
-  stakesLabel: '€25M acquisition',
-  client: { name: 'VentureBuyer', role: 'Technology Acquirer', avatar: '💰', personality: { truthfulness: 65, ego: 60, riskTolerance: 50, patience: 50, trustSensitivity: 55, fairnessSensitivity: 60, authorityLevel: 70, emotionalVolatility: 35, preparationLevel: 75, relationshipOrientation: 45 } },
-  counterparty: { name: 'Sofia Chen', role: 'CEO, CloudSync', avatar: '☁️', personality: { truthfulness: 35, ego: 75, riskTolerance: 65, patience: 55, trustSensitivity: 40, fairnessSensitivity: 40, authorityLevel: 85, emotionalVolatility: 50, preparationLevel: 80, relationshipOrientation: 30 } },
-  briefing: { clientName: 'VentureBuyer', clientRole: 'Technology Acquisition Fund', situation: 'CloudSync claims a major enterprise customer is "basically signed" and wants a premium valuation based on that future revenue.', clientDemands: ['Price reduction without proof', 'Verification of customer claim'], knownFacts: ['CloudSync says major customer is "essentially closed"', 'Valuation is based partly on this customer', 'No signed contract exists'], missingInformation: ['Is the customer actually committed?', 'What does "basically signed" mean?', 'Has the customer received budget approval?'], timePressure: 'Moderate — competing bidders', stakes: '€25M acquisition', clientEmotionalState: 'Excited but cautious' },
-  surfaceDemand: 'VentureBuyer wants a price reduction unless the customer is proven.',
-  hiddenTruth: 'The customer is interested but has not received budget approval. The "basically signed" claim is misleading — it\'s at best a letter of intent without funding.',
-  postmortem: { masterSolution: 'Lower upfront price + major earnout if customer signs + escrow for misrepresentation + founder retention tied to revenue.', keyHiddenFact: 'The customer has no budget approval. The deal is far from "basically signed."', missedOpportunity: 'Accepting the valuation at face value is the winner\'s curse.', lesson: 'When value depends on uncertain future events, bet on the event, not the claim.', bestPossibleDeal: '€18M upfront + €12M earnout tied to customer contract + escrow + founder retention' },
-});
-
-const case14 = makeCompactScenario({
-  id: 'case-14', title: 'The Vendor With Two Stories', subtitle: 'When sales and engineering disagree', tier: 3, category: 'deception',
-  stakesLabel: '€8M software contract',
-  client: { name: 'MetroTransit Authority', role: 'Public Transit Authority', avatar: '🚇', personality: { truthfulness: 75, ego: 40, riskTolerance: 30, patience: 50, trustSensitivity: 60, fairnessSensitivity: 70, authorityLevel: 75, emotionalVolatility: 35, preparationLevel: 65, relationshipOrientation: 55 } },
-  counterparty: { name: 'TechFlow Systems', role: 'Software Vendor', avatar: '💻', personality: { truthfulness: 30, ego: 70, riskTolerance: 60, patience: 45, trustSensitivity: 35, fairnessSensitivity: 40, authorityLevel: 65, emotionalVolatility: 50, preparationLevel: 70, relationshipOrientation: 30 } },
-  briefing: { clientName: 'MetroTransit Authority', clientRole: 'Municipal Transit Authority', situation: 'TechFlow\'s sales team promises features that their engineering team says don\'t exist yet. Procurement heard one story, technical staff heard another.', clientDemands: ['Verified functionality before contract', 'Protection against overpromising'], knownFacts: ['Sales demo was impressive', 'Technical staff found discrepancies', 'Vendor has famous clients'], missingInformation: ['What actually works vs. what\'s planned', 'Whether the vendor can deliver on time', 'Real vs. demo capabilities'], timePressure: 'Moderate — procurement deadline', stakes: '€8M software contract', clientEmotionalState: 'Confused, losing trust in vendor' },
-  surfaceDemand: 'MetroTransit wants clarity before awarding the contract.',
-  hiddenTruth: 'TechFlow\'s sales team is overselling capabilities that the engineering team hasn\'t built yet. The demo was a prototype, not a product.',
-  postmortem: { masterSolution: 'Award conditional contract: milestone-based payment + independent technical test + termination right + performance bond.', keyHiddenFact: 'The demo was a prototype, not a production system. Engineering hasn\'t built what sales promised.', missedOpportunity: 'Reputation and famous clients are not proof. Test the claim.', lesson: 'Reputation is not proof. Test the claim.', bestPossibleDeal: 'Milestone-based contract + independent testing + termination rights + performance bond' },
-});
-
-const case15 = makeCompactScenario({
-  id: 'case-15', title: 'Startup vs. Platform Giant', subtitle: 'Weakness as leverage', tier: 4, category: 'power_imbalance',
-  stakesLabel: 'Company survival',
-  client: { name: 'VerityMesh', role: 'AI Startup', avatar: '🧠', personality: { truthfulness: 75, ego: 45, riskTolerance: 55, patience: 35, trustSensitivity: 60, fairnessSensitivity: 70, authorityLevel: 20, emotionalVolatility: 55, preparationLevel: 50, relationshipOrientation: 50 } },
-  counterparty: { name: 'OmniCorp', role: 'Platform Giant', avatar: '🏢', personality: { truthfulness: 40, ego: 80, riskTolerance: 50, patience: 60, trustSensitivity: 35, fairnessSensitivity: 30, authorityLevel: 95, emotionalVolatility: 25, preparationLevel: 85, relationshipOrientation: 20 } },
-  briefing: { clientName: 'VerityMesh', clientRole: 'AI Startup', situation: 'OmniCorp offers distribution access but demands broad data rights that would compromise VerityMesh\'s core IP and competitive position.', clientDemands: ['Fairer data terms', 'Maintain independence'], knownFacts: ['OmniCorp controls 70% of distribution', 'Data rights demand is aggressive', 'VerityMesh depends on this channel'], missingInformation: ['Why OmniCorp really wants the data', 'What alternatives exist', 'Whether OmniCorp needs VerityMesh'], timePressure: 'High — funding running low', stakes: 'Company survival', clientEmotionalState: 'Intimidated, feels powerless' },
-  surfaceDemand: 'VerityMesh wants fairer data terms from OmniCorp.',
-  hiddenTruth: 'OmniCorp needs VerityMesh to show regulators it supports independent AI companies. VerityMesh\'s survival is more valuable to OmniCorp as a regulatory shield than any data rights.',
-  postmortem: { masterSolution: 'Offer public partnership narrative: fair data boundaries + regulatory showcase + limited exclusivity + revenue share + startup independence protections.', keyHiddenFact: 'OmniCorp needs VerityMesh alive and independent for regulatory optics.', missedOpportunity: 'Weakness can become leverage if the strong party needs your survival.', lesson: 'Weak parties have power when the strong party needs what only they can provide.', bestPossibleDeal: 'Fair data limits + public partnership + regulatory showcase + revenue share + independence protections' },
-});
-
+// Cases 16-30 — concise entries
 const case16 = makeCompactScenario({
   id: 'case-16', title: 'Employee vs. MegaCorp', subtitle: 'The precedent they fear', tier: 4, category: 'power_imbalance',
   stakesLabel: 'IP ownership rights',

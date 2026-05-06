@@ -63,6 +63,11 @@ export interface GameState {
   // Case results
   caseResults: CaseResult[];
   addCaseResult: (result: CaseResult) => void;
+  replayCaseResult: (result: CaseResult) => void;
+
+  // Replay tracking
+  isReplay: boolean;
+  setIsReplay: (isReplay: boolean) => void;
 
   // Case acceptance
   caseAccepted: boolean;
@@ -244,6 +249,9 @@ export const useGameStore = create<GameState>()(
         set({
           negotiation: { ...defaultNegotiation },
         }),
+
+      isReplay: false,
+      setIsReplay: (isReplay) => set({ isReplay }),
 
       caseResults: [],
       addCaseResult: (result) =>
@@ -466,6 +474,202 @@ export const useGameStore = create<GameState>()(
           };
         }),
 
+      replayCaseResult: (result) =>
+        set((s) => {
+          const existingIndex = s.caseResults.findIndex(r => r.scenarioId === result.scenarioId);
+          if (existingIndex === -1) {
+            // Not actually a replay, just add it
+            return s;
+          }
+
+          const existingResult = s.caseResults[existingIndex];
+          const oldScore = existingResult.finalScore;
+          const newScore = result.finalScore;
+          const scoreDiff = newScore - oldScore;
+
+          // Replace the existing result with the better one
+          const newResults = [...s.caseResults];
+          newResults[existingIndex] = result;
+
+          // Adjust totalScore: only add the difference if new score is better
+          const adjustedTotalScore = scoreDiff > 0 ? s.totalScore + scoreDiff : s.totalScore;
+
+          const prevTier = s.careerTier;
+          const newCasesCompleted = newResults.length;
+          const newTier = newCasesCompleted < 3 ? 1 : newCasesCompleted < 8 ? 2 : newCasesCompleted < 15 ? 3 : newCasesCompleted < 22 ? 4 : 5;
+
+          // Check for tier up
+          const newNotifications = [...s.notifications];
+          if (newTier > prevTier) {
+            const tierNames: Record<number, string> = { 1: 'Junior Associate', 2: 'Deal Associate', 3: 'Senior Negotiator', 4: 'Crisis Partner', 5: 'Master Negotiator' };
+            newNotifications.unshift({
+              id: `notif-tier-${Date.now()}`,
+              type: 'tier_up',
+              title: '⬆️ Career Tier Up!',
+              message: `You've been promoted to ${tierNames[newTier]}!`,
+              icon: '📈',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Re-check achievements based on new state
+          const newAchievements = [...s.achievements];
+
+          // Master deal achievement
+          if (result.outcome === 'master' && !newAchievements.find(a => a.id === 'first_master')) {
+            newAchievements.push({ id: 'first_master', title: 'Master Negotiator', description: 'Achieve a master deal outcome', icon: '👑', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-master-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Master Negotiator - You achieved a master deal!',
+              icon: '👑',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Perfect score achievement
+          if (result.finalScore >= 90 && !newAchievements.find(a => a.id === 'perfect_score')) {
+            newAchievements.push({ id: 'perfect_score', title: 'Perfect Deal', description: 'Score 90+ on a case', icon: '💎', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-perfect-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Perfect Deal - Scored 90+ on a case!',
+              icon: '💎',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // 5 cooperative outcomes achievement
+          const cooperativeCount = newResults.filter(r => r.outcome === 'cooperative').length;
+          if (cooperativeCount >= 5 && !newAchievements.find(a => a.id === 'five_cooperative')) {
+            newAchievements.push({ id: 'five_cooperative', title: 'Cooperative Champion', description: 'Get 5 cooperative outcomes', icon: '🤝', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-coop-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Cooperative Champion - 5 cooperative outcomes!',
+              icon: '🤝',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Strategic no-deal achievement
+          if (result.outcome === 'strategic_no_deal' && !newAchievements.find(a => a.id === 'no_deal_strategist')) {
+            newAchievements.push({ id: 'no_deal_strategist', title: 'Strategic Walker', description: 'Get a strategic no-deal outcome', icon: '🚶', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-nodeal-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Strategic Walker - Achieved a strategic no-deal!',
+              icon: '🚶',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Comeback kid achievement
+          const previousResult = existingIndex > 0 ? s.caseResults[existingIndex - 1] : null;
+          if (previousResult && previousResult.outcome === 'bad_deal' && result.outcome === 'master' && !newAchievements.find(a => a.id === 'comeback_kid')) {
+            newAchievements.push({ id: 'comeback_kid', title: 'Comeback Kid', description: 'Get a master outcome after a bad deal on previous case', icon: '🔄', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-comeback-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Comeback Kid - Master deal after a bad deal!',
+              icon: '🔄',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Shark reputation achievement
+          if (s.reputation.shark >= 15 && !newAchievements.find(a => a.id === 'shark_rep')) {
+            newAchievements.push({ id: 'shark_rep', title: 'The Shark', description: 'Reach shark reputation 15+', icon: '🦈', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-shark-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'The Shark - Shark reputation reached 15+!',
+              icon: '🦈',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Diplomat reputation achievement
+          if (s.reputation.diplomat >= 15 && !newAchievements.find(a => a.id === 'diplomat_rep')) {
+            newAchievements.push({ id: 'diplomat_rep', title: 'The Peacemaker', description: 'Reach diplomat reputation 15+', icon: '🕊️', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-diplomat-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'The Peacemaker - Diplomat reputation reached 15+!',
+              icon: '🕊️',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Detective reputation achievement
+          if (s.reputation.detective >= 15 && !newAchievements.find(a => a.id === 'detective_rep')) {
+            newAchievements.push({ id: 'detective_rep', title: 'Truth Seeker', description: 'Reach detective reputation 15+', icon: '🔍', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-detective-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Truth Seeker - Detective reputation reached 15+!',
+              icon: '🔍',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // All fundamentals achievement
+          const fundamentalsIds = getScenariosByCategory('fundamentals').map(sc => sc.id);
+          const allFundamentalsComplete = fundamentalsIds.length > 0 && fundamentalsIds.every(id => newResults.some(r => r.scenarioId === id));
+          if (allFundamentalsComplete && !newAchievements.find(a => a.id === 'all_fundamentals')) {
+            newAchievements.push({ id: 'all_fundamentals', title: 'Fundamentals Master', description: 'Complete all fundamentals cases', icon: '📚', unlockedAt: Date.now() });
+            newNotifications.unshift({
+              id: `notif-ach-fundamentals-${Date.now()}`,
+              type: 'achievement',
+              title: '🏆 Achievement Unlocked!',
+              message: 'Fundamentals Master - All fundamentals cases completed!',
+              icon: '📚',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Replay notification
+          if (scoreDiff > 0) {
+            newNotifications.unshift({
+              id: `notif-replay-${Date.now()}`,
+              type: 'info',
+              title: '🔄 Replay Score Improved!',
+              message: `Your score improved by ${scoreDiff} points!`,
+              icon: '📈',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          return {
+            caseResults: newResults,
+            casesCompleted: newCasesCompleted,
+            totalScore: adjustedTotalScore,
+            careerTier: newTier,
+            achievements: newAchievements,
+            notifications: newNotifications,
+            isReplay: false,
+          };
+        }),
+
       caseAccepted: false,
       setCaseAccepted: (accepted) => set({ caseAccepted: accepted }),
 
@@ -495,6 +699,7 @@ export const useGameStore = create<GameState>()(
           reputation: { ...defaultReputation },
           currentScenarioId: null,
           caseResults: [],
+          isReplay: false,
           caseAccepted: false,
           investigationPoints: 5,
           maxInvestigationPoints: 5,
@@ -519,6 +724,7 @@ export const useGameStore = create<GameState>()(
           reputation: { ...defaultReputation },
           currentScenarioId: null,
           caseResults: [],
+          isReplay: false,
           caseAccepted: false,
           investigationPoints: 5,
           maxInvestigationPoints: 5,
