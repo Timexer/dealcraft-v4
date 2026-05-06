@@ -74,8 +74,12 @@ export function Investigation() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 grid-pattern opacity-30 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/3 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-violet-500/3 rounded-full blur-[100px] pointer-events-none" />
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -99,21 +103,43 @@ export function Investigation() {
 
         {/* Action Points Tracker */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="bg-card/50 border-border/50">
+          <Card className="bg-card/50 border-border/50 glass-card-hover">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Eye className="h-4 w-4 text-amber-500" />
                   <span className="text-sm font-medium">Investigation Points</span>
                 </div>
-                <span className="text-sm font-bold text-amber-400">
-                  {investigationPoints}/{maxInvestigationPoints}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-amber-400">
+                    {investigationPoints}/{maxInvestigationPoints}
+                  </span>
+                  {investigationPoints === 0 && (
+                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">
+                      All Spent
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <Progress value={progressPercent} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-2">
-                Spend points wisely to uncover hidden information before the negotiation begins.
-              </p>
+              <div className="relative">
+                <Progress value={progressPercent} className="h-2" />
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent pointer-events-none rounded-full" />
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-muted-foreground">
+                  Spend points wisely to uncover hidden information before the negotiation begins.
+                </p>
+                <div className="flex gap-0.5">
+                  {Array.from({ length: maxInvestigationPoints }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        i < pointsUsed ? 'bg-amber-500 scale-110' : 'bg-border/40'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -139,8 +165,10 @@ export function Investigation() {
                     transition={{ delay: i * 0.08 }}
                   >
                     <Card
-                      className={`bg-card/50 border-border/50 transition-all ${
-                        isUsed ? 'opacity-60' : 'hover:border-amber-500/30 cursor-pointer'
+                      className={`bg-card/50 border-border/50 transition-all duration-300 ${
+                        isUsed
+                          ? 'opacity-60 border-emerald-500/20'
+                          : 'hover:border-amber-500/30 cursor-pointer card-hover-lift'
                       }`}
                       onClick={() => !isDisabled && handleInvestigate(action.id)}
                     >
@@ -157,7 +185,9 @@ export function Investigation() {
                             Cost: {action.cost} point{action.cost > 1 ? 's' : ''}
                           </span>
                           {isUsed ? (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                              ✓ Done
+                            </Badge>
                           ) : (
                             <Button
                               variant="outline"
@@ -266,7 +296,7 @@ export function Investigation() {
           </div>
         </div>
 
-        <Separator />
+        <div className="animated-line" />
 
         {/* Proceed Button */}
         <motion.div
@@ -282,7 +312,7 @@ export function Investigation() {
           </p>
           <Button
             onClick={handleProceed}
-            className="bg-amber-600 hover:bg-amber-700 text-white gap-2"
+            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white gap-2 premium-button dramatic-glow"
             size="lg"
           >
             Proceed to Negotiation

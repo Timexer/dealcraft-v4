@@ -47,6 +47,15 @@
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+
+  /* Theme CSS Custom Properties - default amber */
+  --theme-primary: #f59e0b;
+  --theme-accent: #fbbf24;
+  --theme-glow: oklch(0.77 0.16 75);
+  --theme-primary-bg: rgba(245, 158, 11, 0.1);
+  --theme-primary-text: #f59e0b;
+  --theme-gradient: linear-gradient(135deg, #f59e0b, #fbbf24);
+
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -118,6 +127,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    transition: color 0.3s ease, background-color 0.3s ease;
   }
 }
 
@@ -1162,4 +1172,124 @@
 }
 .category-dist-bar .segment:last-child {
   border-radius: 0 3px 3px 0;
+}
+
+/* ===== TASK 11 - THEME ENGINE & STREAK SYSTEM ===== */
+
+/* Theme-aware gradient text - uses CSS custom properties */
+.gradient-text-themed {
+  background: var(--theme-gradient);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 6s ease-in-out infinite;
+}
+
+/* Theme-aware glow pulse */
+@keyframes glowPulseThemed {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--theme-glow) / 15%, 0 0 20px var(--theme-glow) / 5%;
+  }
+  50% {
+    box-shadow: 0 0 16px var(--theme-glow) / 25%, 0 0 40px var(--theme-glow) / 10%;
+  }
+}
+.glow-pulse-themed {
+  animation: glowPulseThemed 3s ease-in-out infinite;
+}
+
+/* Theme-aware dramatic glow */
+@keyframes dramaticGlowThemed {
+  0%, 100% {
+    box-shadow: 0 0 10px var(--theme-glow) / 20%, 0 0 30px var(--theme-glow) / 10%, 0 0 50px var(--theme-glow) / 5%;
+  }
+  50% {
+    box-shadow: 0 0 20px var(--theme-glow) / 40%, 0 0 50px var(--theme-glow) / 20%, 0 0 80px var(--theme-glow) / 10%;
+  }
+}
+.dramatic-glow-themed {
+  animation: dramaticGlowThemed 2.5s ease-in-out infinite;
+}
+
+/* Theme-aware premium button */
+.premium-button-themed {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.premium-button-themed:hover {
+  box-shadow: 0 0 20px var(--theme-glow) / 20%, 0 4px 12px oklch(0 0 0 / 20%);
+  transform: translateY(-1px);
+}
+
+/* Theme-aware grid pattern */
+.grid-pattern-themed {
+  background-image:
+    linear-gradient(var(--theme-glow) / 3% 1px, transparent 1px),
+    linear-gradient(90deg, var(--theme-glow) / 3% 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Theme-aware ambient name glow */
+.ambient-name-glow-themed {
+  position: relative;
+}
+.ambient-name-glow-themed::before {
+  content: '';
+  position: absolute;
+  inset: -8px -16px;
+  background: radial-gradient(ellipse at center, var(--theme-glow) / 12% 0%, transparent 70%);
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Theme-aware streak indicator */
+@keyframes streakPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--theme-glow) / 20%;
+  }
+  50% {
+    box-shadow: 0 0 16px var(--theme-glow) / 40%, 0 0 30px var(--theme-glow) / 15%;
+  }
+}
+.streak-pulse {
+  animation: streakPulse 2s ease-in-out infinite;
+}
+
+/* Theme-aware choice hover trail */
+.choice-hover-trail-themed {
+  position: relative;
+  overflow: hidden;
+}
+.choice-hover-trail-themed::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--theme-glow) / 8%, transparent);
+  transition: left 0.5s ease;
+}
+.choice-hover-trail-themed:hover::before {
+  left: 100%;
+}
+
+/* Theme-aware search focus glow */
+.search-focus-glow-themed {
+  transition: all 0.3s ease;
+}
+.search-focus-glow-themed:focus-within {
+  box-shadow: 0 0 0 3px var(--theme-glow) / 15%, 0 0 20px var(--theme-glow) / 8%;
+  border-color: var(--theme-primary);
+}
+
+/* Theme transition for smooth color changes */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
 }

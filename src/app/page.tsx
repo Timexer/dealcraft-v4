@@ -9,6 +9,7 @@ import { Investigation } from '@/components/game/Investigation';
 import { NegotiationTable } from '@/components/game/NegotiationTable';
 import { Postmortem } from '@/components/game/Postmortem';
 import { CareerProgression } from '@/components/game/CareerProgression';
+import { CaseHistory } from '@/components/game/CaseHistory';
 import { GameHeader } from '@/components/game/GameHeader';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeToggle } from '@/components/game/ThemeToggle';
@@ -39,6 +40,8 @@ export default function Home() {
         return <Postmortem />;
       case 'career':
         return <CareerProgression />;
+      case 'case_history':
+        return <CaseHistory />;
       default:
         return <TitleScreen />;
     }
@@ -66,18 +69,19 @@ export default function Home() {
         </AnimatePresence>
       </main>
       <footer className="mt-auto bg-background/80 backdrop-blur-sm py-3 px-4 text-center border-t border-border/30">
-        <div className="h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent mb-3" />
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--theme-primary)]/20 to-transparent mb-2" />
         <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-[11px] text-muted-foreground/60">
-          <span className="font-semibold tracking-wider text-amber-500/80">DEALCRAFT</span>
+          <span className="font-semibold tracking-wider text-[var(--theme-primary)]/80">DEALCRAFT</span>
           <span className="hidden sm:inline text-border/50">·</span>
           <span>Negotiation Career Simulator</span>
           <span className="hidden sm:inline text-border/50">·</span>
           <span>Season 1</span>
           <span className="hidden sm:inline text-border/50">·</span>
-          <span>v3.0</span>
+          <span>v4.0</span>
           <span className="hidden sm:inline text-border/50">·</span>
-          <span>30 Cases · 8 Endings</span>
+          <span>30 Cases · Streaks · Themes · Transcripts</span>
         </div>
+        <p className="text-[9px] text-muted-foreground/30 mt-1">Based on &quot;Negotiation Genius&quot; by Malhotra &amp; Bazerman</p>
       </footer>
       <TutorialOverlay />
 

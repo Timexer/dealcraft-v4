@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Briefcase, Play, RotateCcw } from 'lucide-react';
+import { useThemeApplication } from '@/components/game/ThemeSelector';
 
 // Floating negotiation term badges
 const NEGOTIATION_TERMS = [
@@ -36,6 +37,9 @@ export function TitleScreen() {
   const { startNewGame, playerName, casesCompleted, resetGame } = useGameStore();
   const [name, setName] = useState('');
   const hasSave = casesCompleted > 0;
+
+  // Apply theme
+  useThemeApplication();
 
   // Typewriter effect state
   const [displayedSubtitle, setDisplayedSubtitle] = useState('');
@@ -157,7 +161,7 @@ export function TitleScreen() {
             transition: 'transform 0.3s ease-out',
           }}
         >
-          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center dramatic-glow">
+          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center dramatic-glow-themed">
             <Briefcase className="h-8 w-8 text-amber-500" />
           </div>
         </motion.div>
@@ -175,7 +179,7 @@ export function TitleScreen() {
         >
           <h1 className="text-5xl sm:text-7xl font-bold tracking-tighter">
             <span className="text-foreground">DEAL</span>
-            <span className="gradient-text">CRAFT</span>
+            <span className="gradient-text-themed">CRAFT</span>
           </h1>
           {/* Typewriter effect for subtitle */}
           <p className="text-lg sm:text-xl text-muted-foreground tracking-wide h-7">
@@ -223,7 +227,7 @@ export function TitleScreen() {
             <Button
               onClick={() => name.trim() && startNewGame(name.trim())}
               disabled={!name.trim()}
-              className="h-11 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-base gap-2 premium-button dramatic-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"
+              className="h-11 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-base gap-2 premium-button-themed dramatic-glow-themed disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"
             >
               <Play className="h-4 w-4" />
               New Career
@@ -265,7 +269,7 @@ export function TitleScreen() {
             transition: 'transform 0.3s ease-out',
           }}
         >
-          {['30 Cases', '5 Tiers', 'Career Mode', 'Postmortem Analysis', 'Reputation System', 'Glossary', 'AI Advisor', 'Bias Traps'].map((badge) => (
+          {['30 Cases', '5 Tiers', 'Career Mode', 'Postmortem Analysis', 'Reputation System', 'Glossary', 'AI Advisor', 'Bias Traps', 'Streaks', 'Themes'].map((badge) => (
             <span key={badge} className="glass-card px-3 py-1.5 rounded-full text-xs text-muted-foreground/80 hover:text-amber-400 transition-colors duration-200 card-hover-lift cursor-default">
               {badge}
             </span>

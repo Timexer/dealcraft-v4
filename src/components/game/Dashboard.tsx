@@ -10,10 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X, Clock, Activity, Zap } from 'lucide-react';
+import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X, Clock, Activity, Zap, History, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AchievementGallery } from './AchievementGallery';
 import { ChallengeModeSelector } from './ChallengeModeSelector';
+import { StreakIndicator } from './StreakIndicator';
+import { NegotiationTranscript } from './NegotiationTranscript';
 import { Input } from '@/components/ui/input';
 import { useSound } from '@/hooks/use-sound';
 
@@ -53,6 +55,10 @@ export function Dashboard() {
 
   // Achievement gallery dialog state
   const [showAchievements, setShowAchievements] = useState(false);
+
+  // Transcript dialog state
+  const [showTranscript, setShowTranscript] = useState(false);
+  const [transcriptScenarioId, setTranscriptScenarioId] = useState<string | null>(null);
 
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -186,9 +192,12 @@ export function Dashboard() {
         >
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Welcome back, <span className="gradient-text ambient-name-glow">{playerName}</span>
+              Welcome back, <span className="gradient-text-themed ambient-name-glow">{playerName}</span>
             </h1>
-            <p className="text-muted-foreground mt-1">{tierName} — {tierDesc}</p>
+            <div className="flex items-center gap-3 mt-1">
+              <p className="text-muted-foreground">{tierName} — {tierDesc}</p>
+              <StreakIndicator compact />
+            </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <Button variant="outline" size="sm" onClick={() => setShowAchievements(true)} className="gap-1.5 sm:gap-2">
@@ -201,6 +210,12 @@ export function Dashboard() {
               <span className="hidden sm:inline">Career Stats</span>
               <span className="sm:hidden">Stats</span>
             </Button>
+            {caseResults.length > 0 && (
+              <Button variant="outline" size="sm" onClick={() => setPhase('case_history')} className="gap-1.5 sm:gap-2">
+                <History className="h-4 w-4" />
+                <span className="hidden sm:inline">History</span>
+              </Button>
+            )}
           </div>
         </motion.div>
 
@@ -502,6 +517,19 @@ export function Dashboard() {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
+                              setTranscriptScenarioId(result.scenarioId);
+                              setShowTranscript(true);
+                            }}
+                            className="h-8 px-2 gap-1 text-xs text-muted-foreground hover:text-cyan-500 hover:bg-cyan-500/10"
+                            title="Review transcript"
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               handleReplayCase(result.scenarioId);
                             }}
                             className="h-8 px-2 gap-1 text-xs text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
@@ -595,7 +623,7 @@ export function Dashboard() {
               Cancel
             </Button>
             <Button
-              className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold premium-button"
+              className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold premium-button-themed"
               onClick={handleProceedWithCase}
             >
               Start Case
@@ -618,6 +646,32 @@ export function Dashboard() {
             </DialogDescription>
           </DialogHeader>
           <AchievementGallery />
+        </DialogContent>
+      </Dialog>
+
+      {/* Transcript Review Dialog */}
+      <Dialog open={showTranscript} onOpenChange={setShowTranscript}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden sm:max-w-[calc(100%-2rem)]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-amber-500" />
+              {transcriptScenarioId ? (getScenarioById(transcriptScenarioId)?.title || 'Case Transcript') : 'Case Transcript'}
+            </DialogTitle>
+            <DialogDescription>
+              Review the full negotiation dialogue for this case
+            </DialogDescription>
+          </DialogHeader>
+          {transcriptScenarioId && (() => {
+            const result = caseResults.find(r => r.scenarioId === transcriptScenarioId);
+            if (!result) return <p className="text-sm text-muted-foreground">No transcript data available.</p>;
+            return (
+              <NegotiationTranscript
+                scenarioId={transcriptScenarioId}
+                transcript={result.transcript}
+                choicesMade={result.choicesMade}
+              />
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

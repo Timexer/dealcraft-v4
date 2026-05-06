@@ -5,12 +5,15 @@ import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS, type EndingScores } from '@/data/scenarios/types';
 import { calculateFinalScore, getScoreGrade, getReputationType, calculateReputationDelta, calculateStatsDelta } from '@/lib/game-engine';
+import { StreakIndicator } from '@/components/game/StreakIndicator';
+import { NegotiationTranscript } from '@/components/game/NegotiationTranscript';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   RadarChart,
@@ -39,6 +42,8 @@ import {
   ChevronDown,
   HelpCircle,
   Sparkles,
+  Flame,
+  FileText,
 } from 'lucide-react';
 
 const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string; maxColor: string }[] = [
@@ -168,6 +173,7 @@ export function Postmortem() {
     caseResults, negotiation,
     discoveredFacts, stats, addStats,
     reputation, addReputation,
+    currentStreak, bestStreak, streakType,
   } = useGameStore();
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
@@ -181,6 +187,9 @@ export function Postmortem() {
     const timer = setTimeout(() => setShowRadar(true), 600);
     return () => clearTimeout(timer);
   }, []);
+
+  // Transcript dialog state
+  const [showTranscript, setShowTranscript] = useState(false);
 
   // Expanded bias traps state
   const [expandedTraps, setExpandedTraps] = useState<Set<string>>(new Set());
@@ -213,6 +222,10 @@ export function Postmortem() {
   const repType = getReputationType(reputation);
   const endingType = latestResult.outcome;
   const ending = scenario.endings.find(e => e.type === endingType) || scenario.endings[0];
+
+  // Calculate streak bonus info
+  const streakMultiplier = currentStreak >= 3 ? Math.min(1.5, 1 + (currentStreak - 2) * 0.05) : 1;
+  const streakBonus = streakMultiplier > 1 ? Math.round(finalScore * (streakMultiplier - 1)) : 0;
 
   // Calculate deltas
   const repDelta = calculateReputationDelta(scenario, endingType);
@@ -273,6 +286,31 @@ export function Postmortem() {
                       <p className={`text-sm font-medium mt-1 ${grade.color}`}>{grade.description}</p>
                       <p className="text-sm text-muted-foreground mt-2">{ending.description}</p>
                       <p className="text-xs text-muted-foreground mt-1 italic">{ending.longTermConsequence}</p>
+                      {/* Streak Bonus Info */}
+                      {streakBonus > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 1.5 }}
+                          className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20"
+                        >
+                          <Flame className="h-4 w-4 text-amber-400" />
+                          <div className="flex-1">
+                            <p className="text-xs font-bold text-amber-300">
+                              Streak Bonus: +{streakBonus} pts ({Math.round((streakMultiplier - 1) * 100)}%)
+                            </p>
+                            <p className="text-[10px] text-amber-400/60">
+                              From {currentStreak}x {streakType === 'master' ? 'master' : 'win'} streak
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
+                      {/* Streak Indicator */}
+                      {currentStreak > 0 && (
+                        <div className="mt-2">
+                          <StreakIndicator />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -714,8 +752,16 @@ export function Postmortem() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.5 }}
-          className="flex justify-center"
+          className="flex flex-col sm:flex-row justify-center gap-3"
         >
+          <Button
+            variant="outline"
+            onClick={() => setShowTranscript(true)}
+            className="gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            Review Transcript
+          </Button>
           <Button
             onClick={() => setPhase('dashboard')}
             size="lg"
@@ -726,6 +772,28 @@ export function Postmortem() {
           </Button>
         </motion.div>
       </div>
+
+      {/* Transcript Review Dialog */}
+      <Dialog open={showTranscript} onOpenChange={setShowTranscript}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden sm:max-w-[calc(100%-2rem)]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-amber-500" />
+              {scenario.title} — Transcript
+            </DialogTitle>
+            <DialogDescription>
+              Review the full negotiation dialogue for this case
+            </DialogDescription>
+          </DialogHeader>
+          {latestResult && (
+            <NegotiationTranscript
+              scenarioId={latestResult.scenarioId}
+              transcript={latestResult.transcript}
+              choicesMade={latestResult.choicesMade}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

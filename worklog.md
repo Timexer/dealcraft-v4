@@ -695,3 +695,271 @@ Unresolved Issues / Risks:
 - Could add social sharing of scores
 - Could add case difficulty scaling based on player skill
 - Could add multiplayer/competitive negotiation mode
+
+---
+Task ID: 10
+Agent: Feature Developer (Case History & Negotiation Transcript)
+Task: Add Case History/Timeline page and Negotiation Transcript Review feature
+
+Work Log:
+- Read worklog.md to understand project progress from 10+ previous agents
+- Read all key files: types.ts, game-store.ts, page.tsx, NegotiationTable.tsx, Dashboard.tsx, Postmortem.tsx, game-engine.ts
+- Feature 1: Case History / Timeline Page
+  - Added `TranscriptEntry` interface and `transcript?: TranscriptEntry[]` field to `CaseResult` type in types.ts
+  - Added `'case_history'` to `GamePhase` type union in types.ts
+  - Created `src/components/game/CaseHistory.tsx` component with:
+    - Visual vertical timeline with connected dots/nodes showing each completed case in chronological order
+    - Each node shows: case title, outcome grade badge (S/A/B/C/D/F), final score, case number
+    - Color-coded by outcome: master=gold, cooperative=emerald, hard_bargain=amber, bad_deal=red
+    - Connecting lines between nodes that change color based on performance trend (improving=green, declining=red, stable=gray)
+    - Score Trend Chart using recharts AreaChart with amber/gold line, filled area gradient, dots at each data point
+    - Average score displayed as dashed horizontal reference line
+    - Statistics Summary: Total cases, average score, best score, most common outcome, win streak, current form (last 3 vs overall average)
+    - Filter by outcome type (master, cooperative, hard_bargain, bad_deal) with animated transitions
+    - Sort by date, score, or title
+    - Click any case to open transcript dialog
+    - Empty state for no completed cases
+    - Back button to return to Dashboard
+  - Added `case_history` phase rendering in page.tsx
+  - Added "History" button in Dashboard header (visible when cases completed > 0)
+- Feature 2: Negotiation Transcript Review
+  - Created `src/components/game/NegotiationTranscript.tsx` component with:
+    - Full dialogue tree path viewer showing each message with speaker label, avatar, and text
+    - Player choices highlighted with amber accent
+    - Counterparty messages shown with different styling per speaker (narrator, counterparty, client, advisor)
+    - Branch Indicators: available but not taken choices shown grayed out with lock icon and "Road not taken" label
+    - Choice type badges from CHOICE_TYPE_STYLES (diagnostic, aggressive_anchor, etc.)
+    - Timeline Scrubber: horizontal mini timeline at top showing conversation flow as clickable avatar dots
+    - Current position indicator with focus ring
+    - Previous/Next navigation buttons
+    - Click-to-focus on any entry in transcript
+    - Fallback transcript builder from scenario data + choicesMade when stored transcript is not available (backwards compatible with old case results)
+  - Integrated into NegotiationTable.tsx: builds and stores transcript data in handleViewResults
+    - Maps dialogueHistory to TranscriptEntry format with nodeId, speaker, text
+    - Records chosenChoiceId, chosenChoiceText for each entry
+    - Captures all availableChoices with id, text, type, wasTaken flag
+    - Transcript stored in caseResult.transcript field and persisted via Zustand
+  - Access Points:
+    - From Postmortem: "Review Transcript" button next to "Continue Career" button, opens dialog
+    - From Dashboard: FileText icon on completed case cards, opens dialog
+    - From Case History: click any case card to open transcript dialog
+- Fixed pre-existing lint error in StreakIndicator.tsx (setAnimateStreak called directly in effect)
+- All lint checks pass cleanly with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- Case History page: visual timeline, score trend chart, statistics summary, filter/sort
+- Negotiation Transcript: full dialogue review with branch indicators, timeline scrubber, speaker styling
+- Transcript data captured during negotiation and stored in CaseResult for replay
+- Three access points for transcript review: Postmortem, Dashboard, Case History
+- Backwards compatible: old case results without transcript data reconstruct from scenario + choicesMade
+- All lint checks pass cleanly
+
+Current Project Status:
+- Dealcraft is a fully playable, feature-rich negotiation career simulator
+- 30 cases with rich dialogue trees (all expanded)
+- Complete game loop with scoring, reputation, achievements, career progression, replay
+- NEW: Case History page with visual timeline, score trend chart, statistics
+- NEW: Negotiation Transcript Review with branch indicators, timeline scrubber
+- NEW: Transcript data persistence for reviewing past negotiation dialogues
+- LLM AI Advisor, Challenge Mode, Sound Effects, Keyboard Shortcuts
+- Enhanced mobile experience, Quick Stats Bar, premium visual design
+- All core features working: BATNA analysis, issue matrix, investigation, branching dialogue, multiple endings
+
+Unresolved Issues / Risks:
+- Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- AI Advisor response time varies (3-8 seconds)
+- Could add more achievements for challenge mode completions
+- Could add social sharing of scores
+- Could add case difficulty scaling based on player skill
+- Could add multiplayer/competitive negotiation mode
+
+---
+Task ID: 11
+Agent: Feature Developer
+Task: Add Streak/Combo System and Dynamic Theme Engine
+
+Work Log:
+- Read worklog.md to understand project progress from 10+ previous agents
+- Read all key files: game-store.ts, GameHeader.tsx, Dashboard.tsx, Postmortem.tsx, TitleScreen.tsx, page.tsx, globals.css, game-engine.ts
+- Feature 1: Streak / Combo System
+  - Added streak state to game-store.ts: currentStreak (default 0), bestStreak (default 0), streakType ('none'|'win'|'master'), streakHistory array
+  - Added getStreakMultiplier method: returns 1.0 for streak < 3, +5% per level (capped at 1.5x/50%)
+  - In addCaseResult: master/cooperative increments streak and updates streakType, hard_bargain/bad_deal ends streak and archives to streakHistory
+  - Streak bonus calculated in addCaseResult: Math.round(finalScore * (multiplier - 1)) added to totalScore
+  - Milestone notifications at 3 (Bronze), 5 (Silver), 7 (Gold), 10 (Platinum) with themed emojis
+  - Streak bonus notification showing exact bonus points
+  - Created StreakIndicator.tsx: compact mode (for inline badges) and full mode (with icon, counter, milestone badge, bonus percentage)
+  - Integrated StreakIndicator into Dashboard (compact, next to player name), GameHeader (compact in center stats + quick stats bar), Postmortem (full mode with bonus breakdown)
+  - Reset streak in startNewGame and resetGame
+  - Persisted streak data in partialize function (currentStreak, bestStreak, streakType, streakHistory)
+- Feature 2: Dynamic Theme Engine
+  - Added colorTheme state to game-store.ts: 'amber'|'emerald'|'crimson'|'ocean' (default 'amber')
+  - Added setColorTheme action
+  - Created ThemeSelector.tsx with 4 theme definitions:
+    - Amber Gold: Primary=#f59e0b, Accent=#fbbf24, Glow=oklch(0.77 0.16 75)
+    - Emerald: Primary=#10b981, Accent=#2dd4bf, Glow=oklch(0.7 0.15 165)
+    - Crimson: Primary=#f43f5e, Accent=#f472b6, Glow=oklch(0.65 0.2 10)
+    - Ocean: Primary=#06b6d4, Accent=#38bdf8, Glow=oklch(0.7 0.15 230)
+  - ThemeSelector component: 2x2 grid of gradient swatches, active checkmark with theme color, glow border on active
+  - useThemeApplication hook: applies 6 CSS custom properties (--theme-primary, --theme-accent, --theme-glow, --theme-primary-bg, --theme-primary-text, --theme-gradient) to document.documentElement.style on mount and on theme change
+  - Added CSS custom properties to :root in globals.css
+  - Added smooth body transition: transition: color 0.3s ease, background-color 0.3s ease
+  - Created 8 theme-aware CSS utility classes: .gradient-text-themed, .glow-pulse-themed, .dramatic-glow-themed, .premium-button-themed, .ambient-name-glow-themed, .streak-pulse, .choice-hover-trail-themed, .search-focus-glow-themed, .theme-transition
+  - Applied theme-aware classes to: TitleScreen (gradient text, dramatic glow, premium button), Dashboard (gradient text), Footer (brand color via --theme-primary), GameHeader (theme picker dialog with Dialog/DialogContent)
+  - Added Palette icon button in GameHeader to open theme picker dialog
+  - Added theme application hook in GameHeader and TitleScreen (applies on mount)
+  - Persisted colorTheme in partialize function
+  - Updated feature badges on TitleScreen: added 'Streaks' and 'Themes'
+- All lint checks pass cleanly (0 errors, 0 warnings)
+- Dev server compiles successfully
+
+Stage Summary:
+- Streak/Combo System: tracks consecutive good outcomes, rewards with +5% per level (capped at +50%), milestone notifications at 3/5/7/10, streak indicator shown across UI
+- Dynamic Theme Engine: 4 selectable color themes (Amber Gold, Emerald, Crimson, Ocean), CSS custom properties applied dynamically, smooth transitions, theme-aware CSS classes
+- Game version updated to v4.0 reflecting feature additions
+- All existing functionality preserved
+
+Current Project Status:
+- Dealcraft v4.0 is a fully playable, feature-rich negotiation career simulator
+- 30 cases with RICH dialogue trees (all expanded)
+- Complete game loop with scoring, reputation, achievements, career progression, replay
+- Streak/Combo System with bonus scoring and milestone notifications
+- Dynamic Theme Engine with 4 selectable color themes
+- LLM AI Advisor, Challenge Mode, Sound Effects, Keyboard Shortcuts
+- Enhanced mobile experience with swipe gestures, mini-bars, haptic feedback
+- Quick Stats Bar for desktop users
+- Premium visual design with 25+ CSS animations and micro-interactions
+- All core features working: BATNA analysis, issue matrix, investigation, branching dialogue, multiple endings
+
+Unresolved Issues / Risks:
+- Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- AI Advisor response time varies (3-8 seconds)
+- Could add more achievements for streak milestones
+- Could add social sharing of scores/streaks
+- Could add multiplayer/competitive negotiation mode
+
+---
+Task ID: 10
+Agent: Feature Developer (Case History & Transcript)
+Task: Add Case History/Timeline page and Negotiation Transcript Review feature
+
+Work Log:
+- Read worklog.md to understand project progress from 9+ previous agents
+- Feature 1: Case History / Timeline Page
+  - Created `src/components/game/CaseHistory.tsx`:
+    - Visual timeline with connected dots/nodes showing completed cases in chronological order
+    - Each node shows case title, outcome grade badge (S/A/B/C/D/F), final score, outcome type
+    - Color-coded by outcome: master=gold, cooperative=emerald, hard_bargain=amber, bad_deal=red
+    - Connecting lines change color based on performance trend (improving=green, declining=red, stable=gray)
+    - Score Trend Chart: AreaChart using recharts with filled gradient area, average score reference line
+    - Statistics Summary: 6 stat cards (Total Cases, Average Score, Best Score, Win Streak, Most Common Outcome, Current Form)
+    - Filter by outcome type, sort by date/score/title
+  - Accessible from Dashboard "History" button
+  - Added 'case_history' to GamePhase type in types.ts
+- Feature 2: Negotiation Transcript Review
+  - Created `src/components/game/NegotiationTranscript.tsx`:
+    - Full dialogue path viewer with speaker labels, avatars, and text
+    - Player choices highlighted with amber accent
+    - Branch indicators: available but not taken choices shown grayed out with lock icon
+    - Timeline scrubber: horizontal mini timeline with clickable avatar dots
+    - Step navigation with Previous/Next buttons
+  - Added `transcript` field to CaseResult type in types.ts
+  - Updated NegotiationTable.tsx: builds and stores transcript in handleViewResults
+  - Backward compatible: falls back to reconstructing transcript from scenario data + choicesMade
+  - Access points: Postmortem "Review Transcript" button, Dashboard file icon on completed cases
+- All lint checks pass cleanly with zero errors
+
+Stage Summary:
+- Case History page: visual timeline, score trend chart, statistics, filters/sorts
+- Negotiation Transcript: full dialogue review with branch indicators and timeline scrubber
+- Both features fully integrated and accessible from existing UI
+- Transcript data persisted in case results for future review
+
+---
+Task ID: 11
+Agent: Feature Developer (Streak System & Theme Engine)
+Task: Add Streak/Combo system and Dynamic Theme Engine
+
+Work Log:
+- Read worklog.md to understand project progress from 9+ previous agents
+- Feature 1: Streak / Combo System
+  - Updated game-store.ts: added currentStreak, bestStreak, streakType, streakHistory with persistence
+  - Streak logic in addCaseResult: master/cooperative outcomes increment streak; hard_bargain/bad_deal end it
+  - Streak bonus: +5% per streak level (capped at +50%) when streak >= 3
+  - Milestone notifications at 3 (Bronze), 5 (Silver), 7 (Gold), 10 (Platinum)
+  - Created StreakIndicator component: compact and full modes with milestone badges
+  - Integrated into Dashboard (next to player name), GameHeader (quick stats), Postmortem (bonus breakdown)
+- Feature 2: Dynamic Theme Engine
+  - 4 selectable themes: Amber Gold, Emerald, Crimson, Ocean
+  - Created ThemeSelector component: 2x2 grid of gradient swatches, active checkmark with glow
+  - CSS custom properties: --theme-primary, --theme-accent, --theme-glow, --theme-primary-bg, --theme-primary-text, --theme-gradient
+  - Theme-aware CSS classes: .gradient-text-themed, .dramatic-glow-themed, .premium-button-themed, etc.
+  - Applied CSS variables across TitleScreen, Dashboard, Footer, and other components
+  - Smooth 0.3s transition on theme change
+  - Palette icon button in GameHeader
+  - Theme persisted in game store
+- Updated game version to v4.0
+- All lint checks pass cleanly with zero errors
+
+Stage Summary:
+- Streak system: tracks consecutive good outcomes with bonus multipliers, milestone notifications
+- Dynamic theme engine: 4 color themes (Amber Gold, Emerald, Crimson, Ocean) with CSS custom properties
+- Both features fully integrated across the game UI
+- Game version updated to v4.0
+
+---
+Task ID: 12
+Agent: Main Developer (Round 10)
+Task: QA testing, bug fixes, new features (Case History, Transcript, Streaks, Theme Engine), and styling improvements
+
+Work Log:
+- Read worklog.md to understand project status (9+ previous agents, extensive feature development)
+- Performed comprehensive QA testing via agent-browser: full game loop verified end-to-end (Title → Dashboard → Intake → Strategy → Investigation → Negotiation → Ending → Postmortem → Dashboard)
+- Verified: no hydration errors, no runtime errors, no console errors
+- All lint checks pass cleanly with zero errors
+- Delegated Case History & Transcript features to subagent (Task 10): completed successfully
+  - CaseHistory component with visual timeline, score trend chart, statistics, filters
+  - NegotiationTranscript component with dialogue review, branch indicators, timeline scrubber
+  - Transcript data stored in case results for persistence
+- Delegated Streak System & Theme Engine to subagent (Task 11): completed successfully
+  - Streak tracking with bonus multipliers and milestone notifications
+  - 4 color themes (Amber Gold, Emerald, Crimson, Ocean) with CSS custom properties
+  - ThemeSelector accessible from GameHeader
+- Enhanced Investigation phase styling:
+  - Added subtle background pattern and ambient glow orbs
+  - Enhanced point tracker card with glass-card-hover, dot indicators, "All Spent" badge
+  - Investigation action cards with card-hover-lift effect and emerald "✓ Done" badge
+  - Replaced Separator with animated-line divider
+  - Enhanced Proceed button with gradient, premium-button, dramatic-glow classes
+- Updated footer: reduced spacing, added "Streaks · Themes · Transcripts" features text, added "Based on Negotiation Genius" attribution
+- Final QA test passed with zero errors
+
+Stage Summary:
+- Full game loop works end-to-end with no errors
+- New features: Case History/Timeline, Negotiation Transcript, Streak/Combo System, Dynamic Theme Engine
+- Enhanced Investigation phase with premium styling
+- Updated footer with feature list and source attribution
+- Game version: v4.0
+
+Current Project Status:
+- Dealcraft v4.0 is a fully playable, feature-rich negotiation career simulator
+- 30 cases with rich dialogue trees (all expanded)
+- Complete game loop with scoring, reputation, achievements, career progression, replay
+- NEW: Case History/Timeline with score trend chart and statistics
+- NEW: Negotiation Transcript review with branch indicators and scrubber
+- NEW: Streak/Combo system with bonus multipliers and milestone notifications
+- NEW: Dynamic Theme Engine with 4 color themes (Amber Gold, Emerald, Crimson, Ocean)
+- LLM AI Advisor, Challenge Mode (4 modes), Sound Effects, Keyboard Shortcuts
+- Enhanced mobile experience with swipe gestures, mini-bars, haptic feedback
+- Quick Stats Bar, Premium visual design with 35+ CSS animations
+- Full state persistence including negotiation dialogue position and transcript data
+- Tutorial, Glossary (28 terms), Achievement Gallery (13), Bias Trap Alerts, Career Visualization
+
+Unresolved Issues / Risks:
+- Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- AI Advisor response time varies (3-8 seconds) - could add streaming
+- Could add social sharing of scores
+- Could add case difficulty scaling based on player skill
+- Could add multiplayer/competitive negotiation mode
+- Could expand achievement system for challenge mode completions and theme milestones

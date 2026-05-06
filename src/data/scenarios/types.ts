@@ -191,7 +191,7 @@ export interface ReputationScores {
   fixer: number;
 }
 
-export type GamePhase = 'title' | 'dashboard' | 'intake' | 'strategy' | 'investigation' | 'negotiation' | 'postmortem' | 'career';
+export type GamePhase = 'title' | 'dashboard' | 'intake' | 'strategy' | 'investigation' | 'negotiation' | 'postmortem' | 'career' | 'case_history';
 
 export interface NegotiationState {
   trust: number;
@@ -213,6 +213,15 @@ export interface NegotiationState {
   endingTriggered?: string;
 }
 
+export interface TranscriptEntry {
+  nodeId: string;
+  speaker: string;
+  text: string;
+  chosenChoiceId?: string;
+  chosenChoiceText?: string;
+  availableChoices?: { id: string; text: string; type: string; wasTaken: boolean }[];
+}
+
 export interface CaseResult {
   scenarioId: string;
   outcome: string;
@@ -221,6 +230,7 @@ export interface CaseResult {
   choicesMade: string[];
   hiddenFactsFound: string[];
   postmortemRead: boolean;
+  transcript?: TranscriptEntry[];
 }
 
 export const CATEGORY_COLORS: Record<string, string> = {

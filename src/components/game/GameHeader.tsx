@@ -19,20 +19,29 @@ import {
   Zap,
   ChevronDown,
   ChevronUp,
+  Palette,
+  Flame,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { NegotiationGlossary } from '@/components/game/NegotiationGlossary';
 import { KeyboardShortcutsDialog } from '@/components/game/KeyboardShortcuts';
+import { ThemeSelector, useThemeApplication } from '@/components/game/ThemeSelector';
 import { useSound } from '@/hooks/use-sound';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export function GameHeader() {
-  const { playerName, careerTier, casesCompleted, totalScore, reputation, phase, setPhase, currentScenarioId, challengeMode } = useGameStore();
+  const { playerName, careerTier, casesCompleted, totalScore, reputation, phase, setPhase, currentScenarioId, challengeMode, currentStreak, streakType } = useGameStore();
   const [showMiniStats, setShowMiniStats] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const [quickStatsCollapsed, setQuickStatsCollapsed] = useState(false);
   const { soundEnabled, toggleSound } = useSound();
+
+  // Apply theme on mount
+  useThemeApplication();
+
   const repType = getReputationType(reputation);
   const tierName = TIER_NAMES[careerTier];
 
@@ -90,6 +99,12 @@ export function GameHeader() {
             <span className="truncate max-w-[120px]">{playerName}</span>
             <span>·</span>
             <span>{casesCompleted} cases</span>
+            {currentStreak > 0 && (
+              <span className="flex items-center gap-1 text-amber-400 font-bold">
+                {streakType === 'master' ? '👑' : <Flame className="h-3 w-3" />}
+                x{currentStreak}
+              </span>
+            )}
           </div>
         </div>
 
@@ -136,6 +151,15 @@ export function GameHeader() {
             title="Keyboard Shortcuts (?)"
           >
             <Keyboard className="h-3.5 w-3.5 text-amber-500/70" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => setShowThemePicker(true)}
+            title="Color Theme"
+          >
+            <Palette className="h-3.5 w-3.5 text-amber-500/70" />
           </Button>
           <Button
             variant="ghost"
@@ -210,6 +234,12 @@ export function GameHeader() {
                 {challengeMode === 'speed' ? 'Speed Run' : challengeMode === 'limited_choices' ? 'Limited Choices' : 'Ethics Lock'}
               </Badge>
             )}
+            {currentStreak > 0 && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-amber-500/20 text-amber-300 bg-amber-500/5">
+                {streakType === 'master' ? '👑' : <Flame className="h-2.5 w-2.5 mr-0.5" />}
+                x{currentStreak}
+              </Badge>
+            )}
             <button
               onClick={() => setQuickStatsCollapsed(true)}
               className="ml-auto text-muted-foreground/50 hover:text-muted-foreground transition-colors"
@@ -238,6 +268,22 @@ export function GameHeader() {
 
       {/* Keyboard Shortcuts Dialog */}
       <KeyboardShortcutsDialog open={showShortcuts} onOpenChange={setShowShortcuts} />
+
+      {/* Theme Picker Dialog */}
+      <Dialog open={showThemePicker} onOpenChange={setShowThemePicker}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Palette className="h-5 w-5 text-amber-500" />
+              Color Theme
+            </DialogTitle>
+            <DialogDescription>
+              Choose your preferred accent color
+            </DialogDescription>
+          </DialogHeader>
+          <ThemeSelector />
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }

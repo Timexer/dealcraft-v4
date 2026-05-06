@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
-import { CHOICE_TYPE_STYLES, type DialogueNode, type DialogueChoice, type BiasEvent } from '@/data/scenarios/types';
+import { CHOICE_TYPE_STYLES, type DialogueNode, type DialogueChoice, type BiasEvent, type TranscriptEntry } from '@/data/scenarios/types';
 import { getEndingFromNegotiation, calculateFinalScore, calculateReputationDelta, calculateStatsDelta } from '@/lib/game-engine';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -445,6 +445,32 @@ export function NegotiationTable() {
     const ending = scenario.endings.find(e => e.type === endingType) || scenario.endings[0];
     const finalScore = calculateFinalScore(ending.scores);
 
+    // Build transcript from dialogue history
+    const transcript: TranscriptEntry[] = dialogueHistory.map(entry => {
+      const transcriptEntry: TranscriptEntry = {
+        nodeId: entry.node.id,
+        speaker: entry.node.speaker,
+        text: entry.node.text,
+      };
+
+      if (entry.chosenChoiceId) {
+        transcriptEntry.chosenChoiceId = entry.chosenChoiceId;
+        transcriptEntry.chosenChoiceText = entry.chosenChoiceText;
+      }
+
+      // Include all available choices at this point
+      if (entry.node.choices && entry.node.choices.length > 0) {
+        transcriptEntry.availableChoices = entry.node.choices.map(choice => ({
+          id: choice.id,
+          text: choice.text,
+          type: choice.type,
+          wasTaken: choice.id === entry.chosenChoiceId,
+        }));
+      }
+
+      return transcriptEntry;
+    });
+
     const caseResult = {
       scenarioId: scenario.id,
       outcome: endingType,
@@ -453,6 +479,7 @@ export function NegotiationTable() {
       choicesMade: negotiation.choicesMade,
       hiddenFactsFound: negotiation.informationRevealed,
       postmortemRead: false,
+      transcript,
     };
 
     if (isReplay) {
@@ -473,7 +500,7 @@ export function NegotiationTable() {
     // Store ending info for postmortem
     updateNegotiation({ endingTriggered: endingType });
     setPhase('postmortem');
-  }, [scenario, currentNode, negotiation, isReplay, replayCaseResult, addCaseResult, addReputation, addStats, discoveredFacts, updateNegotiation, setPhase, playSuccess]);
+  }, [scenario, currentNode, negotiation, isReplay, replayCaseResult, addCaseResult, addReputation, addStats, discoveredFacts, updateNegotiation, setPhase, playSuccess, dialogueHistory]);
 
   // Auto-trigger view results when speed timer hits 0
   useEffect(() => {

@@ -13,13 +13,22 @@ export interface Achievement {
 
 export interface GameNotification {
   id: string;
-  type: 'achievement' | 'tier_up' | 'reputation_change' | 'info';
+  type: 'achievement' | 'tier_up' | 'reputation_change' | 'info' | 'streak';
   title: string;
   message: string;
   icon: string;
   timestamp: number;
   read: boolean;
 }
+
+export interface StreakHistoryEntry {
+  type: string;
+  startedAt: number;
+  length: number;
+  endedAt: number;
+}
+
+export type ColorTheme = 'amber' | 'emerald' | 'crimson' | 'ocean';
 
 export interface GameState {
   // Game phase
@@ -89,6 +98,17 @@ export interface GameState {
   setChallengeMode: (mode: 'none' | 'speed' | 'limited_choices' | 'ethics_lock') => void;
   challengeTimer: number;
   setChallengeTimer: (seconds: number) => void;
+
+  // Streak System
+  currentStreak: number;
+  bestStreak: number;
+  streakType: 'none' | 'win' | 'master';
+  streakHistory: StreakHistoryEntry[];
+  getStreakMultiplier: () => number;
+
+  // Theme
+  colorTheme: ColorTheme;
+  setColorTheme: (theme: ColorTheme) => void;
 
   // Tutorial
   tutorialCompleted: boolean;
@@ -285,7 +305,11 @@ export const useGameStore = create<GameState>()(
         set((s) => {
           const newResults = [...s.caseResults, result];
           const newCasesCompleted = newResults.length;
-          const newTotalScore = s.totalScore + result.finalScore;
+
+          // Calculate streak bonus
+          const streakMultiplier = s.currentStreak >= 3 ? Math.min(1.5, 1 + (s.currentStreak - 2) * 0.05) : 1;
+          const streakBonus = streakMultiplier > 1 ? Math.round(result.finalScore * (streakMultiplier - 1)) : 0;
+          const newTotalScore = s.totalScore + result.finalScore + streakBonus;
           const prevTier = s.careerTier;
           const newTier = newCasesCompleted < 3 ? 1 : newCasesCompleted < 8 ? 2 : newCasesCompleted < 15 ? 3 : newCasesCompleted < 22 ? 4 : 5;
           
@@ -299,6 +323,68 @@ export const useGameStore = create<GameState>()(
               title: '⬆️ Career Tier Up!',
               message: `You've been promoted to ${tierNames[newTier]}!`,
               icon: '📈',
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Streak logic
+          let newCurrentStreak = s.currentStreak;
+          let newBestStreak = s.bestStreak;
+          let newStreakType = s.streakType;
+          const newStreakHistory = [...s.streakHistory];
+          const streakStartedAt = s.currentStreak === 0 ? Date.now() : (s.streakHistory.length > 0 ? s.streakHistory[s.streakHistory.length - 1].startedAt : Date.now());
+
+          if (result.outcome === 'master' || result.outcome === 'cooperative') {
+            newCurrentStreak = s.currentStreak + 1;
+            newStreakType = result.outcome === 'master' ? 'master' : 'win';
+            if (newCurrentStreak > newBestStreak) {
+              newBestStreak = newCurrentStreak;
+            }
+          } else if (result.outcome === 'hard_bargain' || result.outcome === 'bad_deal') {
+            // End streak
+            if (s.currentStreak > 0) {
+              newStreakHistory.push({
+                type: s.streakType,
+                startedAt: streakStartedAt,
+                length: s.currentStreak,
+                endedAt: Date.now(),
+              });
+            }
+            newCurrentStreak = 0;
+            newStreakType = 'none';
+          }
+
+          // Streak milestone notifications
+          const STREAK_MILESTONES: Record<number, { name: string; emoji: string }> = {
+            3: { name: 'Bronze Negotiator', emoji: '🔥' },
+            5: { name: 'Silver Negotiator', emoji: '🔥' },
+            7: { name: 'Gold Negotiator', emoji: '👑' },
+            10: { name: 'Platinum Negotiator', emoji: '👑' },
+          };
+
+          if (newCurrentStreak >= 3 && STREAK_MILESTONES[newCurrentStreak]) {
+            const milestone = STREAK_MILESTONES[newCurrentStreak];
+            const streakEmoji = newStreakType === 'master' ? '👑' : '🔥';
+            newNotifications.unshift({
+              id: `notif-streak-${Date.now()}`,
+              type: 'streak',
+              title: `${streakEmoji} ${newStreakType === 'master' ? 'Master' : 'Win'} Streak x${newCurrentStreak}!`,
+              message: `${milestone.emoji} ${milestone.name}!`,
+              icon: streakEmoji,
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+
+          // Streak bonus notification
+          if (streakBonus > 0 && newCurrentStreak >= 3) {
+            newNotifications.unshift({
+              id: `notif-streak-bonus-${Date.now()}`,
+              type: 'streak',
+              title: '⚡ Streak Bonus!',
+              message: `+${streakBonus} bonus points from your ${newCurrentStreak}x streak!`,
+              icon: '⚡',
               timestamp: Date.now(),
               read: false,
             });
@@ -498,6 +584,10 @@ export const useGameStore = create<GameState>()(
             careerTier: newTier,
             achievements: newAchievements,
             notifications: newNotifications,
+            currentStreak: newCurrentStreak,
+            bestStreak: newBestStreak,
+            streakType: newStreakType,
+            streakHistory: newStreakHistory,
           };
         }),
 
@@ -720,6 +810,22 @@ export const useGameStore = create<GameState>()(
       challengeTimer: 0,
       setChallengeTimer: (seconds) => set({ challengeTimer: seconds }),
 
+      // Streak System
+      currentStreak: 0,
+      bestStreak: 0,
+      streakType: 'none',
+      streakHistory: [],
+      getStreakMultiplier: () => {
+        const s = get();
+        if (s.currentStreak < 3) return 1;
+        const bonus = Math.min(0.5, (s.currentStreak - 2) * 0.05);
+        return 1 + bonus;
+      },
+
+      // Theme
+      colorTheme: 'amber',
+      setColorTheme: (theme) => set({ colorTheme: theme }),
+
       startNewGame: (name) =>
         set({
           phase: 'dashboard',
@@ -745,6 +851,10 @@ export const useGameStore = create<GameState>()(
           unlockedCases: ['case-01', 'case-02', 'case-03'],
           challengeMode: 'none',
           challengeTimer: 0,
+          currentStreak: 0,
+          bestStreak: 0,
+          streakType: 'none',
+          streakHistory: [],
         }),
 
       resetGame: () =>
@@ -772,6 +882,10 @@ export const useGameStore = create<GameState>()(
           unlockedCases: [],
           challengeMode: 'none',
           challengeTimer: 0,
+          currentStreak: 0,
+          bestStreak: 0,
+          streakType: 'none',
+          streakHistory: [],
         }),
 
       unlockedCases: ['case-01', 'case-02', 'case-03'],
@@ -840,6 +954,11 @@ export const useGameStore = create<GameState>()(
         investigationHistory: state.investigationHistory,
         negotiation: state.negotiation,
         challengeMode: state.challengeMode,
+        currentStreak: state.currentStreak,
+        bestStreak: state.bestStreak,
+        streakType: state.streakType,
+        streakHistory: state.streakHistory,
+        colorTheme: state.colorTheme,
       }),
     }
   )
