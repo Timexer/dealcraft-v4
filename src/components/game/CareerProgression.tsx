@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
 import { TIER_NAMES, TIER_DESCRIPTIONS } from '@/data/scenarios/types';
@@ -127,10 +128,37 @@ function getStatTextColor(value: number): string {
   return 'text-red-400';
 }
 
+// Animated stat number counter
+function AnimatedStatNumber({ value }: { value: number }) {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    const startTime = Date.now();
+    const duration = 1200;
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(value * eased));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    // Small delay to let the animation feel intentional
+    const timer = setTimeout(() => requestAnimationFrame(animate), 400);
+    return () => clearTimeout(timer);
+  }, [value]);
+
+  return <span>{display}</span>;
+}
+
 export function CareerProgression() {
   const {
     playerName, careerTier, casesCompleted, totalScore,
-    stats, reputation, caseResults,
+    stats, reputation, caseResults, achievements,
     setPhase,
   } = useGameStore();
 
@@ -161,6 +189,12 @@ export function CareerProgression() {
             Back
           </Button>
           <h1 className="text-xl sm:text-2xl font-bold">Career Progression</h1>
+          {/* Achievement count badge with animated number */}
+          <Badge variant="outline" className="ml-auto gap-1.5 border-amber-500/30 text-amber-400 bg-amber-500/10">
+            <Sparkles className="h-3.5 w-3.5" />
+            <AnimatedStatNumber value={achievements.length} />
+            <span className="text-[10px] text-amber-500/60">achievements</span>
+          </Badge>
         </motion.div>
 
         <ScrollArea className="max-h-[calc(100vh-140px)]">
@@ -176,17 +210,17 @@ export function CareerProgression() {
                   <div className="text-5xl mb-3">
                     {TIER_ICONS[careerTier - 1]}
                   </div>
-                  <h2 className="text-2xl font-bold gradient-text">{playerName}</h2>
+                  <h2 className="text-2xl font-bold gradient-text ambient-name-glow">{playerName}</h2>
                   <p className="text-amber-500 font-semibold mt-1">{tierName}</p>
                   <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">{tierDesc}</p>
 
                   <div className="flex items-center justify-center gap-6 mt-4">
                     <div className="text-center">
-                      <p className="text-2xl font-black">{casesCompleted}</p>
+                      <p className="text-2xl font-black"><AnimatedStatNumber value={casesCompleted} /></p>
                       <p className="text-[10px] text-muted-foreground">Cases</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-black text-amber-500">{totalScore}</p>
+                      <p className="text-2xl font-black text-amber-500"><AnimatedStatNumber value={totalScore} /></p>
                       <p className="text-[10px] text-muted-foreground">Total Score</p>
                     </div>
                   </div>
@@ -198,7 +232,7 @@ export function CareerProgression() {
                         <span className="text-[10px] text-muted-foreground">Progress to {nextTierName}</span>
                         <span className="text-[10px] text-muted-foreground">{casesCompleted}/{nextTierThreshold}</span>
                       </div>
-                      <div className="h-2 bg-muted/30 rounded-full overflow-hidden tier-progress-bar">
+                      <div className="h-2 bg-muted/30 rounded-full overflow-hidden tier-progress-bar breathing-animation">
                         <motion.div
                           className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400"
                           initial={{ width: 0 }}
@@ -212,7 +246,7 @@ export function CareerProgression() {
               </div>
             </motion.div>
 
-            {/* Visual Tier Map */}
+            {/* Visual Tier Map - with hover trail effect */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               <div className="glass-card overflow-hidden">
                 <div className="p-4 border-b border-border/30 bg-gradient-to-r from-amber-500/5 to-transparent">
@@ -233,7 +267,7 @@ export function CareerProgression() {
                       const isLast = idx === 4;
 
                       return (
-                        <div key={tier} className="relative">
+                        <div key={tier} className={`relative ${isCurrent ? 'tier-hover-trail' : ''}`}>
                           {/* Connector line */}
                           {!isLast && (
                             <div
@@ -318,7 +352,7 @@ export function CareerProgression() {
               </div>
             </motion.div>
 
-            {/* Stats - Categorized */}
+            {/* Stats - Categorized with animated bars */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <div className="glass-card overflow-hidden">
                 <div className="p-4 border-b border-border/30 bg-gradient-to-r from-cyan-500/5 to-transparent">
@@ -355,7 +389,9 @@ export function CareerProgression() {
                                   <Icon className="h-3.5 w-3.5" />
                                   {label}
                                 </span>
-                                <span className={`text-xs font-bold ${getStatTextColor(value)}`}>{value}/100</span>
+                                <span className={`text-xs font-bold ${getStatTextColor(value)}`}>
+                                  <AnimatedStatNumber value={value} />/100
+                                </span>
                               </div>
                               <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
                                 <motion.div
@@ -378,7 +414,7 @@ export function CareerProgression() {
               </div>
             </motion.div>
 
-            {/* Reputation - Enhanced */}
+            {/* Reputation - Enhanced with shimmer bars */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
               <div className="glass-card overflow-hidden">
                 <div className="p-4 border-b border-border/30 bg-gradient-to-r from-violet-500/5 to-transparent">
@@ -407,7 +443,7 @@ export function CareerProgression() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.6 }}
-                    className="mb-5 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 relative overflow-hidden"
+                    className="mb-5 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 relative overflow-hidden sparkle-effect"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-transparent pointer-events-none" />
                     <div className="relative flex items-center gap-3">
@@ -426,7 +462,7 @@ export function CareerProgression() {
                     </div>
                   </motion.div>
 
-                  {/* Horizontal Bar Chart */}
+                  {/* Horizontal Bar Chart with shimmer */}
                   <div className="space-y-3">
                     {(Object.entries(reputation) as [keyof typeof reputation, number][]).map(([key, value], i) => {
                       const isTop = key === topRep1[0];
@@ -451,7 +487,7 @@ export function CareerProgression() {
                               </div>
                               <div className="h-2 bg-muted/20 rounded-full overflow-hidden">
                                 <motion.div
-                                  className={`h-full rounded-full ${REP_COLORS[key] || 'bg-violet-500'}`}
+                                  className={`h-full rounded-full ${REP_COLORS[key] || 'bg-violet-500'} reputation-shimmer`}
                                   initial={{ width: 0 }}
                                   animate={{ width: `${Math.min(100, Math.max(value, 0))}%` }}
                                   transition={{ duration: 0.8, ease: 'easeOut', delay: 0.8 + i * 0.05 }}
@@ -488,7 +524,7 @@ export function CareerProgression() {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.6 + i * 0.05 }}
-                            className="flex items-center justify-between p-2.5 rounded-lg bg-background/50 border border-border/30 hover:border-amber-500/20 transition-colors"
+                            className="flex items-center justify-between p-2.5 rounded-lg bg-background/50 border border-border/30 hover:border-amber-500/20 transition-colors sealed-card"
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-xl">{caseScenario?.client.avatar || '📁'}</span>

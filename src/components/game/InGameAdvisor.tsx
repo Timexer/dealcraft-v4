@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Lightbulb,
@@ -12,8 +12,11 @@ import {
   Clock,
   Shield,
   Search,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface InGameAdvisorProps {
   negotiation: {
@@ -30,6 +33,8 @@ interface InGameAdvisorProps {
   };
   discoveredFacts: string[];
   scenarioCategory: string;
+  scenarioTitle?: string;
+  recentDialogueText?: string;
 }
 
 type TipSeverity = 'urgent' | 'caution' | 'good';
@@ -257,7 +262,97 @@ function generateTips(props: InGameAdvisorProps): AdvisorTip[] {
 export function InGameAdvisor(props: InGameAdvisorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  // AI Advisor state
+  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const lastRequestTimeRef = useRef<number>(0);
+  const cachedAdviceRef = useRef<string | null>(null);
+  const lastContextRef = useRef<string>('');
+
   const tips = useMemo(() => generateTips(props), [props]);
+
+  // Generate a context key to know when to invalidate cache
+  const contextKey = `${props.negotiation.trust}-${props.negotiation.anger}-${props.negotiation.patience}-${props.negotiation.choicesMade.length}-${props.negotiation.biasTrapsTriggered.length}`;
+
+  // Invalidate cache if context changes significantly
+  if (contextKey !== lastContextRef.current) {
+    lastContextRef.current = contextKey;
+    if (cachedAdviceRef.current) {
+      // Context changed, but keep the advice until a new request
+    }
+  }
+
+  const handleAskAI = useCallback(async () => {
+    // Check cooldown
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTimeRef.current;
+    if (timeSinceLastRequest < 10000) {
+      const remaining = Math.ceil((10000 - timeSinceLastRequest) / 1000);
+      setCooldownRemaining(remaining);
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - lastRequestTimeRef.current;
+        const rem = Math.ceil((10000 - elapsed) / 1000);
+        if (rem <= 0) {
+          setCooldownRemaining(0);
+          clearInterval(interval);
+        } else {
+          setCooldownRemaining(rem);
+        }
+      }, 1000);
+      return;
+    }
+
+    // Return cached advice if available and context hasn't changed
+    if (cachedAdviceRef.current && contextKey === lastContextRef.current) {
+      setAiAdvice(cachedAdviceRef.current);
+      return;
+    }
+
+    setAiLoading(true);
+    setAiError(false);
+    lastRequestTimeRef.current = Date.now();
+
+    try {
+      const response = await fetch('/api/game/advisor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenarioContext: `${props.scenarioTitle || 'Negotiation'} - ${props.scenarioCategory}`,
+          negotiationState: {
+            trust: props.negotiation.trust,
+            anger: props.negotiation.anger,
+            patience: props.negotiation.patience,
+            valueClaimed: props.negotiation.valueClaimed,
+            valueCreated: props.negotiation.valueCreated,
+            choicesMade: props.negotiation.choicesMade,
+            informationRevealed: props.negotiation.informationRevealed,
+            biasTrapsTriggered: props.negotiation.biasTrapsTriggered,
+          },
+          discoveredFacts: props.discoveredFacts,
+          recentDialogue: props.recentDialogueText || '',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('AI advisor request failed');
+      }
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setAiAdvice(data.advice);
+      cachedAdviceRef.current = data.advice;
+      lastContextRef.current = contextKey;
+    } catch {
+      setAiError(true);
+    } finally {
+      setAiLoading(false);
+    }
+  }, [props, contextKey]);
 
   return (
     <>
@@ -413,12 +508,69 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
                       </p>
                     </motion.div>
                   )}
+
+                  {/* AI Advice Card */}
+                  {aiAdvice && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      className="rounded-xl border border-amber-400/25 bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-cyan-500/5 p-4 shadow-lg shadow-amber-500/5"
+                    >
+                      <div className="flex items-center gap-2 mb-2.5">
+                        <div className="flex size-6 items-center justify-center rounded-md bg-amber-400/20">
+                          <Sparkles className="size-3.5 text-amber-300" />
+                        </div>
+                        <span className="text-xs font-semibold text-amber-300 tracking-wide uppercase">
+                          AI Advisor
+                        </span>
+                      </div>
+                      <p className="text-[13px] leading-relaxed text-amber-50/90">
+                        {aiAdvice}
+                      </p>
+                    </motion.div>
+                  )}
+
+                  {/* AI Error Card */}
+                  {aiError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-xl border border-amber-500/10 bg-amber-500/5 p-3.5"
+                    >
+                      <p className="text-xs text-amber-400/60 italic">
+                        AI advisor unavailable. Use the static tips above.
+                      </p>
+                    </motion.div>
+                  )}
                 </div>
 
-                {/* Footer */}
-                <div className="border-t border-amber-500/10 px-5 py-3">
+                {/* Footer with Ask AI button */}
+                <div className="border-t border-amber-500/10 px-5 py-3 space-y-2">
+                  <Button
+                    onClick={handleAskAI}
+                    disabled={aiLoading || cooldownRemaining > 0}
+                    className="w-full bg-gradient-to-r from-amber-500/80 to-amber-600/80 hover:from-amber-500 hover:to-amber-600 text-amber-950 font-semibold gap-2 text-sm h-9 disabled:opacity-50 disabled:cursor-not-allowed"
+                    size="sm"
+                  >
+                    {aiLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Thinking...
+                      </>
+                    ) : cooldownRemaining > 0 ? (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        Wait {cooldownRemaining}s
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        Ask AI
+                      </>
+                    )}
+                  </Button>
                   <p className="text-center text-[11px] text-amber-500/35">
-                    Based on your current negotiation state
+                    {aiAdvice ? 'AI advice based on your current state' : 'Based on your current negotiation state'}
                   </p>
                 </div>
               </div>

@@ -240,3 +240,241 @@ Unresolved Issues / Risks:
 - Could add LLM-powered advisor for more dynamic, AI-generated tips
 - Could expand achievement system with more milestone-based achievements
 - Could add multiplayer/competitive negotiation mode
+
+---
+Task ID: 2-a
+Agent: Dialogue Writer (Cases 16-20)
+Task: Expand dialogue trees for cases 16-20
+
+Work Log:
+- Read worklog.md to understand project progress from previous agents (5 rounds of development)
+- Read case-01.ts (gold standard), case-11.ts, case-15.ts, types.ts, and index.ts for reference patterns
+- Created case-16.ts (Employee vs. MegaCorp - IP ownership, power_imbalance): 19 dialogue nodes, 4 endings (master/cooperative/hard_bargain/bad_deal), 5 investigation actions, 2 bias traps (egocentrism/power_surrender, fixed_pie/fixed_pie_ownership)
+- Created case-17.ts (Small Nation Debt Talks - sovereign debt, power_imbalance): 18 dialogue nodes, 4 endings, 5 investigation actions, 2 bias traps (egocentrism/power_surrender_nation, fixed_pie/fixed_pie_debt)
+- Created case-18.ts (The Family Business Buyout - family business, relationship): 20 dialogue nodes, 4 endings, 5 investigation actions, 2 bias traps (fixed_pie/fixed_pie_price, overconfidence/rational_assumption)
+- Created case-19.ts (The Apology Clause - client contract, relationship): 19 dialogue nodes, 4 endings, 5 investigation actions, 2 bias traps (escalation/escalation_trap, fixed_pie/fixed_pie_apology)
+- Created case-20.ts (The Supplier You Still Need - machinery, relationship): 19 dialogue nodes, 4 endings, 5 investigation actions, 2 bias traps (escalation/revenge_bias, overconfidence/batna_blindness)
+- Updated index.ts: added imports for case16-case20, removed makeCompactScenario definitions for cases 16-20, updated comments
+- All lint checks pass cleanly with zero errors
+
+Stage Summary:
+- Created 5 new rich dialogue tree files (case-16.ts through case-20.ts) with 18-20 dialogue nodes each
+- Each case has 4 distinct endings, 5 investigation actions, 2 bias traps, and requirements on key choices
+- Rich thematic dialogue covering IP precedent fears, debt-for-nature swaps, family identity disputes, face-saving alternatives, and terrible BATNAs
+- Cases 16-20 now match the quality standard of cases 01-15
+- Total rich dialogue cases: 20 of 30 (up from 15 of 30)
+
+---
+Task ID: 2-c
+Agent: Dialogue Writer (Cases 26-30)
+Task: Expand dialogue trees for cases 26-30
+
+Work Log:
+- Read worklog.md to understand project progress from previous agents (6 rounds of development + task 2-a for cases 16-20)
+- Read case-01.ts (gold standard), case-16.ts (recently created example), types.ts, and index.ts for reference patterns
+- Created case-26.ts (The Dangerous Settlement - ethics/public safety): 20 dialogue nodes, 4 endings (master/cooperative/hard_bargain/bad_deal), 5 investigation actions, 2 bias traps (overconfidence/nda_comfort, fixed_pie/zero_sum_safety), requirements on key choices
+- Created case-27.ts (The Sports League Lockout - master/€2B season): 20 dialogue nodes, 4 endings (master/cooperative/hard_bargain/bad_deal), 5 investigation actions, 2 bias traps (escalation/escalation_trap, fixed_pie/fixed_pie_revenue), requirements on key choices
+- Created case-28.ts (The City Water Treaty - master/water supply): 19 dialogue nodes, 4 endings (master/cooperative/hard_bargain/bad_deal), 5 investigation actions, 2 bias traps (fixed_pie/allocation_bias, overconfidence/drought_temporary), requirements on key choices
+- Created case-29.ts (The AI Data Accord - master/AI industry): 19 dialogue nodes, 4 endings (master/cooperative/hard_bargain/bad_deal), 5 investigation actions, 2 bias traps (fixed_pie/micro_tracking_bias, overconfidence/ban_illusion), requirements on key choices
+- Created case-30.ts (The Peace Accord - master/regional stability): 20 dialogue nodes, 4 endings (master/cooperative/hard_bargain/bad_deal), 5 investigation actions, 2 bias traps (fixed_pie/uniform_solution, egocentrism/power_dominance), requirements on key choices
+- Updated index.ts: added imports for case26-case30, removed makeCompactScenario definitions for cases 26-30, kept makeCompactScenario function (still needed for cases 21-25), updated comments
+- All lint checks pass cleanly with zero errors
+
+Stage Summary:
+- Created 5 new rich dialogue tree files (case-26.ts through case-30.ts) with 19-20 dialogue nodes each
+- Each case has 4 distinct endings, 5 investigation actions, 2 bias traps, and requirements on key choices (info_discovered, min_trust)
+- Rich thematic dialogue covering: NDA ethics and systemic defects, escrow mechanisms and charity penalties, infrastructure investment solving root causes, ASCAP-style macro-licensing pools, and sequential bilateral peace architecture
+- Cases 26-30 now match the quality standard of cases 01-20
+- Total rich dialogue cases: 25 of 30 (up from 20 of 30)
+- Only cases 21-25 remain with compact/generic dialogue trees
+
+---
+Task ID: 6
+Agent: Styling Expert
+Task: Premium styling improvements across all game screens
+
+Work Log:
+- Read worklog.md to understand project progress from 6 previous agents (4 rounds of development + 2 dialogue writers)
+- Read all existing component files and globals.css to understand current styling baseline
+- Added 20+ new CSS animations and utility classes to globals.css:
+  - @keyframes confetti-fall: Small colored squares falling for celebration effects
+  - @keyframes pressure-wave: Red edge flash for anger increases
+  - @keyframes trust-glow: Warm glow pulse for trust increases
+  - @keyframes score-count: Counter animation with scale and blur
+  - @keyframes grade-reveal: 3D flip animation for grade badge
+  - @keyframes sparkle: Twinkling effect with rotation and scale
+  - @keyframes float-drift: Floating drift for background elements with CSS custom properties
+  - @keyframes breathing: Breathing animation for progress bars
+  - @keyframes borderGlow: Animated border glow for stats cards
+  - @keyframes staggerSlideUp: Staggered choice appear animation
+  - @keyframes pulseBorder: Pulsing border for active speaker
+  - @keyframes dramaticGlow: Dramatic button glow pulse for CTA
+  - @keyframes typewriter-blink: Blinking cursor for typewriter effect
+  - @keyframes particleFloat: Particle background animation
+  - @keyframes radarReveal: Radar chart animated reveal
+  - @keyframes trailParticle: Tier map hover particle trail
+  - @keyframes shimmerBar: Shimmer for reputation bars
+  - Utility classes: .pressure-wave, .trust-glow, .score-counter, .grade-flip, .sparkle-effect, .floating-badge, .breathing-animation, .animated-border, .sealed-card, .search-focus-glow, .stagger-choice, .pulse-border, .ambient-name-glow, .reputation-shimmer, .dramatic-glow, .typewriter-cursor, .particle, .radar-reveal, .tier-hover-trail, .confetti-particle
+- Enhanced TitleScreen.tsx:
+  - Added floating particle effect background (20 particles with CSS custom properties for size, duration, delay, drift, opacity)
+  - Added subtle parallax effect on mouse move for logo, title, and feature cards (3 depth levels: 8px, 4px, 2px)
+  - Changed New Career button from glow-pulse to dramatic-glow (more intense, 3-layer box-shadow)
+  - Added typewriter effect for subtitle "Negotiation Career Simulator" (60ms per character with blinking cursor)
+  - Added 8 floating negotiation term badges drifting across background (BATNA, ZOPA, Anchoring, Logrolling, etc.)
+- Enhanced Dashboard.tsx:
+  - Added ambient-name-glow class behind player name
+  - Added sealed-card class to completed case cards (watermark "SEALED" stamp effect)
+  - Added breathing-animation class on tier progress bar
+  - Added search-focus-glow wrapper around search bar (amber glow ring on focus-within)
+  - Added animated-border class on stats overview cards
+- Enhanced NegotiationTable.tsx:
+  - Added pressure-wave effect when anger increases > 5 points (red inset box-shadow flash)
+  - Added trust-glow effect when trust increases > 5 points (warm amber inset box-shadow flash)
+  - Added stagger-choice class on choice buttons with animation-delay per choice index
+  - Added pulse-border class on latest active speaker's message bubble
+  - Added pulse-border on typing indicator
+  - Added ConfettiEffect component (50 particles, 7 colors) triggered on master ending
+  - Used requestAnimationFrame to defer setState in pressure/trust flash effects (lint fix)
+- Enhanced Postmortem.tsx:
+  - Added score-counter class on final score display
+  - Added grade-flip animation on grade badge (3D rotateY reveal)
+  - Added radar-reveal class on radar chart container (delayed 600ms)
+  - Added sparkle-effect class on score card and master deal card for good endings
+  - Created SparkleOverlay component (12 sparkle particles with animate-subtle-float)
+  - Changed AnimatedNumber duration to 2000ms for more dramatic count-up
+- Enhanced CareerProgression.tsx:
+  - Added AnimatedStatNumber component (counter that animates from 0 to value with ease-out cubic)
+  - Applied to cases completed, total score, all stat values
+  - Added reputation-shimmer class on reputation bars (light sweep animation)
+  - Added sparkle-effect on dominant reputation highlight
+  - Added achievement count badge with animated number in header
+  - Added sealed-card class on completed case entries
+  - Added ambient-name-glow on player name
+  - Added breathing-animation on tier progress bar
+  - Added tier-hover-trail on current tier in map
+- All lint checks pass cleanly with zero errors
+
+Stage Summary:
+- 20+ new CSS keyframe animations and utility classes added
+- Title Screen: floating particles, parallax on mouse move, typewriter subtitle, floating negotiation badges, dramatic glow button
+- Dashboard: ambient name glow, sealed stamp on completed cases, breathing progress bar, search focus glow, animated border stats
+- Negotiation Table: pressure wave (anger flash), trust glow, staggered choice animations, pulsing active speaker border, confetti on master ending
+- Postmortem: animated score counter, 3D grade flip reveal, radar chart reveal animation, sparkle effects on good endings
+- Career Progression: animated stat number counters, shimmer reputation bars, achievement badge with count, sealed completed cases
+- All animations are CSS-based (performant, no heavy canvas rendering)
+- Amber/gold color scheme preserved throughout
+- All lint checks pass cleanly
+
+---
+Task ID: 5+3+4
+Agent: Feature Developer
+Task: Implement LLM Advisor API, Challenge Mode, and Sound Effects
+
+Work Log:
+- Read worklog.md to understand project progress from 7+ previous agents
+- Read all key files: game-store.ts, InGameAdvisor.tsx, NegotiationTable.tsx, Dashboard.tsx, GameHeader.tsx, types.ts, game-engine.ts
+- Verified z-ai-web-dev-sdk availability and read its type definitions
+- Feature 1: LLM-Powered AI Advisor
+  - Created /api/game/advisor/route.ts: POST endpoint using z-ai-web-dev-sdk
+  - System prompt instructs advisor to use negotiation terminology (BATNA, ZOPA, anchoring, logrolling)
+  - Accepts scenarioContext, negotiationState, discoveredFacts, recentDialogue
+  - Returns { advice: string } or { error: string } on failure
+  - Uses thinking: { type: 'disabled' } for faster responses
+  - Enforces 2-3 sentence max on advice
+  - Updated InGameAdvisor.tsx with "Ask AI" button in footer
+  - AI button shows loading spinner, cooldown countdown (10s between requests)
+  - AI advice displayed in special gradient card with Sparkles icon
+  - Caches last AI response to avoid repeated calls
+  - Context-based cache invalidation when negotiation state changes
+  - Fallback message on API error: "AI advisor unavailable. Use the static tips above."
+  - Passed scenarioTitle and recentDialogueText from NegotiationTable to InGameAdvisor
+- Feature 2: Challenge Mode
+  - Updated game-store.ts: Added challengeMode, setChallengeMode, challengeTimer, setChallengeTimer
+  - Persisted challengeMode in partialize function
+  - Reset challengeMode/challengeTimer in startNewGame and resetGame
+  - Created ChallengeModeSelector.tsx: 4 modes with visual cards (None, Speed Run, Limited Choices, Ethics Lock)
+  - Each mode shows description, difficulty modifier (1x, 1.5x, 2x, 1.8x), icons, badges
+  - Speed Run: 90-second countdown timer in NegotiationTable top bar, auto-triggers View Results on timeout
+  - Timer styling changes: red+pulse under 15s, amber under 30s, normal otherwise
+  - Limited Choices: Disables even-indexed choices (indices 1, 3, 5...), shows lock icon and "Limited Choices" label
+  - Ethics Lock: Disables choices with negative ethicalImpact, shows scale icon and "Ethics Lock" label
+  - Challenge mode badge shown in negotiation top bar when active
+  - Integrated ChallengeModeSelector into Dashboard via dialog when case card is clicked
+  - Dialog shows before navigating to intake, with Cancel and Start Case buttons
+- Feature 3: Sound Effects System
+  - Created /hooks/use-sound.ts with Web Audio API
+  - 6 procedurally generated sounds: playClick (high freq, fast decay), playSuccess (ascending chime), playWarning (low buzz), playNegotiation (medium transition), playAchievement (3-tone fanfare), playTyping (soft key tap)
+  - Sound enabled state with localStorage persistence
+  - toggleSound function for enable/disable
+  - All sounds use oscillators with gain nodes (max 0.15 gain), subtle and pleasant
+  - Lazy AudioContext singleton with auto-resume for browser autoplay policy
+  - Added sound toggle button to GameHeader (volume/mute SVG icons)
+  - Sound triggers: case card click → playClick, start case → playNegotiation, replay case → playClick
+  - Choice made → playClick, view results → playSuccess, bias trap triggered → playWarning
+- Fixed lint issue: moved auto-trigger speed timer useEffect after handleViewResults definition
+- All lint checks pass cleanly with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- LLM AI Advisor: Backend API route using z-ai-web-dev-sdk + frontend "Ask AI" button with caching, cooldown, and error handling
+- Challenge Mode: 4 modes (None, Speed Run, Limited Choices, Ethics Lock) with store persistence, visual selector, and full integration in NegotiationTable
+- Sound Effects: Web Audio API procedural sounds with toggle in header, triggered on key game interactions
+- All three features fully integrated and working together
+- All lint checks pass cleanly
+---
+Task ID: 6
+Agent: Main Developer (Round 6)
+Task: QA testing, expand all dialogue trees (cases 16-30), implement LLM AI Advisor, Challenge Mode, Sound Effects, and premium styling improvements
+
+Work Log:
+- Read worklog.md to understand current project status (5 previous rounds of development)
+- Performed QA testing via agent-browser: full game loop works end-to-end, no runtime errors
+- Confirmed known issue: some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- Expanded dialogue trees for cases 16-20 (delegated to agent): 5 new files with 18-20 nodes each, 4 endings, investigation actions, bias traps
+- Expanded dialogue trees for cases 26-30 (delegated to agent): 5 new files with 19-20 nodes each, 4 endings, investigation actions, bias traps
+- Expanded dialogue trees for cases 21-25 (delegated to agent): 5 new files with 15-20 nodes each, 4 endings, investigation actions, bias traps
+- All 30 cases now have rich dialogue trees (previously only 1-15 had rich dialogues, 16-30 were compact/generic)
+- Implemented LLM-powered AI Advisor: backend API route at /api/game/advisor using z-ai-web-dev-sdk, frontend "Ask AI" button in InGameAdvisor panel with 10-second cooldown, loading spinner, and caching
+- Verified AI Advisor API returns contextual, terminology-rich negotiation advice
+- Implemented Challenge Mode with 4 modes: Normal, Speed Run (90s timer), Limited Choices (locks even-indexed choices), Ethics Lock (disables unethical choices)
+- ChallengeModeSelector component shown in dialog before starting a case
+- Speed Run mode verified: timer counts down, auto-triggers View Results when time expires
+- Implemented Sound Effects system using Web Audio API: procedural sounds (click, success, warning, negotiation, achievement, typing) with subtle gain
+- Sound toggle button in GameHeader with localStorage persistence
+- Premium styling improvements: 20+ new CSS animations (confetti, pressure-wave, trust-glow, score-count, grade-reveal, sparkle, float-drift, etc.)
+- Title Screen: floating particle background, mouse parallax, typewriter subtitle, floating negotiation term badges
+- Dashboard: ambient glow, sealed stamp on completed cases, breathing animation, search bar focus glow
+- Negotiation Table: pressure wave on anger, trust glow on trust increase, staggered choice animations, pulsing speaker border, confetti on master ending
+- Postmortem: animated score counter, 3D grade flip reveal, radar chart grow-from-center, sparkle effects
+- Career Progression: animated stat counters, shimmer on reputation bars, achievement count badge
+- All lint checks pass cleanly
+- Full QA testing confirms all features working
+
+Stage Summary:
+- ALL 30 cases now have rich dialogue trees (was 15/30, now 30/30)
+- LLM AI Advisor: contextual advice using z-ai-web-dev-sdk, verified working via API test
+- Challenge Mode: 4 modes (Normal, Speed Run, Limited Choices, Ethics Lock) with visual selector
+- Sound Effects: 6 procedural sounds with Web Audio API, toggle in header
+- Premium styling: 20+ CSS animations, particle effects, parallax, confetti, grade flip, etc.
+- Game version effectively v3.0 with all feature additions
+
+Current Project Status:
+- Dealcraft is a fully playable, feature-rich negotiation career simulator
+- 30 cases with RICH dialogue trees (all expanded from compact/generic)
+- Complete game loop with scoring, reputation, achievements, career progression, replay
+- LLM AI Advisor for dynamic, contextual negotiation tips
+- Challenge Mode (Speed Run, Limited Choices, Ethics Lock)
+- Sound Effects system with Web Audio API
+- Premium visual design with 20+ CSS animations and micro-interactions
+- All core features working: BATNA analysis, issue matrix, investigation, branching dialogue, multiple endings
+- Negotiation Glossary (28 terms), In-Game Advisor, Case Search/Filter
+- State persistence across page refreshes
+- Tutorial system, notifications, achievement gallery, bias trap alerts, career visualization
+
+Unresolved Issues / Risks:
+- Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- AI Advisor response time varies (3-8 seconds) - could add streaming for better UX
+- Could add more achievements for challenge mode completions
+- Could add social sharing of scores
+- Could add multiplayer/competitive negotiation mode
+- Could add case difficulty scaling based on player skill

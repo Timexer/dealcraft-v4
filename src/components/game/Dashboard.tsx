@@ -13,7 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AchievementGallery } from './AchievementGallery';
+import { ChallengeModeSelector } from './ChallengeModeSelector';
 import { Input } from '@/components/ui/input';
+import { useSound } from '@/hooks/use-sound';
 
 export function Dashboard() {
   const {
@@ -33,6 +35,13 @@ export function Dashboard() {
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  // Challenge mode dialog state
+  const [showChallengeMode, setShowChallengeMode] = useState(false);
+  const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
+
+  // Sound effects
+  const { playClick, playNegotiation } = useSound();
 
   // Available cases for current tier (excluding completed ones)
   const availableCases = allScenarios.filter(
@@ -55,6 +64,16 @@ export function Dashboard() {
   const completedCases = caseResults.length;
 
   const handleSelectCase = (scenarioId: string) => {
+    // Show challenge mode selector first
+    playClick();
+    setPendingScenarioId(scenarioId);
+    setShowChallengeMode(true);
+  };
+
+  const handleProceedWithCase = () => {
+    if (!pendingScenarioId) return;
+    const scenarioId = pendingScenarioId;
+    playNegotiation();
     setCurrentScenarioId(scenarioId);
     setCaseAccepted(false);
     setIsReplay(false);
@@ -64,10 +83,14 @@ export function Dashboard() {
     useGameStore.getState().setReservationEstimate(0);
     useGameStore.getState().setOpeningStrategy('');
     useGameStore.getState().assumptions = [];
+    useGameStore.getState().setChallengeTimer(0);
+    setShowChallengeMode(false);
+    setPendingScenarioId(null);
     setPhase('intake');
   };
 
   const handleReplayCase = (scenarioId: string) => {
+    playClick();
     setCurrentScenarioId(scenarioId);
     setCaseAccepted(false);
     setIsReplay(true);
@@ -100,7 +123,7 @@ export function Dashboard() {
         >
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Welcome back, <span className="gradient-text">{playerName}</span>
+              Welcome back, <span className="gradient-text ambient-name-glow">{playerName}</span>
             </h1>
             <p className="text-muted-foreground mt-1">{tierName} — {tierDesc}</p>
           </div>
@@ -118,7 +141,7 @@ export function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Stats Overview - Glassmorphism cards */}
+        {/* Stats Overview - Glassmorphism cards with animated borders */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {[
             { label: 'Tier', value: tierName, icon: Briefcase, color: 'text-amber-500' },
@@ -132,7 +155,7 @@ export function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <Card className="glass-card hover:border-amber-500/20 transition-all duration-200">
+              <Card className="glass-card animated-border hover:border-amber-500/20 transition-all duration-200">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <stat.icon className={`h-4 w-4 ${stat.color}`} />
@@ -145,14 +168,14 @@ export function Dashboard() {
           ))}
         </div>
 
-        {/* Tier Progress - with animated gradient */}
+        {/* Tier Progress - with breathing animation + animated gradient */}
         <Card className="glass-card overflow-hidden">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Progress to {TIER_NAMES[Math.min(careerTier + 1, 5)]}</span>
               <span className="text-sm text-muted-foreground">{casesCompleted}/{nextTierThreshold} cases</span>
             </div>
-            <div className="tier-progress-bar rounded-full overflow-hidden">
+            <div className="tier-progress-bar rounded-full overflow-hidden breathing-animation">
               <Progress value={tierProgress} className="h-2.5" />
             </div>
           </CardContent>
@@ -170,10 +193,10 @@ export function Dashboard() {
             </h2>
           </div>
 
-          {/* Search & Filter Bar */}
+          {/* Search & Filter Bar with focus glow */}
           {availableCases.length > 0 && (
             <div className="flex flex-col sm:flex-row gap-2">
-              <div className="relative flex-1">
+              <div className="relative flex-1 search-focus-glow rounded-lg">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   value={searchQuery}
@@ -316,7 +339,7 @@ export function Dashboard() {
           )}
         </div>
 
-        {/* Completed Cases */}
+        {/* Completed Cases - with sealed stamp effect */}
         {caseResults.length > 0 && (
           <div className="space-y-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -338,7 +361,7 @@ export function Dashboard() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.03 }}
                   >
-                    <Card className="bg-card/30 border-border/30 hover:bg-card/50 hover:border-amber-500/15 transition-all duration-200">
+                    <Card className="bg-card/30 border-border/30 hover:bg-card/50 hover:border-amber-500/15 transition-all duration-200 sealed-card">
                       <CardContent className="p-3 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           <span className="text-xl shrink-0">{scenario.client.avatar}</span>
@@ -380,6 +403,41 @@ export function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Challenge Mode Dialog */}
+      <Dialog open={showChallengeMode} onOpenChange={setShowChallengeMode}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-amber-500" />
+              Start Case
+            </DialogTitle>
+            <DialogDescription>
+              Choose a challenge mode before starting this case
+            </DialogDescription>
+          </DialogHeader>
+          <ChallengeModeSelector />
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setShowChallengeMode(false);
+                setPendingScenarioId(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold premium-button"
+              onClick={handleProceedWithCase}
+            >
+              Start Case
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Achievement Gallery Dialog */}
       <Dialog open={showAchievements} onOpenChange={setShowAchievements}>

@@ -4,8 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
 import { CHOICE_TYPE_STYLES, type DialogueNode, type DialogueChoice, type BiasEvent } from '@/data/scenarios/types';
-import { getEndingFromNegotiation, calculateFinalScore, getScoreGrade, calculateReputationDelta, calculateStatsDelta } from '@/lib/game-engine';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getEndingFromNegotiation, calculateFinalScore, calculateReputationDelta, calculateStatsDelta } from '@/lib/game-engine';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -14,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BiasTrapAlertContainer } from '@/components/game/BiasTrapAlert';
 import { InGameAdvisor } from '@/components/game/InGameAdvisor';
+import { useSound } from '@/hooks/use-sound';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart,
@@ -44,6 +44,7 @@ export function NegotiationTable() {
     currentScenarioId, setPhase,
     negotiation, updateNegotiation, makeChoice, addCaseResult, replayCaseResult,
     discoveredFacts, addStats, addReputation, isReplay,
+    challengeMode, challengeTimer, setChallengeTimer,
   } = useGameStore();
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
@@ -62,15 +63,46 @@ export function NegotiationTable() {
   const dialogueEndRef = useRef<HTMLDivElement>(null);
   const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
   const currentNodeIdRef = useRef<string | null>(currentNode?.id || null);
+  const speedTimerStartedRef = useRef<boolean>(false);
+
+  // Sound effects
+  const { playClick, playSuccess, playWarning, playNegotiation } = useSound();
 
   // Update ref when currentNode changes
   useEffect(() => {
     currentNodeIdRef.current = currentNode?.id || null;
   }, [currentNode?.id]);
 
+  const isEndingNode = currentNode?.id.startsWith('ending_');
+
+  // Speed mode timer
+  useEffect(() => {
+    if (challengeMode !== 'speed' || isEndingNode) return;
+    if (!speedTimerStartedRef.current && currentNode) {
+      speedTimerStartedRef.current = true;
+      setChallengeTimer(90);
+    }
+    if (challengeTimer <= 0) return;
+
+    const interval = setInterval(() => {
+      const currentTimer = useGameStore.getState().challengeTimer;
+      if (currentTimer <= 1) {
+        setChallengeTimer(0);
+        clearInterval(interval);
+        return;
+      }
+      setChallengeTimer(currentTimer - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [challengeMode, challengeTimer, currentNode, isEndingNode, setChallengeTimer]);
+
   const triggerBiasTrap = useCallback((biasEvent: BiasEvent) => {
     const neg = useGameStore.getState().negotiation;
     if (neg.biasTrapsTriggered.includes(biasEvent.id)) return;
+
+    // Play warning sound for bias trap
+    playWarning();
 
     // Add to negotiation state
     updateNegotiation({
@@ -82,7 +114,7 @@ export function NegotiationTable() {
       if (prev.find(a => a.id === biasEvent.id)) return prev;
       return [...prev, biasEvent];
     });
-  }, [updateNegotiation]);
+  }, [updateNegotiation, playWarning]);
 
   const dismissBiasAlert = useCallback((id: string) => {
     setActiveBiasAlerts(prev => prev.filter(a => a.id !== id));
@@ -112,7 +144,6 @@ export function NegotiationTable() {
     }
 
     if (trapsToTrigger.length > 0) {
-      // Defer setState calls to avoid synchronous setState in effect
       const rafId = requestAnimationFrame(() => {
         for (const trap of trapsToTrigger) {
           triggerBiasTrap(trap);
@@ -122,7 +153,7 @@ export function NegotiationTable() {
     }
   }, [currentNode?.id, scenario, triggerBiasTrap]);
 
-  // Apply node effects when entering a new node (defensive: ensure effects is always an object)
+  // Apply node effects when entering a new node
   useEffect(() => {
     if (!currentNode || !currentNode.effects) return;
 
@@ -153,14 +184,12 @@ export function NegotiationTable() {
         concessionsGiven: [...useGameStore.getState().negotiation.concessionsGiven, eff.concessionMade],
       });
     }
-  // We intentionally only depend on the node ID, not the full negotiation state
   }, [currentNode?.id, updateNegotiation]);
 
-  // Typing animation & auto-advance - use requestAnimationFrame to defer state updates
+  // Typing animation & auto-advance
   useEffect(() => {
     if (!currentNode) return;
 
-    // Use rAF to defer the synchronous setState out of the effect body
     const rafId = requestAnimationFrame(() => {
       setIsTyping(true);
       setShowChoices(false);
@@ -207,7 +236,10 @@ export function NegotiationTable() {
       if (choice.requirement.type === 'max_anger' && neg.anger > choice.requirement.value) return;
     }
 
-    // Apply choice effects (defensive: ensure effects is always an object)
+    // Play click sound
+    playClick();
+
+    // Apply choice effects
     const eff = choice.effects || {};
     const effects: Record<string, number> = {};
     if (eff.trust) effects.trust = eff.trust;
@@ -229,8 +261,6 @@ export function NegotiationTable() {
     if (scenario) {
       const updatedChoices = [...neg.choicesMade, choice.id];
 
-      // Re-scan all choices to count aggressive_anchor choices
-      // We need to look at the dialogue tree to find the choice types
       let aggressiveAnchorCount = 0;
       for (const choiceId of updatedChoices) {
         for (const node of scenario.dialogueTree) {
@@ -244,7 +274,6 @@ export function NegotiationTable() {
         }
       }
 
-      // Fixed-pie bias: 3+ aggressive_anchor choices
       if (aggressiveAnchorCount >= 3) {
         const fixedPieTrap = scenario.biasTraps.find(b => b.type === 'fixed_pie' && !b.triggerDialogueNodeId);
         if (fixedPieTrap && !neg.biasTrapsTriggered.includes(fixedPieTrap.id)) {
@@ -252,7 +281,6 @@ export function NegotiationTable() {
         }
       }
 
-      // Escalation bias: anger > 70 and another aggressive_anchor
       if (neg.anger > 70 && choice.type === 'aggressive_anchor') {
         const escalationTrap = scenario.biasTraps.find(b => b.type === 'escalation' && !b.triggerDialogueNodeId);
         if (escalationTrap && !neg.biasTrapsTriggered.includes(escalationTrap.id)) {
@@ -278,9 +306,27 @@ export function NegotiationTable() {
     if (choice.nextNodeId) {
       setTimeout(() => advanceToNode(choice.nextNodeId), 300);
     }
-  }, [advanceToNode, makeChoice, scenario, triggerBiasTrap]);
+  }, [advanceToNode, makeChoice, scenario, triggerBiasTrap, playClick]);
 
-  const isChoiceDisabled = (choice: DialogueChoice): boolean => {
+  const isChoiceDisabledByChallenge = (choice: DialogueChoice, choiceIndex: number): { disabled: boolean; reason: string } => {
+    // Limited Choices mode: disable even-indexed choices (0-indexed: indices 1, 3, 5...)
+    if (challengeMode === 'limited_choices' && choiceIndex % 2 === 1) {
+      return { disabled: true, reason: 'Limited Choices: This option is locked' };
+    }
+    // Ethics Lock mode: disable choices that would reduce ethicalImpact
+    if (challengeMode === 'ethics_lock' && choice.effects && choice.effects.ethicalImpact && choice.effects.ethicalImpact < 0) {
+      return { disabled: true, reason: 'Ethics Lock: This choice would compromise ethical standards' };
+    }
+    return { disabled: false, reason: '' };
+  };
+
+  const isChoiceDisabled = (choice: DialogueChoice, choiceIndex?: number): boolean => {
+    // Check challenge mode restrictions
+    if (choiceIndex !== undefined) {
+      const challengeResult = isChoiceDisabledByChallenge(choice, choiceIndex);
+      if (challengeResult.disabled) return true;
+    }
+    // Check normal requirements
     if (!choice.requirement) return false;
     if (choice.requirement.type === 'info_discovered') {
       const allInfo = [...discoveredFacts, ...negotiation.informationRevealed];
@@ -291,7 +337,12 @@ export function NegotiationTable() {
     return false;
   };
 
-  const getDisabledReason = (choice: DialogueChoice): string => {
+  const getDisabledReason = (choice: DialogueChoice, choiceIndex?: number): string => {
+    // Check challenge mode first
+    if (choiceIndex !== undefined) {
+      const challengeResult = isChoiceDisabledByChallenge(choice, choiceIndex);
+      if (challengeResult.disabled) return challengeResult.reason;
+    }
     if (!choice.requirement) return choice.disabledReason || 'Requirements not met';
     if (choice.requirement.type === 'info_discovered') {
       return 'Requires discovered information you haven\'t found yet';
@@ -305,10 +356,11 @@ export function NegotiationTable() {
     return choice.disabledReason || 'Requirements not met';
   };
 
-  const isEndingNode = currentNode?.id.startsWith('ending_');
-
-  const handleViewResults = () => {
+  const handleViewResults = useCallback(() => {
     if (!scenario || !currentNode) return;
+
+    // Play success sound
+    playSuccess();
 
     const endingType = getEndingFromNegotiation(scenario, {
       ...negotiation,
@@ -346,7 +398,14 @@ export function NegotiationTable() {
     // Store ending info for postmortem
     updateNegotiation({ endingTriggered: endingType });
     setPhase('postmortem');
-  };
+  }, [scenario, currentNode, negotiation, isReplay, replayCaseResult, addCaseResult, addReputation, addStats, discoveredFacts, updateNegotiation, setPhase, playSuccess]);
+
+  // Auto-trigger view results when speed timer hits 0
+  useEffect(() => {
+    if (challengeMode === 'speed' && challengeTimer === 0 && speedTimerStartedRef.current && currentNode && !isEndingNode) {
+      handleViewResults();
+    }
+  }, [challengeTimer, challengeMode, currentNode, isEndingNode, handleViewResults]);
 
   if (!scenario) {
     return (
@@ -361,7 +420,6 @@ export function NegotiationTable() {
 
   const { counterparty, client, title } = scenario;
 
-  // Emotion indicator helper
   const getEmotionIndicator = (trust: number, anger: number) => {
     if (trust >= 70 && anger <= 30) return { emoji: '😊', label: 'Receptive' };
     if (trust >= 50 && anger <= 50) return { emoji: '😐', label: 'Neutral' };
@@ -403,6 +461,33 @@ export function NegotiationTable() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {/* Speed Mode Timer */}
+            {challengeMode === 'speed' && (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${
+                  challengeTimer <= 15
+                    ? 'bg-red-500/15 border-red-500/30 text-red-400 animate-pulse'
+                    : challengeTimer <= 30
+                      ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                      : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                }`}
+              >
+                <Hourglass className="h-3.5 w-3.5" />
+                <span className="text-sm font-bold tabular-nums">
+                  {Math.floor(challengeTimer / 60)}:{(challengeTimer % 60).toString().padStart(2, '0')}
+                </span>
+              </motion.div>
+            )}
+            {/* Challenge Mode Badge */}
+            {challengeMode !== 'none' && (
+              <Badge variant="outline" className="text-[10px] px-2 py-0 bg-amber-500/10 text-amber-400 border-amber-500/25">
+                {challengeMode === 'speed' && '\u26A1 Speed Run'}
+                {challengeMode === 'limited_choices' && '\uD83D\uDD12 Limited Choices'}
+                {challengeMode === 'ethics_lock' && '\u2696\uFE0F Ethics Lock'}
+              </Badge>
+            )}
             <div className="flex items-center gap-1.5">
               <span className="text-xl">{emotion.emoji}</span>
               <Badge variant="outline" className="text-[10px]">
@@ -490,8 +575,9 @@ export function NegotiationTable() {
                   >
                     <p className="text-xs text-muted-foreground mb-2">Choose your response:</p>
                     <TooltipProvider delayDuration={300}>
-                      {currentNode.choices.map((choice) => {
-                        const disabled = isChoiceDisabled(choice);
+                      {currentNode.choices.map((choice, choiceIndex) => {
+                        const challengeCheck = isChoiceDisabledByChallenge(choice, choiceIndex);
+                        const disabled = isChoiceDisabled(choice, choiceIndex);
                         const style = CHOICE_TYPE_STYLES[choice.type];
 
                         return (
@@ -504,21 +590,23 @@ export function NegotiationTable() {
                                 disabled={disabled}
                                 className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center gap-3 choice-hover-trail ${
                                   disabled
-                                    ? 'opacity-40 cursor-not-allowed bg-muted/20 border-border/20'
+                                    ? challengeCheck.disabled
+                                      ? 'opacity-40 cursor-not-allowed bg-amber-500/5 border-amber-500/15'
+                                      : 'opacity-40 cursor-not-allowed bg-muted/20 border-border/20'
                                     : `${style.color} cursor-pointer hover:border-amber-500/30`
                                 }`}
                               >
-                                <span className="text-lg shrink-0">{style.icon}</span>
+                                <span className="text-lg shrink-0">{challengeCheck.disabled ? (challengeMode === 'limited_choices' ? '\uD83D\uDD12' : '\u2696\uFE0F') : style.icon}</span>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-medium">{choice.text}</p>
-                                  <p className="text-[10px] opacity-70 mt-0.5">{style.label}</p>
+                                  <p className="text-[10px] opacity-70 mt-0.5">{challengeCheck.disabled ? challengeCheck.reason : style.label}</p>
                                 </div>
                                 <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
                               </motion.button>
                             </TooltipTrigger>
                             {disabled && (
                               <TooltipContent side="top" className="max-w-xs">
-                                <p className="text-xs">{getDisabledReason(choice)}</p>
+                                <p className="text-xs">{getDisabledReason(choice, choiceIndex)}</p>
                               </TooltipContent>
                             )}
                           </Tooltip>
@@ -684,17 +772,17 @@ export function NegotiationTable() {
                 {negotiation.biasTrapsTriggered.map((trapId) => {
                   const trap = scenario?.biasTraps.find(b => b.id === trapId);
                   const BIAS_SIDEBAR_ICONS: Record<string, string> = {
-                    anchor_shock: '⚠️',
-                    fixed_pie: '🎯',
-                    escalation: '🔥',
-                    vividness: '👁️',
-                    egocentrism: '🧠',
-                    overconfidence: '💎',
-                    regret_aversion: '😰',
+                    anchor_shock: '\u26A0\uFE0F',
+                    fixed_pie: '\uD83C\uDFAF',
+                    escalation: '\uD83D\uDD25',
+                    vividness: '\uD83D\uDC41\uFE0F',
+                    egocentrism: '\uD83E\uDDE0',
+                    overconfidence: '\uD83D\uDC8E',
+                    regret_aversion: '\uD83D\uDE30',
                   };
                   return (
                     <Badge key={trapId} variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/10 text-amber-300 border-amber-500/20">
-                      {BIAS_SIDEBAR_ICONS[trap?.type || ''] || '⚠️'}
+                      {BIAS_SIDEBAR_ICONS[trap?.type || ''] || '\u26A0\uFE0F'}
                       <span className="ml-1">{trap?.type.replace(/_/g, ' ') || trapId}</span>
                     </Badge>
                   );
@@ -718,6 +806,8 @@ export function NegotiationTable() {
         negotiation={negotiation}
         discoveredFacts={discoveredFacts}
         scenarioCategory={scenario.category}
+        scenarioTitle={scenario.title}
+        recentDialogueText={currentNode?.text || ''}
       />
 
       {/* Mobile Sidebar Toggle */}

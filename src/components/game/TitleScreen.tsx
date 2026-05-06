@@ -3,17 +3,73 @@
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/game-store';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Briefcase, Play, RotateCcw } from 'lucide-react';
+
+// Floating negotiation term badges
+const NEGOTIATION_TERMS = [
+  'BATNA', 'ZOPA', 'Anchoring', 'Logrolling', 'Reservation Value',
+  'Aspiration Price', 'Value Creation', 'Fixed Pie', 'Escalation',
+  'Empathic Listening', 'Face-saving', 'Walk Away', 'Contingency',
+  'Package Offer', 'Silence as a Tool',
+];
+
+// Particle positions for background
+const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
+  id: i,
+  left: `${Math.random() * 100}%`,
+  size: `${2 + Math.random() * 4}px`,
+  duration: `${8 + Math.random() * 12}s`,
+  delay: `${Math.random() * 8}s`,
+  drift: `${-30 + Math.random() * 60}px`,
+  opacity: `${0.15 + Math.random() * 0.25}`,
+}));
 
 export function TitleScreen() {
   const { startNewGame, playerName, casesCompleted, resetGame } = useGameStore();
   const [name, setName] = useState('');
   const hasSave = casesCompleted > 0;
 
+  // Typewriter effect state
+  const [displayedSubtitle, setDisplayedSubtitle] = useState('');
+  const subtitleText = 'Negotiation Career Simulator';
+  const [typewriterDone, setTypewriterDone] = useState(false);
+
+  // Parallax effect state
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Typewriter effect
+  useEffect(() => {
+    let index = 0;
+    const timer = setInterval(() => {
+      if (index <= subtitleText.length) {
+        setDisplayedSubtitle(subtitleText.slice(0, index));
+        index++;
+      } else {
+        setTypewriterDone(true);
+        clearInterval(timer);
+      }
+    }, 60);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Parallax mouse tracking
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    setMousePos({ x, y });
+  }, []);
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+    <div
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
+    >
       {/* Animated grid background */}
       <div className="absolute inset-0 grid-pattern opacity-60" />
       <div className="absolute inset-0 opacity-[0.02]">
@@ -23,10 +79,50 @@ export function TitleScreen() {
         }} />
       </div>
 
+      {/* Floating particle effect background */}
+      {PARTICLES.map(p => (
+        <div
+          key={p.id}
+          className="particle"
+          style={{
+            left: p.left,
+            ['--particle-size' as string]: p.size,
+            ['--particle-duration' as string]: p.duration,
+            ['--particle-delay' as string]: p.delay,
+            ['--particle-drift' as string]: p.drift,
+            ['--particle-opacity' as string]: p.opacity,
+          } as React.CSSProperties}
+        />
+      ))}
+
       {/* Ambient glow orbs */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[120px]" />
       <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-cyan-500/3 rounded-full blur-[100px]" />
       <div className="absolute top-1/2 right-1/4 w-[300px] h-[300px] bg-amber-600/3 rounded-full blur-[100px]" />
+
+      {/* Floating negotiation term badges */}
+      {NEGOTIATION_TERMS.slice(0, 8).map((term, i) => {
+        const top = 10 + (i * 11) % 80;
+        const left = (i * 17 + 5) % 90;
+        return (
+          <div
+            key={term}
+            className="floating-badge glass-card px-3 py-1 rounded-full text-[10px] text-amber-500/40 font-medium tracking-wider"
+            style={{
+              top: `${top}%`,
+              left: `${left}%`,
+              ['--float-duration' as string]: `${12 + i * 2}s`,
+              ['--float-delay' as string]: `${i * 1.5}s`,
+              ['--drift-x' as string]: `${-30 + i * 10}px`,
+              ['--drift-y' as string]: `${-20 + i * 8}px`,
+              ['--float-start-opacity' as string]: '0.12',
+              ['--float-mid-opacity' as string]: '0.22',
+            } as React.CSSProperties}
+          >
+            {term}
+          </div>
+        );
+      })}
 
       {/* Animated corner accents */}
       <div className="absolute top-0 left-0 w-40 h-40">
@@ -44,31 +140,41 @@ export function TitleScreen() {
         transition={{ duration: 0.8, ease: 'easeOut' }}
         className="relative z-10 text-center space-y-8 px-4"
       >
-        {/* Logo with pulsing glow */}
+        {/* Logo with parallax + pulsing glow */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           className="flex items-center justify-center gap-4"
+          style={{
+            transform: `translate(${mousePos.x * 8}px, ${mousePos.y * 8}px)`,
+            transition: 'transform 0.3s ease-out',
+          }}
         >
-          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center glow-pulse">
+          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center dramatic-glow">
             <Briefcase className="h-8 w-8 text-amber-500" />
           </div>
         </motion.div>
 
-        {/* Title with gradient text */}
+        {/* Title with gradient text + parallax */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.4 }}
           className="space-y-3"
+          style={{
+            transform: `translate(${mousePos.x * 4}px, ${mousePos.y * 4}px)`,
+            transition: 'transform 0.3s ease-out',
+          }}
         >
           <h1 className="text-5xl sm:text-7xl font-bold tracking-tighter">
             <span className="text-foreground">DEAL</span>
             <span className="gradient-text">CRAFT</span>
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground tracking-wide">
-            Negotiation Career Simulator
+          {/* Typewriter effect for subtitle */}
+          <p className="text-lg sm:text-xl text-muted-foreground tracking-wide h-7">
+            {displayedSubtitle}
+            {!typewriterDone && <span className="typewriter-cursor" />}
           </p>
           <p className="text-sm text-muted-foreground/60 max-w-md mx-auto">
             Discover what reality actually is — and design a deal that reality will accept.
@@ -111,7 +217,7 @@ export function TitleScreen() {
             <Button
               onClick={() => name.trim() && startNewGame(name.trim())}
               disabled={!name.trim()}
-              className="h-11 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-base gap-2 premium-button disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"
+              className="h-11 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-base gap-2 premium-button dramatic-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"
             >
               <Play className="h-4 w-4" />
               New Career
@@ -142,12 +248,16 @@ export function TitleScreen() {
           </div>
         </motion.div>
 
-        {/* Feature badges with glass-card style */}
+        {/* Feature badges with glass-card style + parallax */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 1.0 }}
           className="flex flex-wrap justify-center gap-2 pt-4"
+          style={{
+            transform: `translate(${mousePos.x * 2}px, ${mousePos.y * 2}px)`,
+            transition: 'transform 0.3s ease-out',
+          }}
         >
           {['30 Cases', '5 Tiers', 'Career Mode', 'Postmortem Analysis', 'Reputation System', 'Glossary', 'AI Advisor', 'Bias Traps'].map((badge) => (
             <span key={badge} className="glass-card px-3 py-1.5 rounded-full text-xs text-muted-foreground/80 hover:text-amber-400 transition-colors duration-200 card-hover-lift cursor-default">

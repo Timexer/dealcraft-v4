@@ -84,6 +84,12 @@ export interface GameState {
   addAssumption: (assumption: string) => void;
   removeAssumption: (index: number) => void;
 
+  // Challenge Mode
+  challengeMode: 'none' | 'speed' | 'limited_choices' | 'ethics_lock';
+  setChallengeMode: (mode: 'none' | 'speed' | 'limited_choices' | 'ethics_lock') => void;
+  challengeTimer: number;
+  setChallengeTimer: (seconds: number) => void;
+
   // Tutorial
   tutorialCompleted: boolean;
   setTutorialCompleted: () => void;
@@ -688,6 +694,11 @@ export const useGameStore = create<GameState>()(
       tutorialCompleted: false,
       setTutorialCompleted: () => set({ tutorialCompleted: true }),
 
+      challengeMode: 'none',
+      setChallengeMode: (mode) => set({ challengeMode: mode }),
+      challengeTimer: 0,
+      setChallengeTimer: (seconds) => set({ challengeTimer: seconds }),
+
       startNewGame: (name) =>
         set({
           phase: 'dashboard',
@@ -711,6 +722,8 @@ export const useGameStore = create<GameState>()(
           openingStrategy: '',
           assumptions: [],
           unlockedCases: ['case-01', 'case-02', 'case-03'],
+          challengeMode: 'none',
+          challengeTimer: 0,
         }),
 
       resetGame: () =>
@@ -736,6 +749,8 @@ export const useGameStore = create<GameState>()(
           openingStrategy: '',
           assumptions: [],
           unlockedCases: [],
+          challengeMode: 'none',
+          challengeTimer: 0,
         }),
 
       unlockedCases: ['case-01', 'case-02', 'case-03'],
@@ -803,6 +818,7 @@ export const useGameStore = create<GameState>()(
         discoveredFacts: state.discoveredFacts,
         investigationHistory: state.investigationHistory,
         negotiation: state.negotiation,
+        challengeMode: state.challengeMode,
       }),
     }
   )

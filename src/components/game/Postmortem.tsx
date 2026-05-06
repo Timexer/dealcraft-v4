@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS, type EndingScores } from '@/data/scenarios/types';
@@ -101,6 +101,39 @@ function AnimatedBar({ value, delay = 0 }: { value: number; delay?: number }) {
   );
 }
 
+// Sparkle particles component for master/cooperative endings
+function SparkleOverlay() {
+  const sparkles = useMemo(() =>
+    Array.from({ length: 12 }, (_, i) => ({
+      id: i,
+      left: `${10 + Math.random() * 80}%`,
+      top: `${10 + Math.random() * 80}%`,
+      delay: `${i * 0.3}s`,
+      size: 6 + Math.random() * 10,
+    })),
+  []);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {sparkles.map(s => (
+        <span
+          key={s.id}
+          className="absolute text-amber-400/30 animate-subtle-float"
+          style={{
+            left: s.left,
+            top: s.top,
+            fontSize: `${s.size}px`,
+            animationDelay: s.delay,
+            animationDuration: `${2 + Math.random() * 3}s`,
+          }}
+        >
+          ✦
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function Postmortem() {
   const {
     currentScenarioId, setPhase,
@@ -113,6 +146,13 @@ export function Postmortem() {
   const latestResult = currentScenarioId
     ? caseResults.find(r => r.scenarioId === currentScenarioId)
     : caseResults[caseResults.length - 1];
+
+  // Track if radar should animate
+  const [showRadar, setShowRadar] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setShowRadar(true), 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!scenario || !latestResult) {
     return (
@@ -137,6 +177,9 @@ export function Postmortem() {
   const infoFound = (negotiation.informationRevealed?.length || 0) + discoveredFacts.length;
   const statsDelta = calculateStatsDelta(scenario, endingType, infoFound, totalInfo);
 
+  // Determine if this is a good ending for sparkle effect
+  const isGoodEnding = endingType === 'master' || endingType === 'cooperative';
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -155,26 +198,27 @@ export function Postmortem() {
 
         <ScrollArea className="max-h-[calc(100vh-180px)]">
           <div className="space-y-6 pr-2">
-            {/* Score Card */}
+            {/* Score Card - with grade flip animation and score counter */}
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-              <Card className="bg-card/50 border-border/50 overflow-hidden">
-                <CardContent className="p-6">
+              <Card className={`bg-card/50 border-border/50 overflow-hidden relative ${isGoodEnding ? 'sparkle-effect' : ''}`}>
+                {isGoodEnding && <SparkleOverlay />}
+                <CardContent className="p-6 relative z-10">
                   <div className="flex flex-col sm:flex-row items-center gap-6">
-                    {/* Grade Badge */}
+                    {/* Grade Badge - with 3D flip animation */}
                     <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring', stiffness: 200, delay: 0.5 }}
-                      className={`w-24 h-24 rounded-full border-4 flex items-center justify-center ${GRADE_COLORS[grade.grade]}`}
+                      initial={{ scale: 0, rotateY: 90 }}
+                      animate={{ scale: 1, rotateY: 0 }}
+                      transition={{ type: 'spring', stiffness: 200, delay: 0.5, duration: 1 }}
+                      className={`w-24 h-24 rounded-full border-4 flex items-center justify-center grade-flip ${GRADE_COLORS[grade.grade]}`}
                     >
                       <span className="text-4xl font-black">{grade.grade}</span>
                     </motion.div>
 
-                    {/* Score & Description */}
+                    {/* Score & Description - with animated counter */}
                     <div className="flex-1 text-center sm:text-left">
                       <div className="flex items-baseline gap-2 justify-center sm:justify-start">
-                        <span className="text-4xl font-black">
-                          <AnimatedNumber value={finalScore} />
+                        <span className="text-4xl font-black score-counter">
+                          <AnimatedNumber value={finalScore} duration={2000} />
                         </span>
                         <span className="text-lg text-muted-foreground">/100</span>
                       </div>
@@ -187,7 +231,7 @@ export function Postmortem() {
               </Card>
             </motion.div>
 
-            {/* Radar Chart */}
+            {/* Radar Chart - with animated reveal */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-3">
@@ -197,7 +241,7 @@ export function Postmortem() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="w-full h-[300px] sm:h-[340px]">
+                  <div className={`w-full h-[300px] sm:h-[340px] ${showRadar ? 'radar-reveal' : 'opacity-0'}`}>
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart
                         cx="50%"
@@ -322,7 +366,7 @@ export function Postmortem() {
 
             {/* The Master Deal */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
-              <Card className="bg-amber-500/10 border-amber-500/20">
+              <Card className={`bg-amber-500/10 border-amber-500/20 ${endingType === 'master' ? 'sparkle-effect' : ''}`}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-300">
                     <Crown className="h-4 w-4" />

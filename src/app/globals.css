@@ -490,3 +490,403 @@
   border-left: 2px solid oklch(0.77 0.16 75 / 20%);
   padding-left: 0.75rem;
 }
+
+/* ===== PREMIUM STYLING - TASK 6 ===== */
+
+/* Confetti fall animation */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+.confetti-particle {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 9999;
+  animation: confetti-fall var(--duration, 3s) ease-in forwards;
+  animation-delay: var(--delay, 0s);
+  left: var(--x, 50%);
+  top: 0;
+}
+
+/* Pressure wave animation - red edge flash for anger */
+@keyframes pressure-wave {
+  0% {
+    box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+  15% {
+    box-shadow: inset 0 0 60px 10px rgba(239, 68, 68, 0.15);
+  }
+  100% {
+    box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+.pressure-wave {
+  animation: pressure-wave 0.8s ease-out;
+}
+
+/* Trust glow animation - warm glow pulse for trust */
+@keyframes trust-glow {
+  0% {
+    box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+  15% {
+    box-shadow: inset 0 0 50px 8px rgba(251, 191, 36, 0.1);
+  }
+  100% {
+    box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+}
+.trust-glow {
+  animation: trust-glow 0.8s ease-out;
+}
+
+/* Score count animation */
+@keyframes score-count {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+    filter: blur(4px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+.score-counter {
+  animation: score-count 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Grade reveal - 3D flip animation */
+@keyframes grade-reveal {
+  0% {
+    transform: perspective(600px) rotateY(90deg) scale(0.8);
+    opacity: 0;
+  }
+  40% {
+    transform: perspective(600px) rotateY(-10deg) scale(1.05);
+    opacity: 1;
+  }
+  60% {
+    transform: perspective(600px) rotateY(5deg) scale(1);
+  }
+  100% {
+    transform: perspective(600px) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+}
+.grade-flip {
+  animation: grade-reveal 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transform-style: preserve-3d;
+}
+
+/* Sparkle animation - twinkling effect */
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1) rotate(90deg);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(0.8) rotate(180deg);
+  }
+  75% {
+    opacity: 0.4;
+    transform: scale(0.4) rotate(270deg);
+  }
+}
+.sparkle-effect {
+  position: relative;
+}
+.sparkle-effect::before,
+.sparkle-effect::after {
+  content: '✦';
+  position: absolute;
+  color: oklch(0.77 0.16 75);
+  font-size: 12px;
+  pointer-events: none;
+  animation: sparkle 2s ease-in-out infinite;
+}
+.sparkle-effect::before {
+  top: -4px;
+  right: -4px;
+  animation-delay: 0s;
+}
+.sparkle-effect::after {
+  bottom: -4px;
+  left: -4px;
+  animation-delay: 1s;
+  font-size: 8px;
+}
+
+/* Float drift - floating drift for background elements */
+@keyframes float-drift {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: var(--float-start-opacity, 0.12);
+  }
+  25% {
+    transform: translate(var(--drift-x, 20px), var(--drift-y, -30px)) rotate(5deg);
+    opacity: var(--float-mid-opacity, 0.2);
+  }
+  50% {
+    transform: translate(calc(var(--drift-x, 20px) * -0.5), calc(var(--drift-y, -30px) * 1.5)) rotate(-3deg);
+    opacity: var(--float-mid-opacity, 0.2);
+  }
+  75% {
+    transform: translate(calc(var(--drift-x, 20px) * 1.2), calc(var(--drift-y, -30px) * 0.5)) rotate(4deg);
+    opacity: var(--float-start-opacity, 0.12);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: var(--float-start-opacity, 0.12);
+  }
+}
+.floating-badge {
+  position: absolute;
+  pointer-events: none;
+  animation: float-drift var(--float-duration, 15s) ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+}
+
+/* Breathing animation for progress bars */
+@keyframes breathing {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.85;
+    filter: brightness(1.1);
+  }
+}
+.breathing-animation {
+  animation: breathing 3s ease-in-out infinite;
+}
+
+/* Animated border glow for stats cards */
+@keyframes borderGlow {
+  0%, 100% {
+    border-color: oklch(0.77 0.16 75 / 10%);
+  }
+  50% {
+    border-color: oklch(0.77 0.16 75 / 25%);
+  }
+}
+.animated-border {
+  animation: borderGlow 4s ease-in-out infinite;
+}
+
+/* Sealed stamp effect for completed cases */
+.sealed-card {
+  position: relative;
+  overflow: hidden;
+}
+.sealed-card::after {
+  content: 'SEALED';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: oklch(0.77 0.16 75 / 6%);
+  border: 3px solid oklch(0.77 0.16 75 / 8%);
+  border-radius: 8px;
+  padding: 4px 16px;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+/* Search focus glow effect */
+.search-focus-glow {
+  transition: all 0.3s ease;
+}
+.search-focus-glow:focus-within {
+  box-shadow: 0 0 0 3px oklch(0.77 0.16 75 / 15%), 0 0 20px oklch(0.77 0.16 75 / 8%);
+  border-color: oklch(0.77 0.16 75 / 40%);
+}
+
+/* Staggered choice appear animation */
+@keyframes staggerSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.stagger-choice {
+  opacity: 0;
+  animation: staggerSlideUp 0.4s ease-out forwards;
+}
+
+/* Pulsing border for active speaker */
+@keyframes pulseBorder {
+  0%, 100% {
+    border-color: oklch(0.77 0.16 75 / 20%);
+  }
+  50% {
+    border-color: oklch(0.77 0.16 75 / 50%);
+  }
+}
+.pulse-border {
+  animation: pulseBorder 2s ease-in-out infinite;
+}
+
+/* Ambient name glow */
+.ambient-name-glow {
+  position: relative;
+}
+.ambient-name-glow::before {
+  content: '';
+  position: absolute;
+  inset: -8px -16px;
+  background: radial-gradient(ellipse at center, oklch(0.77 0.16 75 / 12%) 0%, transparent 70%);
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Shimmer animation for reputation bars */
+@keyframes shimmerBar {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+.reputation-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.reputation-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 25%), transparent);
+  animation: shimmerBar 3s ease-in-out infinite;
+}
+
+/* Dramatic button glow pulse */
+@keyframes dramaticGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px oklch(0.77 0.16 75 / 20%), 0 0 30px oklch(0.77 0.16 75 / 10%), 0 0 50px oklch(0.77 0.16 75 / 5%);
+  }
+  50% {
+    box-shadow: 0 0 20px oklch(0.77 0.16 75 / 40%), 0 0 50px oklch(0.77 0.16 75 / 20%), 0 0 80px oklch(0.77 0.16 75 / 10%);
+  }
+}
+.dramatic-glow {
+  animation: dramaticGlow 2.5s ease-in-out infinite;
+}
+
+/* Typewriter cursor animation */
+@keyframes typewriter-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.typewriter-cursor::after {
+  content: '|';
+  animation: typewriter-blink 0.7s step-end infinite;
+  color: oklch(0.77 0.16 75);
+  margin-left: 1px;
+}
+
+/* Particle background */
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--particle-opacity, 0.3);
+  }
+  90% {
+    opacity: var(--particle-opacity, 0.3);
+  }
+  100% {
+    transform: translateY(-100vh) translateX(var(--particle-drift, 20px));
+    opacity: 0;
+  }
+}
+.particle {
+  position: absolute;
+  width: var(--particle-size, 3px);
+  height: var(--particle-size, 3px);
+  background: oklch(0.77 0.16 75 / var(--particle-opacity, 30%));
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particleFloat var(--particle-duration, 10s) linear infinite;
+  animation-delay: var(--particle-delay, 0s);
+  bottom: 0;
+}
+
+/* Radar chart animated reveal */
+@keyframes radarReveal {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.radar-reveal {
+  animation: radarReveal 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transform-origin: center;
+}
+
+/* Tier map hover particle trail */
+@keyframes trailParticle {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+.tier-hover-trail {
+  position: relative;
+}
+.tier-hover-trail::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: oklch(0.77 0.16 75 / 40%);
+  animation: trailParticle 1s ease-out infinite;
+  pointer-events: none;
+}

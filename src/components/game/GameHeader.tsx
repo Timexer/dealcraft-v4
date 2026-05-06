@@ -19,11 +19,13 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { NegotiationGlossary } from '@/components/game/NegotiationGlossary';
+import { useSound } from '@/hooks/use-sound';
 
 export function GameHeader() {
   const { playerName, careerTier, casesCompleted, totalScore, reputation, phase, setPhase, currentScenarioId } = useGameStore();
   const [showMiniStats, setShowMiniStats] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
+  const { soundEnabled, toggleSound } = useSound();
   const repType = getReputationType(reputation);
   const tierName = TIER_NAMES[careerTier];
 
@@ -97,6 +99,19 @@ export function GameHeader() {
             <span className="hidden lg:inline">Glossary</span>
           </Button>
           <NotificationPanel />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={toggleSound}
+            title={soundEnabled ? 'Mute sounds' : 'Enable sounds'}
+          >
+            {soundEnabled ? (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+            )}
+          </Button>
           <Button
             variant="ghost"
             size="sm"
