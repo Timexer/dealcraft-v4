@@ -3,7 +3,7 @@
 import { useEffect, useCallback } from 'react';
 import { useGameStore, type ColorTheme } from '@/store/game-store';
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 
 interface ThemeDefinition {
   id: ColorTheme;
@@ -16,6 +16,8 @@ interface ThemeDefinition {
   gradient: string;
   swatchFrom: string;
   swatchTo: string;
+  disabled?: boolean; // Mark themes that aren't fully implemented yet
+  disabledReason?: string;
 }
 
 const THEME_DEFINITIONS: ThemeDefinition[] = [
@@ -42,6 +44,8 @@ const THEME_DEFINITIONS: ThemeDefinition[] = [
     gradient: 'linear-gradient(135deg, #10b981, #2dd4bf)',
     swatchFrom: '#10b981',
     swatchTo: '#2dd4bf',
+    disabled: true,
+    disabledReason: 'Coming Soon — Full app theme support in development',
   },
   {
     id: 'crimson',
@@ -54,6 +58,8 @@ const THEME_DEFINITIONS: ThemeDefinition[] = [
     gradient: 'linear-gradient(135deg, #f43f5e, #f472b6)',
     swatchFrom: '#f43f5e',
     swatchTo: '#f472b6',
+    disabled: true,
+    disabledReason: 'Coming Soon — Full app theme support in development',
   },
   {
     id: 'ocean',
@@ -66,6 +72,8 @@ const THEME_DEFINITIONS: ThemeDefinition[] = [
     gradient: 'linear-gradient(135deg, #06b6d4, #38bdf8)',
     swatchFrom: '#06b6d4',
     swatchTo: '#38bdf8',
+    disabled: true,
+    disabledReason: 'Coming Soon — Full app theme support in development',
   },
 ];
 
@@ -92,7 +100,8 @@ export function useThemeApplication() {
 export function ThemeSelector() {
   const { colorTheme, setColorTheme } = useGameStore();
 
-  const handleSelect = useCallback((theme: ColorTheme) => {
+  const handleSelect = useCallback((theme: ColorTheme, disabled?: boolean) => {
+    if (disabled) return;
     setColorTheme(theme);
   }, [setColorTheme]);
 
@@ -100,38 +109,55 @@ export function ThemeSelector() {
     <div className="grid grid-cols-2 gap-2">
       {THEME_DEFINITIONS.map((theme) => {
         const isActive = colorTheme === theme.id;
+        const isDisabled = theme.disabled;
         return (
           <motion.button
             key={theme.id}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => handleSelect(theme.id)}
+            whileHover={isDisabled ? {} : { scale: 1.03 }}
+            whileTap={isDisabled ? {} : { scale: 0.97 }}
+            onClick={() => handleSelect(theme.id, isDisabled)}
             className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all duration-200 ${
-              isActive
-                ? 'border-[var(--theme-primary)] shadow-lg'
-                : 'border-border/30 hover:border-border/50 bg-card/30'
+              isDisabled
+                ? 'border-border/20 bg-card/10 cursor-not-allowed opacity-60'
+                : isActive
+                  ? 'border-[var(--theme-primary)] shadow-lg'
+                  : 'border-border/30 hover:border-border/50 bg-card/30'
             }`}
-            style={isActive ? {
+            style={isActive && !isDisabled ? {
               boxShadow: `0 0 20px ${theme.primary}20, 0 0 40px ${theme.primary}10`,
               backgroundColor: theme.primaryBg,
             } : {}}
+            disabled={isDisabled}
           >
             {/* Color swatch gradient */}
             <div
-              className="w-full h-8 rounded-lg"
+              className="w-full h-8 rounded-lg relative"
               style={{
                 background: `linear-gradient(135deg, ${theme.swatchFrom}, ${theme.swatchTo})`,
-                opacity: isActive ? 1 : 0.7,
+                opacity: isDisabled ? 0.3 : isActive ? 1 : 0.7,
               }}
-            />
+            >
+              {/* Disabled overlay with lock icon */}
+              {isDisabled && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Lock className="h-3.5 w-3.5 text-white/70" />
+                </div>
+              )}
+            </div>
             {/* Theme name */}
-            <span className={`text-xs font-medium ${isActive ? '' : 'text-muted-foreground'}`}
-              style={isActive ? { color: theme.primaryText } : {}}
+            <span className={`text-xs font-medium ${isActive && !isDisabled ? '' : 'text-muted-foreground'}`}
+              style={isActive && !isDisabled ? { color: theme.primaryText } : {}}
             >
               {theme.name}
             </span>
+            {/* Disabled reason */}
+            {isDisabled && theme.disabledReason && (
+              <span className="text-[10px] text-muted-foreground/60 leading-tight">
+                {theme.disabledReason}
+              </span>
+            )}
             {/* Active checkmark */}
-            {isActive && (
+            {isActive && !isDisabled && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}

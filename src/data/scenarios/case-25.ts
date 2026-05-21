@@ -6,8 +6,9 @@ export const case25: Scenario = {
   subtitle: 'Structural integrity vs. authority',
   category: 'ethics',
   tier: 5,
-  fee: 50000,
+  fee: 100000,
   stakesLabel: '€50M government contract',
+  stakesValue: 50000000,
   difficulty: {
     economicComplexity: 4,
     emotionalComplexity: 4,

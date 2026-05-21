@@ -6,8 +6,10 @@ export const case12: Scenario = {
   subtitle: 'Truth behind the delay',
   category: 'deception',
   tier: 3,
-  fee: 12000,
+  fee: 18000,
   stakesLabel: '€2M in lost revenue',
+  stakesValue: 2000000,
+  stakesValue: 2000000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 3,

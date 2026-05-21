@@ -6,8 +6,9 @@ export const case29: Scenario = {
   subtitle: 'Inventing the system',
   category: 'master',
   tier: 5,
-  fee: 50000,
+  fee: 300000,
   stakesLabel: 'AI industry future',
+  stakesValue: 500000000,
   difficulty: {
     economicComplexity: 5,
     emotionalComplexity: 4,

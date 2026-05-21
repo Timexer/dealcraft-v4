@@ -6,8 +6,9 @@ export const case30: Scenario = {
   subtitle: 'Designing dignity for all sides',
   category: 'master',
   tier: 5,
-  fee: 50000,
+  fee: 300000,
   stakesLabel: 'Regional stability',
+  stakesValue: 1000000000,
   difficulty: {
     economicComplexity: 4,
     emotionalComplexity: 5,

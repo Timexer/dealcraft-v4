@@ -6,8 +6,10 @@ export const case09: Scenario = {
   subtitle: 'A deadline problem in disguise',
   category: 'deadline',
   tier: 3,
-  fee: 12000,
+  fee: 20000,
   stakesLabel: '€2.8M contract',
+  stakesValue: 2800000,
+  stakesValue: 2800000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 2,

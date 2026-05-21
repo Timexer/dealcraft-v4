@@ -6,8 +6,9 @@ export const case28: Scenario = {
   subtitle: 'Solving scarcity\'s root cause',
   category: 'master',
   tier: 5,
-  fee: 50000,
+  fee: 200000,
   stakesLabel: 'Regional water supply',
+  stakesValue: 400000000,
   difficulty: {
     economicComplexity: 5,
     emotionalComplexity: 3,

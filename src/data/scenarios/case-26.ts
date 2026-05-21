@@ -6,8 +6,9 @@ export const case26: Scenario = {
   subtitle: 'What the NDA hides',
   category: 'ethics',
   tier: 5,
-  fee: 50000,
+  fee: 210000,
   stakesLabel: 'Public safety',
+  stakesValue: 300000000,
   difficulty: {
     economicComplexity: 4,
     emotionalComplexity: 5,

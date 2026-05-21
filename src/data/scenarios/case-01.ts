@@ -6,8 +6,9 @@ export const case01: Scenario = {
   subtitle: 'When the check doesn\'t come',
   category: 'fundamentals',
   tier: 1,
-  fee: 2000,
+  fee: 1500,
   stakesLabel: '€8,000',
+  stakesValue: 8000,
   difficulty: {
     economicComplexity: 1,
     emotionalComplexity: 2,

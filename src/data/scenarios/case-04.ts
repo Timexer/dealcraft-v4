@@ -8,6 +8,8 @@ export const case04: Scenario = {
   tier: 2,
   fee: 8000,
   stakesLabel: 'Exclusivity Contract',
+  stakesValue: 500000,
+  stakesValue: 500000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 3,

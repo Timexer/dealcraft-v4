@@ -6,8 +6,10 @@ export const case08: Scenario = {
   subtitle: 'Prescribe after you diagnose',
   category: 'multi_issue',
   tier: 2,
-  fee: 5000,
+  fee: 12000,
   stakesLabel: '€1.2M/yr contract',
+  stakesValue: 1200000,
+  stakesValue: 1200000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 2,

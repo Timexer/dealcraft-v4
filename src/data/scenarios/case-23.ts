@@ -6,8 +6,9 @@ export const case23: Scenario = {
   subtitle: 'Regret wearing anger\'s mask',
   category: 'ugly',
   tier: 5,
-  fee: 50000,
+  fee: 100000,
   stakesLabel: '€50M deal',
+  stakesValue: 50000000,
   difficulty: {
     economicComplexity: 4,
     emotionalComplexity: 5,

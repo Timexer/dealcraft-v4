@@ -6,8 +6,10 @@ export const case11: Scenario = {
   subtitle: 'Risk clauses as weapons',
   category: 'deadline',
   tier: 3,
-  fee: 12000,
+  fee: 32000,
   stakesLabel: '€8M holiday sales',
+  stakesValue: 8000000,
+  stakesValue: 8000000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 3,

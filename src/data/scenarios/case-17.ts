@@ -6,8 +6,10 @@ export const case17: Scenario = {
   subtitle: 'When creditors fear mercy',
   category: 'power_imbalance',
   tier: 4,
-  fee: 25000,
+  fee: 400000,
   stakesLabel: '€800M sovereign debt',
+  stakesValue: 800000000,
+  stakesValue: 800000000,
   difficulty: {
     economicComplexity: 5,
     emotionalComplexity: 3,

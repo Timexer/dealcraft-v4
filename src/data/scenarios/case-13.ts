@@ -6,8 +6,10 @@ export const case13: Scenario = {
   subtitle: 'The customer who isn\'t signed',
   category: 'deception',
   tier: 3,
-  fee: 12000,
+  fee: 50000,
   stakesLabel: '€25M acquisition',
+  stakesValue: 25000000,
+  stakesValue: 25000000,
   difficulty: {
     economicComplexity: 4,
     emotionalComplexity: 3,

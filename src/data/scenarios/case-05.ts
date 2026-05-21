@@ -8,6 +8,8 @@ export const case05: Scenario = {
   tier: 2,
   fee: 12000,
   stakesLabel: '8% Equity',
+  stakesValue: 800000,
+  stakesValue: 800000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 4,

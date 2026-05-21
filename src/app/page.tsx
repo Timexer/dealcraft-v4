@@ -67,17 +67,10 @@ export default function Home() {
       <footer className="mt-auto bg-background/80 backdrop-blur-sm py-3 px-4 text-center border-t border-border/30 relative z-10">
         <div className="h-px bg-gradient-to-r from-transparent via-[var(--theme-primary)]/20 to-transparent mb-2" />
         <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-xs text-muted-foreground">
-          <span className="font-semibold tracking-wider text-amber-400">DEALCRAFT</span>
+          <span>© 2026 by Timothy Hannum</span>
           <span className="hidden sm:inline text-muted-foreground/50">·</span>
-          <span>Negotiation Career Simulator</span>
-          <span className="hidden sm:inline text-muted-foreground/50">·</span>
-          <span>Season 1</span>
-          <span className="hidden sm:inline text-muted-foreground/50">·</span>
-          <span>v4.0</span>
-          <span className="hidden sm:inline text-muted-foreground/50">·</span>
-          <span>30 Cases · Streaks · Themes · Transcripts</span>
+          <span>Englishbreakfast.pl</span>
         </div>
-        <p className="text-[11px] text-muted-foreground mt-1">Based on &quot;Negotiation Genius&quot; by Malhotra &amp; Bazerman</p>
       </footer>
       <TutorialOverlay />
 

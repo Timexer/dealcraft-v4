@@ -6,8 +6,10 @@ export const case19: Scenario = {
   subtitle: 'Saving face on both sides',
   category: 'relationship',
   tier: 4,
-  fee: 25000,
+  fee: 60000,
   stakesLabel: '€12M client contract',
+  stakesValue: 12000000,
+  stakesValue: 12000000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 5,

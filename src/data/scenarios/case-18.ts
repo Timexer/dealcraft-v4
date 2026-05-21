@@ -6,8 +6,10 @@ export const case18: Scenario = {
   subtitle: 'Math vs. identity',
   category: 'relationship',
   tier: 4,
-  fee: 25000,
+  fee: 60000,
   stakesLabel: '€20M family business',
+  stakesValue: 20000000,
+  stakesValue: 20000000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 5,

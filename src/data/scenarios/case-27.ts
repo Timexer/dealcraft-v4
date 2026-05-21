@@ -6,8 +6,9 @@ export const case27: Scenario = {
   subtitle: 'Changing the game',
   category: 'master',
   tier: 5,
-  fee: 50000,
+  fee: 600000,
   stakesLabel: '€2B season revenue',
+  stakesValue: 2000000000,
   difficulty: {
     economicComplexity: 5,
     emotionalComplexity: 4,

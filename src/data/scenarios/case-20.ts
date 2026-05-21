@@ -6,8 +6,10 @@ export const case20: Scenario = {
   subtitle: 'Winning the battle, losing the war',
   category: 'relationship',
   tier: 4,
-  fee: 25000,
+  fee: 30000,
   stakesLabel: '€2M in machinery',
+  stakesValue: 2000000,
+  stakesValue: 2000000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 4,

@@ -6,8 +6,9 @@ export const case24: Scenario = {
   subtitle: 'Value created by destroying outsiders',
   category: 'ethics',
   tier: 5,
-  fee: 50000,
+  fee: 200000,
   stakesLabel: 'Industry standard control',
+  stakesValue: 200000000,
   difficulty: {
     economicComplexity: 4,
     emotionalComplexity: 3,

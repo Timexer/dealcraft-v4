@@ -198,6 +198,7 @@ export interface Scenario {
   counterpartyStyle: CounterpartyStyle;
   fee: number;
   stakesLabel: string;
+  stakesValue?: number; // Numeric stake value for fee percentage calculation
 }
 
 export interface PlayerStats {

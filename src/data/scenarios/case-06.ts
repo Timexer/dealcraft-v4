@@ -6,8 +6,10 @@ export const case06: Scenario = {
   subtitle: 'When identity is the real price',
   category: 'hidden_interests',
   tier: 2,
-  fee: 5000,
+  fee: 60000,
   stakesLabel: '€12M acquisition',
+  stakesValue: 12000000,
+  stakesValue: 12000000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 4,

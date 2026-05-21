@@ -16,6 +16,7 @@ interface ModeConfig {
   difficulty: string;
   badgeClass: string;
   iconBg: string;
+  experimental?: boolean;
 }
 
 const MODES: ModeConfig[] = [
@@ -36,6 +37,7 @@ const MODES: ModeConfig[] = [
     difficulty: '1.5x',
     badgeClass: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
     iconBg: 'bg-amber-500/15',
+    experimental: true,
   },
   {
     id: 'limited_choices',
@@ -45,6 +47,7 @@ const MODES: ModeConfig[] = [
     difficulty: '2x',
     badgeClass: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
     iconBg: 'bg-orange-500/15',
+    experimental: true,
   },
   {
     id: 'ethics_lock',
@@ -54,6 +57,7 @@ const MODES: ModeConfig[] = [
     difficulty: '1.8x',
     badgeClass: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
     iconBg: 'bg-teal-500/15',
+    experimental: true,
   },
 ];
 
@@ -108,6 +112,11 @@ export function ChallengeModeSelector({ onModeSelected }: ChallengeModeSelectorP
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
+                      {mode.experimental && (
+                        <Badge variant="outline" className="text-[10px] px-1 py-0 bg-purple-500/15 text-purple-400 border-purple-500/25">
+                          🧪 Beta
+                        </Badge>
+                      )}
                       <Badge variant="outline" className={`text-[11px] px-1.5 py-0 ${mode.badgeClass}`}>
                         {mode.difficulty}
                       </Badge>

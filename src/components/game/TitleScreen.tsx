@@ -209,7 +209,7 @@ export function TitleScreen() {
           className="space-y-4 max-w-sm mx-auto"
         >
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground text-left block">Your name, negotiator</label>
+            <label className="text-sm text-muted-foreground text-left block">Welcome, Negotiator.</label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}

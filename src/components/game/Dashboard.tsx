@@ -608,7 +608,9 @@ export function Dashboard() {
                     )}
 
                     <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs text-muted-foreground">Fee: €{scenario.fee.toLocaleString()}</span>
+                      <span className="text-xs text-muted-foreground">
+                      Fee: €{scenario.fee.toLocaleString()}{scenario.stakesValue ? ` (${((scenario.fee / scenario.stakesValue) * 100).toFixed(1)}%)` : ''}
+                    </span>
                       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all duration-200" />
                     </div>
                   </CardContent>

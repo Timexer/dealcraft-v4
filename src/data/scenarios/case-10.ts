@@ -6,8 +6,10 @@ export const case10: Scenario = {
   subtitle: 'A demand that reveals a fear',
   category: 'deadline',
   tier: 3,
-  fee: 12000,
+  fee: 30000,
   stakesLabel: '€200K/day penalties',
+  stakesValue: 6000000,
+  stakesValue: 6000000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 3,

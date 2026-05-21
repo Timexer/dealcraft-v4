@@ -6,8 +6,10 @@ export const case15: Scenario = {
   subtitle: 'Weakness as leverage',
   category: 'power_imbalance',
   tier: 4,
-  fee: 25000,
+  fee: 100000,
   stakesLabel: 'Company survival',
+  stakesValue: 50000000,
+  stakesValue: 50000000,
   difficulty: {
     economicComplexity: 4,
     emotionalComplexity: 4,

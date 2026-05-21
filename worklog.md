@@ -1861,3 +1861,36 @@ Stage Summary:
 - Broken color theme selector disabled (Palette button removed); dark/light toggle retained
 - clearCaseSession() properly cleans up session state on postmortem exit
 - Color theme feature marked for future implementation: needs replacing all hardcoded amber Tailwind classes with CSS custom properties
+
+---
+Task ID: 12
+Agent: Main Developer
+Task: Fix difficulty-fee inconsistency, implement percentage-based fees, add experimental tags, fix UI issues
+
+Work Log:
+- Added `stakesValue?: number` to Scenario type in types.ts for fee percentage calculation
+- Fixed Tier 1 case fees: case-01 €2,000→€1,500 (Beginner), case-03 €1,500→€2,000 (Intermediate), case-02 stays €2,500 (Equipment Sales)
+- Added stakesValue to all 30 case files with realistic monetary values extracted from stakesLabel/briefing
+- Adjusted Tier 2-5 fees to follow realistic percentage-based model:
+  - Tier 2: €8K-€25K (0.5-1.6% of stake value)
+  - Tier 3: €18K-€50K (0.2-0.9%)
+  - Tier 4: €30K-€400K (0.05-1.5%)
+  - Tier 5: €25K-€600K (0.03-5%)
+- Added fee calculation helpers to game-engine.ts: getFeeRate(), formatFeeDisplay(), getRecommendedFeeRate()
+- Updated Dashboard.tsx and CaseIntake.tsx to show "Fee: €X,XXX (Y.Z%)" format with percentage
+- Added "🧪 Beta" experimental tag to Speed Run, Limited Choices, Ethics Lock challenge modes
+- Disabled Emerald, Crimson, Ocean themes (marked "Coming Soon") since 200+ hardcoded amber-500 references prevent proper theming
+- Updated TitleScreen label from "Your name, negotiator" to "Welcome, Negotiator." matching design screenshot
+- Updated footer to "© 2026 by Timothy Hannum · Englishbreakfast.pl" matching design screenshot
+- Verified no duplicate bin/reset button exists (only one RotateCcw reset button in GameHeader)
+- All lint checks pass cleanly
+- App loads and compiles successfully
+
+Stage Summary:
+- Fee inconsistency fixed: Beginner=€1,500 (18.8%), Intermediate=€2,000 (16.7%), Equipment=€2,500 (4.3%)
+- All 30 cases now have stakesValue for fee percentage display
+- Fees adjusted to realistic percentages for high-value contracts
+- Dashboard and CaseIntake show fee with percentage: "Fee: €60,000 (0.5%)"
+- Challenge modes marked as experimental with 🧪 Beta badge
+- Non-amber themes disabled with lock icons and "Coming Soon" labels
+- TitleScreen and footer updated to match design reference

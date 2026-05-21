@@ -6,8 +6,10 @@ export const case07: Scenario = {
   subtitle: 'When the real value isn\'t the fee',
   category: 'multi_issue',
   tier: 2,
-  fee: 5000,
+  fee: 25000,
   stakesLabel: '€5M/yr licensing',
+  stakesValue: 5000000,
+  stakesValue: 5000000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 2,

@@ -6,8 +6,9 @@ export const case21: Scenario = {
   subtitle: 'Political currency',
   category: 'ugly',
   tier: 5,
-  fee: 50000,
+  fee: 300000,
   stakesLabel: 'National rail system',
+  stakesValue: 500000000,
   difficulty: {
     economicComplexity: 4,
     emotionalComplexity: 5,

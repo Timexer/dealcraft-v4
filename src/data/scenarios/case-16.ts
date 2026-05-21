@@ -6,8 +6,10 @@ export const case16: Scenario = {
   subtitle: 'The precedent they fear',
   category: 'power_imbalance',
   tier: 4,
-  fee: 25000,
+  fee: 100000,
   stakesLabel: 'IP ownership rights',
+  stakesValue: 100000000,
+  stakesValue: 100000000,
   difficulty: {
     economicComplexity: 4,
     emotionalComplexity: 4,

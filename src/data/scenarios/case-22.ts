@@ -6,8 +6,9 @@ export const case22: Scenario = {
   subtitle: 'Calling the bluff',
   category: 'ugly',
   tier: 5,
-  fee: 50000,
+  fee: 25000,
   stakesLabel: '€500K or shutdown',
+  stakesValue: 500000,
   difficulty: {
     economicComplexity: 4,
     emotionalComplexity: 4,

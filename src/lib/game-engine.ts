@@ -164,6 +164,52 @@ export function getDifficultyColor(difficulty: ReturnType<typeof getDifficultyLa
   }
 }
 
+/**
+ * Calculate fee as a percentage of stake value.
+ * Returns null if stakesValue is not available.
+ */
+export function getFeeRate(fee: number, stakesValue?: number): number | null {
+  if (!stakesValue || stakesValue <= 0) return null;
+  return (fee / stakesValue) * 100;
+}
+
+/**
+ * Format fee display string with optional percentage.
+ * E.g., "€1,500 (18.8%)" or "€1,500"
+ */
+export function formatFeeDisplay(fee: number, stakesValue?: number): string {
+  const rate = getFeeRate(fee, stakesValue);
+  const formatted = `€${fee.toLocaleString()}`;
+  if (rate !== null) {
+    return `${formatted} (${rate.toFixed(1)}%)`;
+  }
+  return formatted;
+}
+
+/**
+ * Get recommended fee rate based on difficulty level.
+ * Higher difficulty = higher fee percentage, reflecting the premium for complexity.
+ * Rates decrease for larger stakes (as in real consulting).
+ */
+export function getRecommendedFeeRate(difficultyAvg: number, stakesValue: number): number {
+  // Base rates by difficulty level (higher difficulty = higher rate)
+  let baseRate: number;
+  if (difficultyAvg <= 1.5) baseRate = 18;       // Beginner: 18%
+  else if (difficultyAvg <= 2.5) baseRate = 10;   // Intermediate: 10%
+  else if (difficultyAvg <= 3.5) baseRate = 5;    // Advanced: 5%
+  else if (difficultyAvg <= 4.5) baseRate = 3;    // Expert: 3%
+  else baseRate = 2;                               // Master: 2%
+
+  // Scale down for very large deals (realistic: bigger deals = lower %)
+  if (stakesValue >= 1_000_000_000) baseRate *= 0.3;     // €1B+: 0.6% max
+  else if (stakesValue >= 100_000_000) baseRate *= 0.5;  // €100M+: 1.5% max
+  else if (stakesValue >= 10_000_000) baseRate *= 0.7;   // €10M+: 3.5% max
+  else if (stakesValue >= 1_000_000) baseRate *= 0.85;   // €1M+: 4.25% max
+  else if (stakesValue >= 100_000) baseRate *= 1.0;      // €100K+: full rate
+
+  return Math.max(0.1, baseRate); // Minimum 0.1%
+}
+
 export function getScoreGrade(score: number): { grade: string; color: string; description: string } {
   if (score >= 90) return { grade: 'S', color: 'text-yellow-400', description: 'Legendary' };
   if (score >= 80) return { grade: 'A', color: 'text-emerald-400', description: 'Masterful' };

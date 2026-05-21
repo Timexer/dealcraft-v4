@@ -6,8 +6,9 @@ export const case03: Scenario = {
   subtitle: 'When the headline number hides the real deal',
   category: 'fundamentals',
   tier: 1,
-  fee: 1500,
+  fee: 2000,
   stakesLabel: '€12,000+',
+  stakesValue: 12000,
   difficulty: {
     economicComplexity: 2,
     emotionalComplexity: 3,

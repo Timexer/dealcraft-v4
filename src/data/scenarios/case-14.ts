@@ -6,8 +6,10 @@ export const case14: Scenario = {
   subtitle: 'When sales and engineering disagree',
   category: 'deception',
   tier: 3,
-  fee: 12000,
+  fee: 32000,
   stakesLabel: '€8M software contract',
+  stakesValue: 8000000,
+  stakesValue: 8000000,
   difficulty: {
     economicComplexity: 3,
     emotionalComplexity: 3,
