@@ -1894,3 +1894,67 @@ Stage Summary:
 - Challenge modes marked as experimental with 🧪 Beta badge
 - Non-amber themes disabled with lock icons and "Coming Soon" labels
 - TitleScreen and footer updated to match design reference
+
+---
+Task ID: 12
+Agent: Main Developer (Round 12)
+Task: Issue Priority Matrix star rating system overhaul, difficulty/payment inconsistency fix, and pending bug fixes
+
+Work Log:
+- Read worklog.md to understand project progress from 11+ previous rounds
+- Reviewed all relevant source files: StrategyBoard.tsx, Dashboard.tsx, CaseIntake.tsx, GameHeader.tsx, ThemeSelector.tsx, ChallengeModeSelector.tsx, game-engine.ts, case-01.ts through case-03.ts, types.ts
+- **Issue Priority Matrix Star System Overhaul** (StrategyBoard.tsx):
+  - Enhanced star visual: Increased star size from h-3/w-3 to h-3.5/w-3.5 with proper gap spacing
+  - Added bright filled stars with glow drop-shadow for priority levels
+  - Changed unfilled stars from 'text-muted/30' to 'text-muted-foreground/15 fill-muted-foreground/8' (dimmed/blurred appearance)
+  - Added numeric indicators (e.g., "9/10") next to each star row with color-coded tabular-nums
+  - Added "Value to Client" star row (emerald stars, derived from counterpartyPriority - logrolling opportunity)
+  - Added "Value to Counterparty" star row (orange stars, derived from clientPriority)
+  - Added tooltips on Value labels explaining the logrolling concept
+  - Added color legend at the top of the Issue Priority Matrix explaining all 4 star types + remaining capacity
+  - Enhanced trade opportunity indicator with stronger language for high-differential issues (🔥 and 🎯 icons)
+  - Added priority-issue-card hover CSS class with amber glow
+- **Difficulty/Payment Inconsistency Fix**:
+  - Updated case-02 (Equipment Sales) difficulty values to make it properly "Advanced" (avg 2.86 → Advanced):
+    - economicComplexity: 2→3, ethicalComplexity: 1→2, informationAsymmetry: 3→4, powerImbalance: 2→3, timePressure: 2→3, relationshipStakes: 2→3
+  - Now correctly maps: Freelancer Invoice (Beginner) = €1,500, First Salary Offer (Intermediate) = €2,000, Equipment Sales (Advanced) = €2,500
+- **Dashboard Display Improvements** (Dashboard.tsx):
+  - Replaced inline difficulty label with CSS difficulty-label-badge component (Beginner=green, Intermediate=cyan, Advanced=amber, Expert=orange, Master=red)
+  - Enhanced star display: brighter filled stars with glow, dimmed unfilled stars (matching StrategyBoard style)
+  - Added numeric difficulty rating display (e.g., "2.9/5")
+  - Improved fee display with new fee-badge CSS class (rounded pill with amber styling, percentage as secondary text)
+- **CaseIntake Fee Display** (CaseIntake.tsx):
+  - Updated fee display to use new fee-badge CSS class for consistency
+- **CSS Additions** (globals.css):
+  - Added starPulse keyframe animation
+  - Added .priority-issue-card hover effect
+  - Added .fee-badge and .fee-percent styling
+  - Added .difficulty-label-badge with color variants (beginner/intermediate/advanced/expert/master)
+- **Verified existing implementations**:
+  - ChallengeModeSelector already has 'experimental' flag with 🧪 Beta badges on Speed Run, Limited Choices, Ethics Lock modes
+  - ThemeSelector already has Emerald, Crimson, Ocean themes disabled with "Coming Soon" messages
+  - GameHeader only has one reset button (RotateCcw), no duplicate bin button found
+  - TitleScreen appears complete with all effects (particles, parallax, typewriter, floating badges)
+- Created 15-minute cron job for ongoing review cycle (job_id: 162809)
+- All lint checks pass cleanly
+
+Stage Summary:
+- Issue Priority Matrix now shows 4 star rows per issue: Client Priority, Counterparty Priority, Value to Client, Value to Counterparty
+- Star visual significantly improved: bright glowing filled stars vs dimmed/blurred unfilled stars, with numeric indicators
+- Difficulty/payment consistency fixed: case-02 now properly rated as "Advanced"
+- Dashboard case cards show difficulty label badges, enhanced stars, and styled fee badges
+- All 4 pending tasks from previous session verified as already completed or resolved
+- CSS additions for priority cards, fee badges, and difficulty label badges
+
+Current Project Status:
+- Dealcraft is a fully playable, feature-rich negotiation career simulator
+- 30 cases with rich dialogue trees, complete game loop
+- Issue Priority Matrix now has comprehensive star rating system with 10-star max and value analysis
+- Difficulty labels and fee structures are now consistent across all views
+- All previously reported issues verified as resolved
+
+Unresolved Issues / Risks:
+- NegotiationTable: Interactive-only node counting and locked option display for Limited Choices mode (low priority)
+- Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- Could add more visual flair to the star system (animated fills, hover effects on individual stars)
+- Could expand the "Value to Client/Counterparty" concept with actual computed trade value scores

@@ -2091,3 +2091,75 @@
   background: oklch(0.77 0.16 75);
   box-shadow: 0 0 8px oklch(0.77 0.16 75 / 40%);
 }
+
+/* Priority Star Glow Effects */
+@keyframes starPulse {
+  0%, 100% { filter: drop-shadow(0 0 2px currentColor / 30%); }
+  50% { filter: drop-shadow(0 0 4px currentColor / 50%); }
+}
+
+/* Issue priority matrix hover effects */
+.priority-issue-card {
+  transition: all 0.2s ease;
+}
+.priority-issue-card:hover {
+  border-color: oklch(0.77 0.16 75 / 25%);
+  box-shadow: 0 0 12px oklch(0.77 0.16 75 / 5%);
+}
+
+/* Fee badge styling */
+.fee-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: oklch(0.77 0.16 75 / 8%);
+  border: 1px solid oklch(0.77 0.16 75 / 15%);
+  color: oklch(0.77 0.16 75);
+}
+.fee-badge .fee-percent {
+  opacity: 0.7;
+  font-weight: 400;
+  font-size: 10px;
+}
+
+/* Difficulty label badge */
+.difficulty-label-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.difficulty-label-badge.beginner {
+  background: oklch(0.72 0.19 155 / 15%);
+  color: oklch(0.72 0.19 155);
+  border: 1px solid oklch(0.72 0.19 155 / 25%);
+}
+.difficulty-label-badge.intermediate {
+  background: oklch(0.75 0.14 200 / 15%);
+  color: oklch(0.75 0.14 200);
+  border: 1px solid oklch(0.75 0.14 200 / 25%);
+}
+.difficulty-label-badge.advanced {
+  background: oklch(0.77 0.16 75 / 15%);
+  color: oklch(0.77 0.16 75);
+  border: 1px solid oklch(0.77 0.16 75 / 25%);
+}
+.difficulty-label-badge.expert {
+  background: oklch(0.65 0.22 50 / 15%);
+  color: oklch(0.65 0.22 50);
+  border: 1px solid oklch(0.65 0.22 50 / 25%);
+}
+.difficulty-label-badge.master {
+  background: oklch(0.6 0.24 27 / 15%);
+  color: oklch(0.6 0.24 27);
+  border: 1px solid oklch(0.6 0.24 27 / 25%);
+}

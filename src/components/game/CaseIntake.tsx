@@ -177,8 +177,9 @@ export function CaseIntake() {
                 </div>
                 <div className="hidden sm:flex flex-col items-end gap-1">
                   <Badge variant="outline" className="text-xs">Tier {scenario.tier}</Badge>
-                  <span className="text-xs text-muted-foreground">
-                    Fee: €{scenario.fee.toLocaleString()}{scenario.stakesValue ? ` (${((scenario.fee / scenario.stakesValue) * 100).toFixed(1)}%)` : ''}
+                  <span className="fee-badge text-[11px]">
+                    €{scenario.fee.toLocaleString()}
+                    {scenario.stakesValue ? <span className="fee-percent">({((scenario.fee / scenario.stakesValue) * 100).toFixed(1)}%)</span> : ''}
                   </span>
                 </div>
               </div>

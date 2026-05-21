@@ -471,15 +471,38 @@ export function StrategyBoard() {
                     Issue Priority Matrix
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Identify trade opportunities where priorities differ
+                    Identify trade opportunities where priorities differ. Each issue rated out of 10.
                   </CardDescription>
+                  {/* Star legend */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                    <div className="flex items-center gap-1.5">
+                      <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                      <span className="text-[10px] text-muted-foreground">Client Priority</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Star className="h-3 w-3 text-cyan-400 fill-cyan-400" />
+                      <span className="text-[10px] text-muted-foreground">CP Priority</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Star className="h-3 w-3 text-emerald-400 fill-emerald-400" />
+                      <span className="text-[10px] text-muted-foreground">Value to Client</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Star className="h-3 w-3 text-orange-400 fill-orange-400" />
+                      <span className="text-[10px] text-muted-foreground">Value to CP</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 ml-auto">
+                      <Star className="h-3 w-3 text-muted-foreground/15 fill-muted-foreground/8" />
+                      <span className="text-[10px] text-muted-foreground">Remaining capacity</span>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-3">
                     {issues.map((issue) => (
                       <div
                         key={issue.id}
-                        className="p-3 rounded-lg bg-background/50 border border-border/30 space-y-2"
+                        className="p-3 rounded-lg bg-background/50 border border-border/30 space-y-2 priority-issue-card"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
@@ -499,25 +522,104 @@ export function StrategyBoard() {
                             </Tooltip>
                           </TooltipProvider>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        {/* Priority Stars - Client & Counterparty */}
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+                          {/* Client Priority */}
                           <div className="space-y-1">
-                            <span className="text-[11px] text-muted-foreground">Client Priority</span>
-                            <div className="flex items-center gap-0.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] text-muted-foreground">Client Priority</span>
+                              <span className="text-[11px] font-semibold text-amber-400 tabular-nums">{issue.clientPriority}/10</span>
+                            </div>
+                            <div className="flex items-center gap-[2px]">
                               {Array.from({ length: 10 }).map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`h-3 w-3 ${i < issue.clientPriority ? 'text-amber-400 fill-amber-400' : 'text-muted/30'}`}
+                                  className={`h-3.5 w-3.5 transition-all duration-200 ${
+                                    i < issue.clientPriority
+                                      ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_3px_rgba(251,191,36,0.4)]'
+                                      : 'text-muted-foreground/15 fill-muted-foreground/8'
+                                  }`}
                                 />
                               ))}
                             </div>
                           </div>
+                          {/* Counterparty Priority */}
                           <div className="space-y-1">
-                            <span className="text-[11px] text-muted-foreground">Counterparty Priority</span>
-                            <div className="flex items-center gap-0.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] text-muted-foreground">Counterparty Priority</span>
+                              <span className="text-[11px] font-semibold text-cyan-400 tabular-nums">{issue.counterpartyPriority}/10</span>
+                            </div>
+                            <div className="flex items-center gap-[2px]">
                               {Array.from({ length: 10 }).map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`h-3 w-3 ${i < issue.counterpartyPriority ? 'text-cyan-400 fill-cyan-400' : 'text-muted/30'}`}
+                                  className={`h-3.5 w-3.5 transition-all duration-200 ${
+                                    i < issue.counterpartyPriority
+                                      ? 'text-cyan-400 fill-cyan-400 drop-shadow-[0_0_3px_rgba(34,211,238,0.4)]'
+                                      : 'text-muted-foreground/15 fill-muted-foreground/8'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          {/* Value to Client - derived from counterparty priority (logrolling opportunity) */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="text-[11px] text-muted-foreground flex items-center gap-1 cursor-help">
+                                      Value to Client
+                                      <Info className="h-2.5 w-2.5 text-muted-foreground/50" />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[200px] text-xs">
+                                    <p>How much trade value this issue represents for your client. Higher counterparty priority = more leverage in logrolling.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <span className="text-[11px] font-semibold text-emerald-400 tabular-nums">{issue.counterpartyPriority}/10</span>
+                            </div>
+                            <div className="flex items-center gap-[2px]">
+                              {Array.from({ length: 10 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-3.5 w-3.5 transition-all duration-200 ${
+                                    i < issue.counterpartyPriority
+                                      ? 'text-emerald-400 fill-emerald-400 drop-shadow-[0_0_3px_rgba(52,211,153,0.4)]'
+                                      : 'text-muted-foreground/15 fill-muted-foreground/8'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          {/* Value to Counterparty - derived from client priority */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="text-[11px] text-muted-foreground flex items-center gap-1 cursor-help">
+                                      Value to Counterparty
+                                      <Info className="h-2.5 w-2.5 text-muted-foreground/50" />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[200px] text-xs">
+                                    <p>How much trade value this issue represents for the counterparty. Higher client priority = more they can demand in exchange.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <span className="text-[11px] font-semibold text-orange-400 tabular-nums">{issue.clientPriority}/10</span>
+                            </div>
+                            <div className="flex items-center gap-[2px]">
+                              {Array.from({ length: 10 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-3.5 w-3.5 transition-all duration-200 ${
+                                    i < issue.clientPriority
+                                      ? 'text-orange-400 fill-orange-400 drop-shadow-[0_0_3px_rgba(251,146,60,0.4)]'
+                                      : 'text-muted-foreground/15 fill-muted-foreground/8'
+                                  }`}
                                 />
                               ))}
                             </div>
@@ -525,12 +627,17 @@ export function StrategyBoard() {
                         </div>
                         {/* Trade opportunity indicator */}
                         {issue.clientPriority !== issue.counterpartyPriority && (
-                          <div className="flex items-center gap-1.5 pt-1">
+                          <div className="flex items-center gap-1.5 pt-1 border-t border-border/20 mt-1">
                             <Lightbulb className="h-3 w-3 text-amber-400" />
                             <span className="text-[11px] text-amber-400">
-                              {issue.clientPriority > issue.counterpartyPriority
-                                ? 'You value this more — potential concession for the counterparty'
-                                : 'They value this more — opportunity to trade for something you want'}
+                              {Math.abs(issue.clientPriority - issue.counterpartyPriority) >= 4
+                                ? issue.clientPriority > issue.counterpartyPriority
+                                  ? '🔥 Strong trade opportunity — you value this much more, consider conceding for a bigger gain elsewhere'
+                                  : '🎯 High logrolling potential — they value this much more, trade it for something you want'
+                                : issue.clientPriority > issue.counterpartyPriority
+                                  ? 'You value this more — potential concession for the counterparty'
+                                  : 'They value this more — opportunity to trade for something you want'
+                              }
                             </span>
                           </div>
                         )}

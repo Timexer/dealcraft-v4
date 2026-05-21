@@ -573,31 +573,51 @@ export function Dashboard() {
                       <Badge variant="outline" className="text-[11px] px-2 py-0">
                         Tier {scenario.tier}
                       </Badge>
-                      <div className="flex items-center gap-1">
-                        <span className={`text-[11px] font-medium ${getDifficultyColor(getDifficultyLabel(scenario.difficulty))}`}>
-                          {getDifficultyLabel(scenario.difficulty)}
-                        </span>
-                        <div className="flex items-center">
-                          {(() => {
-                            const avgDifficulty = (
-                              scenario.difficulty.economicComplexity +
-                              scenario.difficulty.emotionalComplexity +
-                              scenario.difficulty.ethicalComplexity +
-                              scenario.difficulty.informationAsymmetry +
-                              scenario.difficulty.powerImbalance +
-                              scenario.difficulty.timePressure +
-                              scenario.difficulty.relationshipStakes
-                            ) / 7;
-                            const starRating = Math.round(avgDifficulty);
-                            return Array.from({ length: 5 }).map((_, starIdx) => (
-                              <Star
-                                key={starIdx}
-                                className={`h-3 w-3 ${starIdx < starRating ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground'}`}
-                              />
-                            ));
-                          })()}
-                        </div>
-                      </div>
+                      {(() => {
+                        const diffLabel = getDifficultyLabel(scenario.difficulty);
+                        const diffClass = diffLabel.toLowerCase();
+                        return (
+                          <span className={`difficulty-label-badge ${diffClass}`}>
+                            {diffLabel}
+                          </span>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Difficulty stars row */}
+                    <div className="flex items-center gap-1">
+                      {(() => {
+                        const avgDifficulty = (
+                          scenario.difficulty.economicComplexity +
+                          scenario.difficulty.emotionalComplexity +
+                          scenario.difficulty.ethicalComplexity +
+                          scenario.difficulty.informationAsymmetry +
+                          scenario.difficulty.powerImbalance +
+                          scenario.difficulty.timePressure +
+                          scenario.difficulty.relationshipStakes
+                        ) / 7;
+                        const starRating = Math.round(avgDifficulty);
+                        return Array.from({ length: 5 }).map((_, starIdx) => (
+                          <Star
+                            key={starIdx}
+                            className={`h-3.5 w-3.5 ${starIdx < starRating ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_2px_rgba(251,191,36,0.3)]' : 'text-muted-foreground/15 fill-muted-foreground/8'}`}
+                          />
+                        ));
+                      })()}
+                      <span className="text-[10px] text-muted-foreground ml-1">
+                        {(() => {
+                          const avg = (
+                            scenario.difficulty.economicComplexity +
+                            scenario.difficulty.emotionalComplexity +
+                            scenario.difficulty.ethicalComplexity +
+                            scenario.difficulty.informationAsymmetry +
+                            scenario.difficulty.powerImbalance +
+                            scenario.difficulty.timePressure +
+                            scenario.difficulty.relationshipStakes
+                          ) / 7;
+                          return avg.toFixed(1);
+                        })()}/5
+                      </span>
                     </div>
 
                     {scenario.stakesLabel && (
@@ -608,9 +628,10 @@ export function Dashboard() {
                     )}
 
                     <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs text-muted-foreground">
-                      Fee: €{scenario.fee.toLocaleString()}{scenario.stakesValue ? ` (${((scenario.fee / scenario.stakesValue) * 100).toFixed(1)}%)` : ''}
-                    </span>
+                      <span className="fee-badge">
+                        €{scenario.fee.toLocaleString()}
+                        {scenario.stakesValue ? <span className="fee-percent">({((scenario.fee / scenario.stakesValue) * 100).toFixed(1)}%)</span> : ''}
+                      </span>
                       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all duration-200" />
                     </div>
                   </CardContent>
