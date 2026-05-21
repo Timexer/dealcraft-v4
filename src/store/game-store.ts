@@ -142,6 +142,9 @@ export interface GameState {
   // Black Swans
   discoveredBlackSwans: string[];
   discoverBlackSwan: (id: string) => void;
+
+  // Session cleanup (called when leaving postmortem)
+  clearCaseSession: () => void;
 }
 
 const defaultStats: PlayerStats = {
@@ -982,6 +985,22 @@ export const useGameStore = create<GameState>()(
               read: false,
             }, ...s.notifications],
           };
+        }),
+
+      // Clear session state when leaving postmortem — keeps career data intact
+      clearCaseSession: () =>
+        set({
+          currentScenarioId: null,
+          negotiation: { ...defaultNegotiation },
+          caseAccepted: false,
+          isReplay: false,
+          discoveredFacts: [],
+          investigationHistory: [],
+          discoveredBlackSwans: [],
+          techniquesUsed: [],
+          batnaEstimate: 0,
+          reservationEstimate: 0,
+          assumptions: [],
         }),
     }),
     {

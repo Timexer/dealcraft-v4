@@ -19,7 +19,6 @@ import {
   Zap,
   ChevronDown,
   ChevronUp,
-  Palette,
   Flame,
   RotateCcw,
   AlertTriangle,
@@ -29,20 +28,18 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { NegotiationGlossary } from '@/components/game/NegotiationGlossary';
 import { KeyboardShortcutsDialog } from '@/components/game/KeyboardShortcuts';
-import { ThemeSelector, useThemeApplication } from '@/components/game/ThemeSelector';
+import { useThemeApplication } from '@/components/game/ThemeSelector';
 import { TutorialHelpButton } from '@/components/game/TutorialOverlay';
 import { ThemeToggle } from '@/components/game/ThemeToggle';
 import { useSound } from '@/hooks/use-sound';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function GameHeader() {
-  const { playerName, careerTier, casesCompleted, totalScore, reputation, phase, setPhase, currentScenarioId, challengeMode, currentStreak, streakType } = useGameStore();
+  const { playerName, careerTier, casesCompleted, totalScore, reputation, phase, setPhase, currentScenarioId, challengeMode, currentStreak, streakType, clearCaseSession } = useGameStore();
   const [showMiniStats, setShowMiniStats] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [showThemePicker, setShowThemePicker] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [quickStatsCollapsed, setQuickStatsCollapsed] = useState(false);
   const { soundEnabled, toggleSound } = useSound();
@@ -57,6 +54,30 @@ export function GameHeader() {
   const handleResetGame = () => {
     useGameStore.getState().resetGame();
     setShowResetConfirm(false);
+  };
+
+  // Navigate back or to dashboard — clears session when leaving postmortem
+  const handleBackOrDashboard = () => {
+    if (phase === 'postmortem') {
+      clearCaseSession();
+      setPhase('dashboard');
+    } else if (phase === 'negotiation') {
+      setPhase('investigation');
+    } else {
+      const backMap: Record<string, string> = {
+        intake: 'dashboard',
+        strategy: 'intake',
+        investigation: 'strategy',
+        career: 'dashboard',
+      };
+      setPhase((backMap[phase] as any) || 'dashboard');
+    }
+  };
+
+  // Navigate to dashboard — clears session when leaving postmortem
+  const handleGoDashboard = () => {
+    if (phase === 'postmortem') clearCaseSession();
+    setPhase('dashboard');
   };
 
   // Listen for keyboard shortcut to show reset confirmation
@@ -82,23 +103,13 @@ export function GameHeader() {
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 shrink-0"
-              onClick={() => {
-                const backMap: Record<string, string> = {
-                  intake: 'dashboard',
-                  strategy: 'intake',
-                  investigation: 'strategy',
-                  negotiation: 'investigation',
-                  postmortem: 'negotiation',
-                  career: 'dashboard',
-                };
-                setPhase((backMap[phase] as any) || 'dashboard');
-              }}
+              onClick={handleBackOrDashboard}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
           )}
           <button
-            onClick={() => setPhase('dashboard')}
+            onClick={handleGoDashboard}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
@@ -142,7 +153,7 @@ export function GameHeader() {
             <span className="hidden lg:inline">Glossary</span>
           </Button>
           <NotificationPanel />
-          {/* BUG-003 fix: Sound toggle with visual feedback + tooltip */}
+          {/* Sound toggle */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -183,16 +194,8 @@ export function GameHeader() {
             <Keyboard className="h-3.5 w-3.5 text-amber-500" />
           </Button>
           <TutorialHelpButton />
+          {/* Dark/Light mode toggle */}
           <ThemeToggle />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => setShowThemePicker(true)}
-            title="Color Theme"
-          >
-            <Palette className="h-3.5 w-3.5 text-amber-500" />
-          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -206,11 +209,11 @@ export function GameHeader() {
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0"
-            onClick={() => setPhase('dashboard')}
+            onClick={handleGoDashboard}
           >
             <Home className="h-3.5 w-3.5" />
           </Button>
-          {/* Game Reset Button */}
+          {/* Game Reset Button (RotateCcw loop icon) */}
           <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
             <AlertDialogTrigger asChild>
               <Button
@@ -279,7 +282,7 @@ export function GameHeader() {
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-muted-foreground">Rep:</span>
-                <span className="font-medium">{repType.label}</span>
+                <span className="text-medium">{repType.label}</span>
               </div>
               <div className="flex-1 min-w-[120px] max-w-[200px]">
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-0.5">
@@ -300,7 +303,6 @@ export function GameHeader() {
             <Badge variant="outline" className="text-[11px] px-1.5 py-0 h-5 border-amber-500/25 text-amber-400 bg-amber-500/5">
               {tierName}
             </Badge>
-            {/* BUG-007 fix: whitespace-nowrap to prevent word break in stat labels */}
             <span className="text-muted-foreground flex items-center gap-1 whitespace-nowrap">
               <Briefcase className="h-3 w-3" />
               {casesCompleted} case{casesCompleted !== 1 ? 's' : ''}
@@ -349,22 +351,6 @@ export function GameHeader() {
 
       {/* Keyboard Shortcuts Dialog */}
       <KeyboardShortcutsDialog open={showShortcuts} onOpenChange={setShowShortcuts} />
-
-      {/* Theme Picker Dialog */}
-      <Dialog open={showThemePicker} onOpenChange={setShowThemePicker}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5 text-amber-500" />
-              Color Theme
-            </DialogTitle>
-            <DialogDescription>
-              Choose your preferred accent color
-            </DialogDescription>
-          </DialogHeader>
-          <ThemeSelector />
-        </DialogContent>
-      </Dialog>
     </header>
   );
 }

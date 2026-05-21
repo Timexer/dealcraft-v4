@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X, Clock, Activity, Zap, History, FileText, Crown, Handshake, Shield, AlertTriangle, Footprints, ArrowUpRight, ArrowDownRight, Minus, Trash2 } from 'lucide-react';
+import { Briefcase, Trophy, Star, ChevronRight, BarChart3, Users, BookOpen, TrendingUp, RotateCcw, Award, Search, Filter, X, Clock, Activity, Zap, History, FileText, Crown, Handshake, Shield, AlertTriangle, Footprints, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CaseResult, EndingScores } from '@/data/scenarios/types';
 import { AchievementGallery } from './AchievementGallery';
@@ -20,7 +20,6 @@ import { StreakIndicator } from './StreakIndicator';
 import { NegotiationTranscript } from './NegotiationTranscript';
 import { Input } from '@/components/ui/input';
 import { useSound } from '@/hooks/use-sound';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 // Category distribution color map for mini chart
 const CATEGORY_BAR_COLORS: Record<string, string> = {
@@ -143,7 +142,7 @@ export function Dashboard() {
   const {
     playerName, careerTier, casesCompleted, totalScore, stats,
     reputation, caseResults, unlockedCases, setPhase, setCurrentScenarioId, setCaseAccepted,
-    setIsReplay, achievements, resetGame,
+    setIsReplay, achievements,
   } = useGameStore();
   const repType = getReputationType(reputation);
   const tierName = TIER_NAMES[careerTier];
@@ -345,50 +344,7 @@ export function Dashboard() {
                 <span className="hidden sm:inline">History</span>
               </Button>
             )}
-            {/* Reset Game Button with Confirmation */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1.5 sm:gap-2 text-muted-foreground hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 transition-colors">
-                  <Trash2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Reset</span>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="max-w-md">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-red-400" />
-                    Reset Game?
-                  </AlertDialogTitle>
-                  <AlertDialogDescription asChild>
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground">
-                        This will permanently delete all your game progress. This action cannot be undone.
-                      </p>
-                      <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 space-y-1.5">
-                        <p className="text-xs font-medium text-red-400">The following will be lost:</p>
-                        <ul className="text-xs text-muted-foreground space-y-1">
-                          <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />All case results and scores ({casesCompleted} case{casesCompleted !== 1 ? 's' : ''})</li>
-                          <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Career progress (Tier {careerTier} — {tierName})</li>
-                          <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Achievements ({achievements.length})</li>
-                          <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Reputation and stats</li>
-                          <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-red-400" />Streak history and challenge records</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="gap-2 sm:gap-0">
-                  <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={resetGame}
-                    className="bg-red-500 hover:bg-red-600 text-white font-semibold mt-0"
-                  >
-                    <RotateCcw className="h-4 w-4 mr-1.5" />
-                    Reset Everything
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            {/* Reset is available via the header reset button (↻ icon) */}
           </div>
         </motion.div>
 

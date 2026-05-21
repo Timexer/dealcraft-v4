@@ -234,7 +234,7 @@ export function Postmortem() {
     discoveredFacts, stats, addStats,
     reputation, addReputation,
     currentStreak, bestStreak, streakType,
-    techniquesUsed,
+    techniquesUsed, clearCaseSession,
   } = useGameStore();
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
@@ -286,7 +286,7 @@ export function Postmortem() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <p className="text-muted-foreground">No case results found.</p>
-        <Button variant="outline" onClick={() => setPhase('dashboard')} className="ml-4">
+        <Button variant="outline" onClick={() => { clearCaseSession(); setPhase('dashboard'); }} className="ml-4">
           Back to Dashboard
         </Button>
       </div>
@@ -1058,7 +1058,7 @@ export function Postmortem() {
             Review Transcript
           </Button>
           <Button
-            onClick={() => setPhase('dashboard')}
+            onClick={() => { clearCaseSession(); setPhase('dashboard'); }}
             size="lg"
             className="bg-amber-600 hover:bg-amber-700 text-white gap-2"
           >

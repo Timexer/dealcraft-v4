@@ -1838,3 +1838,26 @@ Stage Summary:
 - Removed 80+ text opacity modifiers that made text nearly invisible
 - VLM verification confirms all text now clearly readable
 - Zero lint errors, dev server compiles cleanly
+
+---
+Task ID: 13
+Agent: Main Developer
+Task: Visual & UI Cleanup — remove duplicate bin button, fix/disable color theme selector
+
+Work Log:
+- Removed duplicate Trash2 (bin) button from Dashboard.tsx that had same function as the RotateCcw (reset loop) button in GameHeader
+- Kept only the RotateCcw reset button in GameHeader (next to Home icon) with confirmation dialog
+- Removed broken Color Theme selector (Palette button + ThemeSelector dialog) from GameHeader — the theme system only set CSS custom properties that nothing reads; all UI uses hardcoded amber Tailwind classes
+- Kept the working dark/light ThemeToggle (sun/moon button) which properly uses next-themes
+- Cleaned up unused imports: Trash2, AlertDialog, Palette from Dashboard and GameHeader
+- Added clearCaseSession() method to game-store.ts (consolidated store) — resets session state when leaving postmortem
+- Updated Postmortem.tsx: both "Back to Dashboard" and "Continue Career" call clearCaseSession() before setPhase('dashboard')
+- Updated GameHeader.tsx: back button, logo, and home button all clear session when in postmortem phase
+- All lint checks pass cleanly
+- Dev server compiles successfully
+
+Stage Summary:
+- Duplicate bin button removed from Dashboard; only the RotateCcw reset button in header remains
+- Broken color theme selector disabled (Palette button removed); dark/light toggle retained
+- clearCaseSession() properly cleans up session state on postmortem exit
+- Color theme feature marked for future implementation: needs replacing all hardcoded amber Tailwind classes with CSS custom properties
