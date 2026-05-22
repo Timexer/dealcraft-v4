@@ -63,15 +63,17 @@ export default function Home() {
           </motion.div>
         </AnimatePresence>
       </main>
-      {/* BUG-002 fix: footer z-index lower than CTA buttons, sticky not fixed */}
-      <footer className="mt-auto bg-background/80 backdrop-blur-sm py-3 px-4 text-center border-t border-border/30 relative z-10">
-        <div className="h-px bg-gradient-to-r from-transparent via-[var(--theme-primary)]/20 to-transparent mb-2" />
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-xs text-muted-foreground">
-          <span>© 2026 by Timothy Hannum</span>
-          <span className="hidden sm:inline text-muted-foreground/50">·</span>
-          <span>Englishbreakfast.pl</span>
-        </div>
-      </footer>
+      {/* Global footer — hidden on title screen (has its own premium footer) */}
+      {phase !== 'title' && (
+        <footer className="mt-auto bg-background/80 backdrop-blur-sm py-3 px-4 text-center border-t border-border/30 relative z-10">
+          <div className="h-px bg-gradient-to-r from-transparent via-[var(--theme-primary)]/20 to-transparent mb-2" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-xs text-muted-foreground">
+            <span>© 2026 by Timothy Hannum</span>
+            <span className="hidden sm:inline text-muted-foreground/50">·</span>
+            <span>Englishbreakfast.pl</span>
+          </div>
+        </footer>
+      )}
       <TutorialOverlay />
 
       {/* Global Keyboard Shortcuts Dialog */}

@@ -1958,3 +1958,52 @@ Unresolved Issues / Risks:
 - Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
 - Could add more visual flair to the star system (animated fills, hover effects on individual stars)
 - Could expand the "Value to Client/Counterparty" concept with actual computed trade value scores
+---
+Task ID: 12
+Agent: Main Developer (Round 12)
+Task: Apply TitleScreen improvements, fix fee rate logic, resolve duplicate footer
+
+Work Log:
+- Read worklog.md to understand project progress from 11+ previous rounds
+- Applied TitleScreen.tsx changes per user specification:
+  - Removed clutter badges: Deleted entire feature badges array (['30 Cases', '5 Tiers', 'Career Mode', ...]) and its motion.div wrapper
+  - Kept "Welcome, Negotiator." label (already correct)
+  - Added premium footer: © 2026 by Timothy Hannum | Englishbreakfast.pl with hover effect (muted-foreground/40 → amber-500/70 + underline)
+  - Fixed background overlap: Wrapped NEGOTIATION_TERMS badges in z-[1] container to keep below z-10 content card
+  - Added radial gradient fade overlay (radial-gradient ellipse 50% 45% at 50% 50%) creating a clear zone in center so terms fade out before input card area
+- Fixed duplicate footer: page.tsx global footer now hidden on title screen phase (phase !== 'title' conditional rendering)
+- Verified Issue Priority Matrix star rating system: Already correctly implemented with 10-star max, bright/dark visual design in StrategyBoard.tsx
+- Verified ThemeSelector: Emerald, Crimson, Ocean themes already disabled with "Coming Soon" tags
+- Verified ChallengeModeSelector: Speed Run, Limited Choices, Ethics Lock already have experimental:true with "🧪 Beta" badges
+- Fixed fee rate logic in game-engine.ts:
+  - Reversed incorrect fee rates that decreased with difficulty (was: Beginner 18%, Intermediate 10%, Advanced 5%)
+  - Now correctly increases with difficulty: Beginner 5%, Intermediate 8%, Advanced 12%, Expert 15%, Master 18%
+  - Matches payment tier structure: Beginner (~€1,500), Intermediate (~€2,000), Advanced (~€2,500)
+  - Adjusted stake scaling factors for realistic consulting fee percentages
+- Checked for duplicate 'bin' button in GameHeader: No duplicate found - only one Reset Game button (RotateCcw with AlertDialog)
+- All lint checks pass cleanly
+- Dev server compiles successfully
+
+Stage Summary:
+- TitleScreen cleaned up: no clutter badges, premium footer, overlap fix with radial gradient
+- Duplicate footer resolved: global footer hidden on title screen
+- Fee rate logic fixed: higher difficulty now earns higher percentage (corrected from inverted logic)
+- Star rating system confirmed working (10-star max with bright/dark design already implemented)
+- Theme selector confirmed working (non-amber themes already disabled)
+- Challenge mode experimental tags confirmed working (🧪 Beta badges already present)
+
+Current Project Status:
+- Dealcraft is a fully playable, feature-rich negotiation career simulator
+- 30 cases with RICH dialogue trees
+- Complete game loop with scoring, reputation, achievements, career progression, replay
+- LLM AI Advisor, Challenge Mode, Sound Effects, Keyboard Shortcuts
+- Premium visual design with 35+ CSS animations and micro-interactions
+- Fee structure now correctly reflects difficulty premiums
+- All core features working: BATNA analysis, issue matrix, investigation, branching dialogue, multiple endings
+
+Unresolved Issues / Risks:
+- Some framer-motion buttons don't register clicks via agent-browser (manual testing works fine)
+- AI Advisor response time varies (3-8 seconds)
+- Could add social sharing of scores
+- Could add more achievements for challenge mode completions
+- Could add case difficulty scaling based on player skill

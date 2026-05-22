@@ -189,22 +189,29 @@ export function formatFeeDisplay(fee: number, stakesValue?: number): string {
 /**
  * Get recommended fee rate based on difficulty level.
  * Higher difficulty = higher fee percentage, reflecting the premium for complexity.
- * Rates decrease for larger stakes (as in real consulting).
+ * Rates scale down for larger stakes (as in real consulting), but difficulty premium is always applied.
+ *
+ * Difficulty fee structure:
+ *   Beginner     → €1,500 base / lower %
+ *   Intermediate → €2,000 base / moderate %
+ *   Advanced     → €2,500 base / higher %
+ *   Expert       → highest %
+ *   Master       → premium %
  */
 export function getRecommendedFeeRate(difficultyAvg: number, stakesValue: number): number {
-  // Base rates by difficulty level (higher difficulty = higher rate)
+  // Base rates by difficulty level (higher difficulty = higher rate, matching payment tiers)
   let baseRate: number;
-  if (difficultyAvg <= 1.5) baseRate = 18;       // Beginner: 18%
-  else if (difficultyAvg <= 2.5) baseRate = 10;   // Intermediate: 10%
-  else if (difficultyAvg <= 3.5) baseRate = 5;    // Advanced: 5%
-  else if (difficultyAvg <= 4.5) baseRate = 3;    // Expert: 3%
-  else baseRate = 2;                               // Master: 2%
+  if (difficultyAvg <= 1.5) baseRate = 5;         // Beginner: 5%  → ~€1,500 on €30K stakes
+  else if (difficultyAvg <= 2.5) baseRate = 8;     // Intermediate: 8% → ~€2,000 on €25K stakes
+  else if (difficultyAvg <= 3.5) baseRate = 12;    // Advanced: 12% → ~€2,500 on ~€21K stakes
+  else if (difficultyAvg <= 4.5) baseRate = 15;    // Expert: 15%
+  else baseRate = 18;                               // Master: 18%
 
   // Scale down for very large deals (realistic: bigger deals = lower %)
-  if (stakesValue >= 1_000_000_000) baseRate *= 0.3;     // €1B+: 0.6% max
-  else if (stakesValue >= 100_000_000) baseRate *= 0.5;  // €100M+: 1.5% max
-  else if (stakesValue >= 10_000_000) baseRate *= 0.7;   // €10M+: 3.5% max
-  else if (stakesValue >= 1_000_000) baseRate *= 0.85;   // €1M+: 4.25% max
+  if (stakesValue >= 1_000_000_000) baseRate *= 0.25;    // €1B+: 4.5% max
+  else if (stakesValue >= 100_000_000) baseRate *= 0.4;  // €100M+: 7.2% max
+  else if (stakesValue >= 10_000_000) baseRate *= 0.6;   // €10M+: 10.8% max
+  else if (stakesValue >= 1_000_000) baseRate *= 0.8;    // €1M+: 14.4% max
   else if (stakesValue >= 100_000) baseRate *= 1.0;      // €100K+: full rate
 
   return Math.max(0.1, baseRate); // Minimum 0.1%
