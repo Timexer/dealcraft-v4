@@ -83,9 +83,11 @@ export const case28: Scenario = {
   batna: {
     clientBATNA: 'Maintain current water usage, lose power subsidies — economic pain but farmers survive',
     clientBATNAValue: 30000000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 60000000,
     counterpartyBATNA: 'Cut power subsidies, build desalination — expensive and slow',
     counterpartyBATNAValue: 40000000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 80000000,
     estimatedZOPALow: 60000000,
     estimatedZOPAHigh: 80000000,

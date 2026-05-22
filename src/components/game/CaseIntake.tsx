@@ -41,17 +41,51 @@ const DIFFICULTY_DIMENSIONS = [
   { key: 'relationshipStakes', label: 'Relationship', icon: Repeat },
 ] as const;
 
-// Personality trait labels for the counterparty preview
+// Personality trait labels for the counterparty preview — values are 0-100
 const PERSONALITY_TRAITS = [
-  { key: 'truthfulness', label: 'Truthfulness', color: 'bg-emerald-500/60' },
-  { key: 'ego', label: 'Ego', color: 'bg-amber-500/60' },
-  { key: 'riskTolerance', label: 'Risk Tolerance', color: 'bg-orange-500/60' },
-  { key: 'patience', label: 'Patience', color: 'bg-cyan-500/60' },
-  { key: 'fairnessSensitivity', label: 'Fairness', color: 'bg-violet-500/60' },
-  { key: 'emotionalVolatility', label: 'Volatility', color: 'bg-red-500/60' },
-  { key: 'preparationLevel', label: 'Preparation', color: 'bg-teal-500/60' },
-  { key: 'relationshipOrientation', label: 'Relationship', color: 'bg-pink-500/60' },
+  { key: 'truthfulness', label: 'Truthfulness', lowLabel: 'Deceptive', highLabel: 'Honest', gradientFrom: 'from-red-500', gradientTo: 'to-emerald-400', barBg: 'bg-emerald-500/20', barFill: 'bg-gradient-to-r from-emerald-600 to-emerald-400' },
+  { key: 'ego', label: 'Ego', lowLabel: 'Humble', highLabel: 'Dominant', gradientFrom: 'from-emerald-500', gradientTo: 'to-amber-400', barBg: 'bg-amber-500/20', barFill: 'bg-gradient-to-r from-amber-600 to-amber-400' },
+  { key: 'riskTolerance', label: 'Risk Tolerance', lowLabel: 'Risk-averse', highLabel: 'Risk-seeker', gradientFrom: 'from-cyan-500', gradientTo: 'to-orange-400', barBg: 'bg-orange-500/20', barFill: 'bg-gradient-to-r from-orange-600 to-orange-400' },
+  { key: 'patience', label: 'Patience', lowLabel: 'Impulsive', highLabel: 'Patient', gradientFrom: 'from-red-500', gradientTo: 'to-cyan-400', barBg: 'bg-cyan-500/20', barFill: 'bg-gradient-to-r from-cyan-600 to-cyan-400' },
+  { key: 'fairnessSensitivity', label: 'Fairness', lowLabel: 'Pragmatic', highLabel: 'Idealistic', gradientFrom: 'from-violet-500', gradientTo: 'to-violet-400', barBg: 'bg-violet-500/20', barFill: 'bg-gradient-to-r from-violet-600 to-violet-400' },
+  { key: 'emotionalVolatility', label: 'Volatility', lowLabel: 'Calm', highLabel: 'Explosive', gradientFrom: 'from-emerald-500', gradientTo: 'to-red-400', barBg: 'bg-red-500/20', barFill: 'bg-gradient-to-r from-red-600 to-red-400' },
+  { key: 'preparationLevel', label: 'Preparation', lowLabel: 'Unprepared', highLabel: 'Thorough', gradientFrom: 'from-slate-500', gradientTo: 'to-teal-400', barBg: 'bg-teal-500/20', barFill: 'bg-gradient-to-r from-teal-600 to-teal-400' },
+  { key: 'relationshipOrientation', label: 'Relationship', lowLabel: 'Transactional', highLabel: 'Relational', gradientFrom: 'from-slate-500', gradientTo: 'to-pink-400', barBg: 'bg-pink-500/20', barFill: 'bg-gradient-to-r from-pink-600 to-pink-400' },
 ] as const;
+
+// Intensity level for personality traits (0-100 scale)
+function getIntensityLevel(value: number): { label: string; colorClass: string; dotClass: string } {
+  if (value <= 15) return { label: 'Very Low', colorClass: 'text-slate-400', dotClass: 'bg-slate-400' };
+  if (value <= 30) return { label: 'Low', colorClass: 'text-blue-400', dotClass: 'bg-blue-400' };
+  if (value <= 50) return { label: 'Moderate', colorClass: 'text-amber-400', dotClass: 'bg-amber-400' };
+  if (value <= 70) return { label: 'High', colorClass: 'text-orange-400', dotClass: 'bg-orange-400' };
+  if (value <= 85) return { label: 'Very High', colorClass: 'text-red-400', dotClass: 'bg-red-400' };
+  return { label: 'Extreme', colorClass: 'text-rose-500', dotClass: 'bg-rose-500' };
+}
+
+// Thomas-Kilmann conflict style derivation from personality traits
+type ConflictStyle = 'competing' | 'collaborating' | 'compromising' | 'avoiding' | 'accommodating';
+
+const CONFLICT_STYLES: Record<ConflictStyle, { label: string; icon: string; description: string; color: string; bg: string }> = {
+  competing: { label: 'Competing', icon: '⚔️', description: 'Assertive & uncooperative — pursues own interests at others\' expense', color: 'text-red-400', bg: 'bg-red-500/15 border-red-500/30' },
+  collaborating: { label: 'Collaborating', icon: '🤝', description: 'Assertive & cooperative — seeks mutually beneficial solutions', color: 'text-emerald-400', bg: 'bg-emerald-500/15 border-emerald-500/30' },
+  compromising: { label: 'Compromising', icon: '⚖️', description: 'Moderate on both — finds acceptable middle ground', color: 'text-amber-400', bg: 'bg-amber-500/15 border-amber-500/30' },
+  avoiding: { label: 'Avoiding', icon: '🚪', description: 'Unassertive & uncooperative — sidesteps or postpones conflict', color: 'text-slate-400', bg: 'bg-slate-500/15 border-slate-500/30' },
+  accommodating: { label: 'Accommodating', icon: '🙏', description: 'Unassertive & cooperative — yields to others\' interests', color: 'text-cyan-400', bg: 'bg-cyan-500/15 border-cyan-500/30' },
+};
+
+function deriveConflictStyle(p: { ego: number; riskTolerance: number; patience: number; fairnessSensitivity: number; emotionalVolatility: number; relationshipOrientation: number }): ConflictStyle {
+  // Assertiveness = ego + riskTolerance (high = assertive)
+  const assertiveness = (p.ego + p.riskTolerance) / 2;
+  // Cooperativeness = patience + fairness + relationship (high = cooperative)
+  const cooperativeness = (p.patience + p.fairnessSensitivity + p.relationshipOrientation) / 3;
+
+  if (assertiveness > 60 && cooperativeness > 60) return 'collaborating';
+  if (assertiveness > 60 && cooperativeness <= 60) return 'competing';
+  if (assertiveness <= 60 && cooperativeness > 60) return 'accommodating';
+  if (assertiveness <= 40 && cooperativeness <= 40) return 'avoiding';
+  return 'compromising';
+}
 
 function getDifficultyLevel(value: number): { level: string; cssClass: string } {
   if (value <= 1) return { level: 'Low', cssClass: 'low' };
@@ -61,7 +95,7 @@ function getDifficultyLevel(value: number): { level: string; cssClass: string } 
 }
 
 export function CaseIntake() {
-  const { currentScenarioId, setPhase, setCaseAccepted, setCurrentScenarioId, caseResults } = useGameStore();
+  const { currentScenarioId, setPhase, setCaseAccepted, setCurrentScenarioId, caseResults, initInvestigationPoints } = useGameStore();
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
 
   // Typewriter effect state for stakes
@@ -110,6 +144,10 @@ export function CaseIntake() {
   const { briefing, client, counterparty, difficulty } = scenario;
 
   const handleAccept = () => {
+    // Initialize investigation points based on case tier (difficulty scaling)
+    if (scenario) {
+      initInvestigationPoints(scenario.tier);
+    }
     setCaseAccepted(true);
     setPhase('strategy');
   };
@@ -238,7 +276,7 @@ export function CaseIntake() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="bg-card/50 border-border/50">
+          <Card className="bg-card/50 border-border/50 overflow-hidden">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Brain className="h-4 w-4 text-violet-400" />
@@ -246,40 +284,86 @@ export function CaseIntake() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Avatar card */}
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-border/30 shrink-0">
-                  <div className="text-4xl">{counterparty.avatar}</div>
-                  <div>
-                    <p className="text-sm font-semibold">{counterparty.name}</p>
-                    <p className="text-xs text-muted-foreground">{counterparty.role}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Flame className={`h-3 w-3 ${counterparty.personality.emotionalVolatility > 3 ? 'text-red-400' : 'text-emerald-400'}`} />
-                      <span className="text-[11px] text-muted-foreground">
-                        {counterparty.personality.emotionalVolatility > 3 ? 'Volatile' : 'Calm'}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground mx-1">•</span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {counterparty.personality.riskTolerance > 3 ? 'Risk-taker' : 'Risk-averse'}
-                      </span>
+              <div className="flex flex-col gap-4">
+                {/* Top row: Avatar card + Conflict Style */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {/* Avatar card */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-border/30 shrink-0">
+                    <div className="text-4xl">{counterparty.avatar}</div>
+                    <div>
+                      <p className="text-sm font-semibold">{counterparty.name}</p>
+                      <p className="text-xs text-muted-foreground">{counterparty.role}</p>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <Flame className={`h-3 w-3 ${counterparty.personality.emotionalVolatility > 50 ? 'text-red-400' : 'text-emerald-400'}`} />
+                        <span className={`text-[11px] font-medium ${counterparty.personality.emotionalVolatility > 50 ? 'text-red-400' : 'text-emerald-400'}`}>
+                          {counterparty.personality.emotionalVolatility > 50 ? 'Volatile' : counterparty.personality.emotionalVolatility > 25 ? 'Tempered' : 'Calm'}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground mx-0.5">•</span>
+                        <span className={`text-[11px] font-medium ${counterparty.personality.riskTolerance > 50 ? 'text-orange-400' : 'text-cyan-400'}`}>
+                          {counterparty.personality.riskTolerance > 50 ? 'Risk-taker' : counterparty.personality.riskTolerance > 25 ? 'Balanced' : 'Risk-averse'}
+                        </span>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Conflict Style Badge — derived from Thomas-Kilmann model */}
+                  {(() => {
+                    const style = deriveConflictStyle(counterparty.personality);
+                    const styleInfo = CONFLICT_STYLES[style];
+                    return (
+                      <div className={`flex-1 flex items-center gap-3 p-3 rounded-lg border ${styleInfo.bg}`}>
+                        <span className="text-2xl">{styleInfo.icon}</span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-xs font-bold ${styleInfo.color}`}>{styleInfo.label}</span>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="max-w-[240px] text-xs">
+                                  Based on Thomas-Kilmann Conflict Mode Instrument. Derived from assertiveness (ego + risk tolerance) vs. cooperativeness (patience + fairness + relationship orientation).
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 line-clamp-2">{styleInfo.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
-                {/* Personality trait bars */}
-                <div className="flex-1 grid grid-cols-2 gap-x-4 gap-y-2">
+                {/* Personality trait bars — redesigned with 0-100 fill + intensity labels */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2.5">
                   {PERSONALITY_TRAITS.map((trait) => {
                     const value = counterparty.personality[trait.key as keyof typeof counterparty.personality];
+                    const clampedValue = Math.max(0, Math.min(100, value));
+                    const intensity = getIntensityLevel(clampedValue);
                     return (
-                      <div key={trait.key} className="flex items-center gap-2">
-                        <span className="text-[11px] text-muted-foreground w-20 shrink-0 truncate">{trait.label}</span>
-                        <div className="flex-1 personality-bar">
-                          <div
-                            className="fill"
-                            style={{ width: `${(value / 5) * 100}%`, background: trait.color }}
+                      <div key={trait.key} className="group">
+                        {/* Label row */}
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-medium text-muted-foreground">{trait.label}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${intensity.dotClass}`} />
+                            <span className={`text-[10px] font-medium ${intensity.colorClass}`}>{intensity.label}</span>
+                            <span className="text-[10px] text-muted-foreground tabular-nums ml-0.5">{clampedValue}</span>
+                          </div>
+                        </div>
+                        {/* Bar */}
+                        <div className={`h-2 rounded-full ${trait.barBg} overflow-hidden`}>
+                          <motion.div
+                            className={`h-full rounded-full ${trait.barFill}`}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${clampedValue}%` }}
+                            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
                           />
                         </div>
-                        <span className="text-[11px] text-muted-foreground w-4 text-right">{value}</span>
+                        {/* Contextual hint: what this value means */}
+                        <p className="text-[9px] text-muted-foreground/50 mt-0.5 h-3">
+                          {clampedValue <= 30 ? trait.lowLabel : clampedValue >= 70 ? trait.highLabel : ''}
+                        </p>
                       </div>
                     );
                   })}

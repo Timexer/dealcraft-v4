@@ -90,9 +90,11 @@ export const case08: Scenario = {
   batna: {
     clientBATNA: 'Switch logistics provider (6-month transition, risky during flu season)',
     clientBATNAValue: 400000,
+    clientBATNAStrength: 'weak',
     clientReservationValue: 900000,
     counterpartyBATNA: 'Lose MedSure contract (replace with smaller clients)',
     counterpartyBATNAValue: 500000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 800000,
     estimatedZOPALow: 800000,
     estimatedZOPAHigh: 1100000,

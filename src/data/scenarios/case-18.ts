@@ -84,9 +84,11 @@ export const case18: Scenario = {
   batna: {
     clientBATNA: 'Maintain 50/50 ownership with ongoing conflict',
     clientBATNAValue: 5000000,
+    clientBATNAStrength: 'weak',
     clientReservationValue: 10000000,
     counterpartyBATNA: 'Refuse buyout, force continued co-ownership',
     counterpartyBATNAValue: 6000000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 11000000,
     estimatedZOPALow: 10000000,
     estimatedZOPAHigh: 11000000,

@@ -90,9 +90,11 @@ export const case10: Scenario = {
   batna: {
     clientBATNA: 'Walk away from contract (massive reputational damage, sued by city)',
     clientBATNAValue: 2000000,
+    clientBATNAStrength: 'weak',
     clientReservationValue: 8000000,
     counterpartyBATNA: 'Find new contractor (12+ month delay, miss international event)',
     counterpartyBATNAValue: 3000000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 10000000,
     estimatedZOPALow: 6000000,
     estimatedZOPAHigh: 12000000,

@@ -87,9 +87,11 @@ export const case01: Scenario = {
   batna: {
     clientBATNA: 'Small claims court or public exposure',
     clientBATNAValue: 4000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 6000,
     counterpartyBATNA: 'Find another designer, deal with potential reputation damage',
     counterpartyBATNAValue: 3000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 7500,
     estimatedZOPALow: 6000,
     estimatedZOPAHigh: 7500,

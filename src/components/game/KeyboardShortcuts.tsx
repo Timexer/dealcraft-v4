@@ -165,16 +165,19 @@ export function useKeyboardShortcuts() {
         case 'Escape': {
           // Go back / close dialogs
           e.preventDefault();
-          const backMap: Record<string, string> = {
-            intake: 'dashboard',
-            strategy: 'intake',
-            investigation: 'strategy',
-            negotiation: 'investigation',
-            postmortem: 'negotiation',
-            career: 'dashboard',
-          };
-          if (phase !== 'title' && phase !== 'dashboard') {
-            setPhase((backMap[phase] as typeof phase) || 'dashboard');
+          // Check if user is in an active case phase (show exit warning instead of navigating)
+          const activeCasePhases = ['intake', 'strategy', 'investigation', 'negotiation'];
+          const scenarioId = useGameStore.getState().currentScenarioId;
+          if (activeCasePhases.includes(phase) && scenarioId !== null) {
+            window.dispatchEvent(new CustomEvent('dealcraft:show-exit-warning'));
+          } else {
+            const backMap: Record<string, string> = {
+              postmortem: 'negotiation',
+              career: 'dashboard',
+            };
+            if (phase !== 'title' && phase !== 'dashboard') {
+              setPhase((backMap[phase] as typeof phase) || 'dashboard');
+            }
           }
           // Also dispatch a general escape event for dialogs
           window.dispatchEvent(new CustomEvent('dealcraft:escape'));

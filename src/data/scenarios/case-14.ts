@@ -84,9 +84,11 @@ export const case14: Scenario = {
   batna: {
     clientBATNA: 'Use legacy system with manual workarounds for another year',
     clientBATNAValue: 1500000,
+    clientBATNAStrength: 'weak',
     clientReservationValue: 4000000,
     counterpartyBATNA: 'Pursue other transit authority contracts',
     counterpartyBATNAValue: 2000000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 5500000,
     estimatedZOPALow: 4000000,
     estimatedZOPAHigh: 5500000,

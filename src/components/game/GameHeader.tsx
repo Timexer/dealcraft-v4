@@ -31,6 +31,7 @@ import { KeyboardShortcutsDialog } from '@/components/game/KeyboardShortcuts';
 import { useThemeApplication } from '@/components/game/ThemeSelector';
 import { TutorialHelpButton } from '@/components/game/TutorialOverlay';
 import { ThemeToggle } from '@/components/game/ThemeToggle';
+import { ExitWarningDialog } from '@/components/game/ExitWarningDialog';
 import { useSound } from '@/hooks/use-sound';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -41,6 +42,7 @@ export function GameHeader() {
   const [showGlossary, setShowGlossary] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showExitWarning, setShowExitWarning] = useState(false);
   const [quickStatsCollapsed, setQuickStatsCollapsed] = useState(false);
   const { soundEnabled, toggleSound } = useSound();
 
@@ -56,18 +58,19 @@ export function GameHeader() {
     setShowResetConfirm(false);
   };
 
+  // Check if user is in an active case phase (where leaving loses progress)
+  const isActiveCasePhase = ['intake', 'strategy', 'investigation', 'negotiation'].includes(phase) && currentScenarioId !== null;
+
   // Navigate back or to dashboard — clears session when leaving postmortem
   const handleBackOrDashboard = () => {
     if (phase === 'postmortem') {
       clearCaseSession();
       setPhase('dashboard');
-    } else if (phase === 'negotiation') {
-      setPhase('investigation');
+    } else if (isActiveCasePhase) {
+      // Show exit warning instead of navigating immediately
+      setShowExitWarning(true);
     } else {
       const backMap: Record<string, string> = {
-        intake: 'dashboard',
-        strategy: 'intake',
-        investigation: 'strategy',
         career: 'dashboard',
       };
       setPhase((backMap[phase] as any) || 'dashboard');
@@ -76,8 +79,15 @@ export function GameHeader() {
 
   // Navigate to dashboard — clears session when leaving postmortem
   const handleGoDashboard = () => {
-    if (phase === 'postmortem') clearCaseSession();
-    setPhase('dashboard');
+    if (phase === 'postmortem') {
+      clearCaseSession();
+      setPhase('dashboard');
+    } else if (isActiveCasePhase) {
+      // Show exit warning instead of navigating immediately
+      setShowExitWarning(true);
+    } else {
+      setPhase('dashboard');
+    }
   };
 
   // Listen for keyboard shortcut to show reset confirmation
@@ -85,6 +95,13 @@ export function GameHeader() {
     const handleShowReset = () => setShowResetConfirm(true);
     window.addEventListener('dealcraft:show-reset', handleShowReset);
     return () => window.removeEventListener('dealcraft:show-reset', handleShowReset);
+  }, []);
+
+  // Listen for keyboard shortcut to show exit warning
+  useEffect(() => {
+    const handleShowExitWarning = () => setShowExitWarning(true);
+    window.addEventListener('dealcraft:show-exit-warning', handleShowExitWarning);
+    return () => window.removeEventListener('dealcraft:show-exit-warning', handleShowExitWarning);
   }, []);
 
   // Don't show header on title screen
@@ -345,6 +362,9 @@ export function GameHeader() {
           </button>
         </div>
       )}
+
+      {/* Exit Warning Dialog */}
+      <ExitWarningDialog open={showExitWarning} onOpenChange={setShowExitWarning} />
 
       {/* Negotiation Glossary Dialog */}
       <NegotiationGlossary open={showGlossary} onOpenChange={setShowGlossary} />

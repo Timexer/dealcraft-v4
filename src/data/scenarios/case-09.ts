@@ -90,9 +90,11 @@ export const case09: Scenario = {
   batna: {
     clientBATNA: 'Find alternate supplier (120+ days delivery, project delayed)',
     clientBATNAValue: 800000,
+    clientBATNAStrength: 'weak',
     clientReservationValue: 2400000,
     counterpartyBATNA: 'Standard order timeline at standard price, no rush',
     counterpartyBATNAValue: 2000000,
+    counterpartyBATNAStrength: 'strong',
     counterpartyReservationValue: 2500000,
     estimatedZOPALow: 2200000,
     estimatedZOPAHigh: 2600000,

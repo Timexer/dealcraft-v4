@@ -84,9 +84,11 @@ export const case17: Scenario = {
   batna: {
     clientBATNA: 'Sovereign default — catastrophic but forces restructuring',
     clientBATNAValue: 200000000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 300000000,
     counterpartyBATNA: 'Full repayment demand — risk of default and total loss',
     counterpartyBATNAValue: 400000000,
+    counterpartyBATNAStrength: 'weak',
     counterpartyReservationValue: 600000000,
     estimatedZOPALow: 300000000,
     estimatedZOPAHigh: 600000000,

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
 import { CHOICE_TYPE_STYLES, type DialogueNode, type DialogueChoice, type BiasEvent, type TranscriptEntry } from '@/data/scenarios/types';
-import { getEndingFromNegotiation, calculateFinalScore, calculateReputationDelta, calculateStatsDelta } from '@/lib/game-engine';
+import { getEndingFromNegotiation, calculateFinalScore, calculateDynamicScores, calculateReputationDelta, calculateStatsDelta, type BehaviorContext } from '@/lib/game-engine';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -510,7 +510,34 @@ export function NegotiationTable() {
     });
 
     const ending = scenario.endings.find(e => e.type === endingType) || scenario.endings[0];
-    const finalScore = calculateFinalScore(ending.scores);
+
+    // Calculate dynamic scores based on actual player behavior
+    const totalFactsAvailable = scenario.investigationActions.reduce((sum, a) => sum + a.reveals.length, 0);
+    const behaviorContext: BehaviorContext = {
+      trust: negotiation.trust,
+      anger: negotiation.anger,
+      patience: negotiation.patience,
+      valueClaimed: negotiation.valueClaimed,
+      valueCreated: negotiation.valueCreated,
+      relationshipImpact: negotiation.relationshipImpact,
+      ethicalImpact: negotiation.ethicalImpact,
+      clientSatisfaction: negotiation.clientSatisfaction,
+      counterpartySatisfaction: negotiation.counterpartySatisfaction,
+      concessionsGiven: negotiation.concessionsGiven,
+      concessionsReceived: negotiation.concessionsReceived,
+      biasTrapsTriggered: negotiation.biasTrapsTriggered,
+      choicesMade: negotiation.choicesMade,
+      informationRevealed: negotiation.informationRevealed,
+      discoveredFacts: discoveredFacts,
+      totalFactsAvailable,
+      batnaEstimate: useGameStore.getState().batnaEstimate,
+      openingStrategy: useGameStore.getState().openingStrategy,
+      assumptionsCount: useGameStore.getState().assumptions.length,
+      techniquesUsed: techniquesUsed,
+      challengeMode: challengeMode,
+    };
+    const dynamicScores = calculateDynamicScores(endingType, ending.scores, behaviorContext);
+    const finalScore = calculateFinalScore(dynamicScores);
 
     // Build transcript from dialogue history
     const transcript: TranscriptEntry[] = dialogueHistory.map(entry => {
@@ -541,7 +568,7 @@ export function NegotiationTable() {
     const caseResult = {
       scenarioId: scenario.id,
       outcome: endingType,
-      scores: ending.scores,
+      scores: dynamicScores,
       finalScore,
       choicesMade: negotiation.choicesMade,
       hiddenFactsFound: negotiation.informationRevealed,

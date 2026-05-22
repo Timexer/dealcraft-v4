@@ -90,9 +90,11 @@ export const case03: Scenario = {
   batna: {
     clientBATNA: 'Accept competing offer at €64K base (less career growth)',
     clientBATNAValue: 64000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 56000,
     counterpartyBATNA: 'Continue searching for candidates (2-4 week delay, lower quality)',
     counterpartyBATNAValue: 50000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 68000,
     estimatedZOPALow: 56000,
     estimatedZOPAHigh: 64000,

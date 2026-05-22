@@ -84,9 +84,11 @@ export const case20: Scenario = {
   batna: {
     clientBATNA: 'Sue for damages, terminate contract, find new supplier and replace machinery',
     clientBATNAValue: -1800000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: -500000,
     counterpartyBATNA: 'Pay damages, lose major client, absorb reputation hit',
     counterpartyBATNAValue: 100000,
+    counterpartyBATNAStrength: 'weak',
     counterpartyReservationValue: 400000,
     estimatedZOPALow: -500000,
     estimatedZOPAHigh: 400000,

@@ -83,9 +83,11 @@ export const case21: Scenario = {
   batna: {
     clientBATNA: 'Government intervention or emergency arbitration',
     clientBATNAValue: -20000000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: -5000000,
     counterpartyBATNA: 'Strike during holiday period — maximum public disruption',
     counterpartyBATNAValue: -15000000,
+    counterpartyBATNAStrength: 'strong',
     counterpartyReservationValue: -3000000,
     estimatedZOPALow: -10000000,
     estimatedZOPAHigh: -3000000,

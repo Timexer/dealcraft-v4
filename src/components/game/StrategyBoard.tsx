@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
-import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/data/scenarios/types';
+import { CATEGORY_COLORS, CATEGORY_LABELS, type BATNAStrength, SECTION_LABELS, SECTION_DEFINITIONS, SECTION_HELPERS, SECTION_TOOLTIPS, INLINE_WARNINGS, ZOPA_LEGEND } from '@/data/scenarios/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,7 @@ import {
 import { PreNegotiationChecklist } from '@/components/game/PreNegotiationChecklist';
 
 const ADVISOR_TIPS: Record<string, string> = {
-  fundamentals: 'Start with your BATNA. Know your walk-away point before you sit at the table.',
+  fundamentals: 'Start with your best alternative — know your alternative if talks fail, then set your walk-away point.',
   hidden_interests: 'Ask why. The stated demand is rarely the real need.',
   multi_issue: "Don't negotiate issues one at a time. Build package offers.",
   deadline: 'Urgency creates pressure on both sides. Find out whose deadline it really is.',
@@ -55,7 +55,7 @@ const CATEGORY_TIPS: Record<string, { icon: string; title: string; tips: string[
     icon: '📚',
     title: 'Fundamentals Strategy',
     tips: [
-      'Always quantify your BATNA before entering negotiation — a strong alternative gives you leverage.',
+      'Always identify your best alternative before entering negotiation — a strong alternative gives you leverage.',
       'Anchor high but justify your position with objective criteria.',
       'Listen more than you speak in the opening phase.',
     ],
@@ -129,14 +129,14 @@ const CATEGORY_TIPS: Record<string, { icon: string; title: string; tips: string[
     tips: [
       'Stay calm under pressure — emotional reactions are weapons used against you.',
       'Name the tactic: "I notice we\'re being pressed for an immediate decision."',
-      'Always have a walk-away alternative ready.',
+      'Always have your alternative ready — your best fallback if talks fail.',
     ],
   },
   master: {
     icon: '👑',
     title: 'Master Strategy',
     tips: [
-      'Combine every technique — BATNA, logrolling, contingencies, and relationship.',
+      'Combine every technique — alternatives, logrolling, contingencies, and relationship.',
       'Read the whole board: economic value, emotional stakes, and future implications.',
       'The master creates value that neither side saw coming.',
     ],
@@ -144,9 +144,9 @@ const CATEGORY_TIPS: Record<string, { icon: string; title: string; tips: string[
 };
 
 const BATNA_TIPS: Record<string, { text: string; variant: 'low' | 'medium' | 'high' }> = {
-  low: { text: '⚠️ Your BATNA seems low — consider improving your alternatives before negotiating.', variant: 'low' },
-  medium: { text: '💡 A moderate BATNA gives you some leverage. Can you strengthen it further?', variant: 'medium' },
-  high: { text: '✅ A strong BATNA gives you confidence. Don\'t accept less than you deserve.', variant: 'high' },
+  low: { text: '⚠️ Your alternative seems weak — consider improving your options before negotiating.', variant: 'low' },
+  medium: { text: '💡 A moderate alternative gives you some leverage. Can you strengthen it further?', variant: 'medium' },
+  high: { text: '✅ A strong alternative gives you confidence. Don\'t accept less than you deserve.', variant: 'high' },
 };
 
 const STRATEGY_TIPS: Record<string, string> = {
@@ -183,11 +183,45 @@ const OPENING_STRATEGIES = [
   { id: 'rapport', label: 'Build Rapport First', icon: Handshake, description: 'Establish trust before discussing terms' },
 ];
 
+// FIX 7: Derive BATNA strength from scenario data when explicit field is not provided
+function deriveBATNAStrength(clientValue: number, counterpartyValue: number, side: 'client' | 'counterparty'): BATNAStrength {
+  const value = side === 'client' ? clientValue : counterpartyValue;
+  const otherValue = side === 'client' ? counterpartyValue : clientValue;
+  if (value === 0) return 'weak';
+  const ratio = otherValue > 0 ? value / otherValue : 1;
+  if (ratio >= 1.3) return 'strong';
+  if (ratio >= 0.7) return 'moderate';
+  return 'weak';
+}
+
+// FIX 7: Get BATNA advantage based on strength, not monetary value
+function getBATNAAdvantage(batna: { clientBATNAStrength?: BATNAStrength; counterpartyBATNAStrength?: BATNAStrength; clientBATNAValue: number; counterpartyBATNAValue: number }): 'client' | 'counterparty' | 'equal' {
+  const clientStrength = batna.clientBATNAStrength ?? deriveBATNAStrength(batna.clientBATNAValue, batna.counterpartyBATNAValue, 'client');
+  const cpStrength = batna.counterpartyBATNAStrength ?? deriveBATNAStrength(batna.clientBATNAValue, batna.counterpartyBATNAValue, 'counterparty');
+  const strengthOrder: Record<BATNAStrength, number> = { strong: 3, moderate: 2, weak: 1 };
+  if (strengthOrder[clientStrength] > strengthOrder[cpStrength]) return 'client';
+  if (strengthOrder[cpStrength] > strengthOrder[clientStrength]) return 'counterparty';
+  return 'equal';
+}
+
+// FIX 7: Generate descriptive text for BATNA advantage
+function getBATNAAdvantageDescription(batna: { clientBATNA: string; counterpartyBATNA: string; clientBATNAStrength?: BATNAStrength; counterpartyBATNAStrength?: BATNAStrength; clientBATNAValue: number; counterpartyBATNAValue: number }): string {
+  const advantage = getBATNAAdvantage(batna);
+  if (advantage === 'client') {
+    return `Your client's alternative (${batna.clientBATNA.toLowerCase().split('.')[0]}) is stronger than the counterparty's (${batna.counterpartyBATNA.toLowerCase().split('.')[0]}).`;
+  }
+  if (advantage === 'counterparty') {
+    return `The counterparty's alternative (${batna.counterpartyBATNA.toLowerCase().split('.')[0]}) is stronger than your client's (${batna.clientBATNA.toLowerCase().split('.')[0]}).`;
+  }
+  return 'Both sides have roughly equal alternatives if negotiations fail.';
+}
+
 export function StrategyBoard() {
   const {
     currentScenarioId, setPhase,
     batnaEstimate, setBatnaEstimate,
     reservationEstimate, setReservationEstimate,
+    aspirationEstimate, setAspirationEstimate,
     openingStrategy, setOpeningStrategy,
     assumptions, addAssumption, removeAssumption,
   } = useGameStore();
@@ -240,33 +274,24 @@ export function StrategyBoard() {
   };
 
   // BATNA and ZOPA calculations for visualization
-  const clientValue = batna.clientBATNAValue;
-  const cpValue = batna.counterpartyBATNAValue;
-  const maxVal = Math.max(clientValue, cpValue, batna.estimatedZOPAHigh) * 1.1;
+  // FIX 5: ZOPA is bounded by Reservation Values, NOT BATNA values
+  const clientRV = batna.clientReservationValue;
+  const cpRV = batna.counterpartyReservationValue;
+  const maxVal = Math.max(clientRV, cpRV, batna.estimatedZOPAHigh) * 1.1;
   const zopaLow = batna.estimatedZOPALow;
   const zopaHigh = batna.estimatedZOPAHigh;
 
-  // Calculate position percentages for ZOPA visualization
-  const clientPos = maxVal > 0 ? (clientValue / maxVal) * 100 : 0;
-  const cpPos = maxVal > 0 ? (cpValue / maxVal) * 100 : 0;
+  // Calculate position percentages for ZOPA visualization — using Reservation Values
+  const clientPos = maxVal > 0 ? (clientRV / maxVal) * 100 : 0;
+  const cpPos = maxVal > 0 ? (cpRV / maxVal) * 100 : 0;
   const zopaLeft = maxVal > 0 ? (zopaLow / maxVal) * 100 : 0;
   const zopaWidth = maxVal > 0 ? ((zopaHigh - zopaLow) / maxVal) * 100 : 0;
 
   // Reservation value position
   const rvPos = reservationEstimate > 0 && maxVal > 0 ? (reservationEstimate / maxVal) * 100 : 0;
 
-  // Client BATNA vs Counterparty BATNA comparison for horizontal bar
-  const batnaComparisonMax = Math.max(clientValue, cpValue) || 1;
-  const clientBatnaPercent = (clientValue / batnaComparisonMax) * 100;
-  const cpBatnaPercent = (cpValue / batnaComparisonMax) * 100;
-
-  // Determine who has BATNA advantage
-  const batnaAdvantage = clientValue > cpValue ? 'client' : clientValue < cpValue ? 'counterparty' : 'equal';
-  const advantageLabel = batnaAdvantage === 'client' 
-    ? 'Your client has a stronger BATNA' 
-    : batnaAdvantage === 'counterparty' 
-    ? 'Counterparty has a stronger BATNA'
-    : 'BATNAs are roughly equal';
+  // Aspiration value position
+  const aspirationPos = aspirationEstimate > 0 && maxVal > 0 ? (aspirationEstimate / maxVal) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -298,138 +323,305 @@ export function StrategyBoard() {
           <div className="flex-1 min-w-0">
           <ScrollArea className="h-[calc(100vh-14rem)]">
           <div className="space-y-6 pr-2">
-            {/* BATNA Analysis with Visual Comparison */}
+            {/* BATNA Analysis with Scenario Cards + ZOPA */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <Shield className="h-4 w-4 text-amber-500" />
-                    BATNA Analysis
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help underline decoration-dotted decoration-amber-500/40 underline-offset-4">
+                            {SECTION_LABELS.batna}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[280px] text-xs">
+                          <p>{SECTION_TOOLTIPS.batna}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Understand your Best Alternative to a Negotiated Agreement
+                    {SECTION_DEFINITIONS.batna}
                   </CardDescription>
+                  <p className="text-[11px] text-muted-foreground/60 mt-1">
+                    {SECTION_HELPERS.batnaCard}
+                  </p>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-4">
-                  {/* BATNA Comparison Chart */}
+                  {/* FIX 1: Scenario cards instead of progress bars */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 mb-1">
                       <Swords className="h-3.5 w-3.5 text-amber-400" />
-                      <span className="text-xs font-medium">BATNA Power Comparison</span>
+                      <span className="text-xs font-medium">Alternative Power Comparison</span>
                     </div>
 
-                    {/* Client BATNA bar */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-muted-foreground">Client&apos;s BATNA</span>
-                        <span className="text-[11px] font-medium">€{clientValue.toLocaleString()}</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Client BATNA scenario card */}
+                      <div className="p-3 rounded-lg bg-emerald-500/8 border border-emerald-500/20 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-emerald-400">🟢 Client&apos;s Alternative</span>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] px-2 py-0 border-0 ${
+                              (batna.clientBATNAStrength ?? deriveBATNAStrength(batna.clientBATNAValue, batna.counterpartyBATNAValue, 'client')) === 'strong'
+                                ? 'bg-emerald-500/20 text-emerald-400'
+                                : (batna.clientBATNAStrength ?? deriveBATNAStrength(batna.clientBATNAValue, batna.counterpartyBATNAValue, 'client')) === 'moderate'
+                                ? 'bg-amber-500/20 text-amber-400'
+                                : 'bg-red-500/20 text-red-400'
+                            }`}
+                          >
+                            {(batna.clientBATNAStrength ?? deriveBATNAStrength(batna.clientBATNAValue, batna.counterpartyBATNAValue, 'client')) === 'strong' ? 'Strong' :
+                             (batna.clientBATNAStrength ?? deriveBATNAStrength(batna.clientBATNAValue, batna.counterpartyBATNAValue, 'client')) === 'moderate' ? 'Moderate' : 'Weak'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-foreground/90 leading-relaxed italic">&ldquo;{batna.clientBATNA}&rdquo;</p>
+                        {batna.clientBATNAValue > 0 && (
+                          <p className="text-[11px] text-muted-foreground">Financial equivalent: €{batna.clientBATNAValue.toLocaleString()}</p>
+                        )}
                       </div>
-                      <div className="comparison-bar">
-                        <div
-                          className="bar-fill bg-gradient-to-r from-emerald-500/50 to-emerald-400/70 stat-bar-gradient"
-                          style={{ width: `${clientBatnaPercent}%` }}
-                        />
+
+                      {/* Counterparty BATNA scenario card */}
+                      <div className="p-3 rounded-lg bg-orange-500/8 border border-orange-500/20 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-orange-400">🔴 Counterparty&apos;s Alternative</span>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] px-2 py-0 border-0 ${
+                              (batna.counterpartyBATNAStrength ?? deriveBATNAStrength(batna.clientBATNAValue, batna.counterpartyBATNAValue, 'counterparty')) === 'strong'
+                                ? 'bg-emerald-500/20 text-emerald-400'
+                                : (batna.counterpartyBATNAStrength ?? deriveBATNAStrength(batna.clientBATNAValue, batna.counterpartyBATNAValue, 'counterparty')) === 'moderate'
+                                ? 'bg-amber-500/20 text-amber-400'
+                                : 'bg-red-500/20 text-red-400'
+                            }`}
+                          >
+                            {(batna.counterpartyBATNAStrength ?? deriveBATNAStrength(batna.clientBATNAValue, batna.counterpartyBATNAValue, 'counterparty')) === 'strong' ? 'Strong' :
+                             (batna.counterpartyBATNAStrength ?? deriveBATNAStrength(batna.clientBATNAValue, batna.counterpartyBATNAValue, 'counterparty')) === 'moderate' ? 'Moderate' : 'Weak'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-foreground/90 leading-relaxed italic">&ldquo;{batna.counterpartyBATNA}&rdquo;</p>
+                        {batna.counterpartyBATNAValue > 0 && (
+                          <p className="text-[11px] text-muted-foreground">Financial equivalent: €{batna.counterpartyBATNAValue.toLocaleString()}</p>
+                        )}
                       </div>
-                      <p className="text-[11px] text-muted-foreground truncate">{batna.clientBATNA}</p>
                     </div>
 
-                    {/* Counterparty BATNA bar */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-muted-foreground">Counterparty&apos;s BATNA</span>
-                        <span className="text-[11px] font-medium">€{cpValue.toLocaleString()}</span>
-                      </div>
-                      <div className="comparison-bar">
-                        <div
-                          className="bar-fill bg-gradient-to-r from-red-500/40 to-orange-500/60 stat-bar-gradient"
-                          style={{ width: `${cpBatnaPercent}%` }}
-                        />
-                      </div>
-                      <p className="text-[11px] text-muted-foreground truncate">{batna.counterpartyBATNA}</p>
-                    </div>
+                    {/* Helper text for strength badges */}
+                    <p className="text-[11px] text-muted-foreground/60">{SECTION_HELPERS.batnaStrength}</p>
 
-                    {/* Advantage indicator */}
+                    {/* FIX 7: Strength comparison based on scenario, not money */}
                     <div className={`flex items-center gap-2 p-2 rounded-md text-xs ${
-                      batnaAdvantage === 'client' 
+                      getBATNAAdvantage(batna) === 'client'
                         ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
-                        : batnaAdvantage === 'counterparty'
+                        : getBATNAAdvantage(batna) === 'counterparty'
                         ? 'bg-orange-500/10 border border-orange-500/20 text-orange-300'
                         : 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
                     }`}>
                       <Info className="h-3 w-3 shrink-0" />
-                      <span>{advantageLabel}</span>
+                      <span>{getBATNAAdvantageDescription(batna)}</span>
                     </div>
                   </div>
 
                   <Separator />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Input fields: 3-column grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* BATNA Monetary Equivalent */}
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Your BATNA Estimate (€)</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Label className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
+                              BATNA Monetary Equivalent (€)
+                              <Info className="h-2.5 w-2.5 text-muted-foreground/50" />
+                            </Label>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[240px] text-xs">
+                            <p>{SECTION_TOOLTIPS.batna}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <Input
                         type="number"
-                        placeholder="Enter your estimate..."
+                        min={0}
+                        placeholder="Estimate the financial outcome..."
                         value={batnaEstimate || ''}
-                        onChange={(e) => setBatnaEstimate(Number(e.target.value))}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setBatnaEstimate(Math.max(0, val));
+                        }}
                       />
+                      <p className="text-[11px] text-muted-foreground/70">
+                        {SECTION_HELPERS.batnaMonetary}
+                      </p>
+                      {/* Inline error for negative values */}
+                      {batnaEstimate < 0 && (
+                        <p className="text-[11px] text-red-400 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          BATNA monetary equivalent can&apos;t be negative.
+                        </p>
+                      )}
                     </div>
+                    {/* Walk-Away Point (Reservation Value) */}
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Your Reservation Value (€)</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Label className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
+                              {SECTION_LABELS.reservationValue} (€)
+                              <Info className="h-2.5 w-2.5 text-muted-foreground/50" />
+                            </Label>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[240px] text-xs">
+                            <p>{SECTION_TOOLTIPS.reservationValue}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <Input
                         type="number"
-                        placeholder="Minimum acceptable..."
+                        min={0}
+                        placeholder="Minimum acceptable outcome..."
                         value={reservationEstimate || ''}
-                        onChange={(e) => setReservationEstimate(Number(e.target.value))}
+                        onChange={(e) => setReservationEstimate(Math.max(0, Number(e.target.value)))}
                       />
+                      <p className="text-[11px] text-muted-foreground/70">
+                        {SECTION_HELPERS.reservationValue}
+                      </p>
+                      {/* Cross-field validation RV < BATNA estimate */}
+                      {reservationEstimate > 0 && batnaEstimate > 0 && reservationEstimate < batnaEstimate && (
+                        <p className="text-[11px] text-amber-400 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          {INLINE_WARNINGS.rvBelowBatnaEquiv}
+                        </p>
+                      )}
+                    </div>
+                    {/* Target Outcome (Aspiration Estimate) */}
+                    <div className="space-y-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Label className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
+                              {SECTION_LABELS.aspirationPrice} (€)
+                              <Info className="h-2.5 w-2.5 text-muted-foreground/50" />
+                            </Label>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[240px] text-xs">
+                            <p>{SECTION_TOOLTIPS.aspirationPrice}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder="Your ideal realistic result..."
+                        value={aspirationEstimate || ''}
+                        onChange={(e) => setAspirationEstimate(Math.max(0, Number(e.target.value)))}
+                      />
+                      <p className="text-[11px] text-muted-foreground/70">
+                        {SECTION_HELPERS.aspirationPrice}
+                      </p>
+                      {/* Cross-field validation: aspiration < reservation */}
+                      {aspirationEstimate > 0 && reservationEstimate > 0 && aspirationEstimate < reservationEstimate && (
+                        <p className="text-[11px] text-amber-400 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Your target outcome is below your walk-away point. Your target should be higher than your minimum.
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  {/* ZOPA Visualization */}
+                  {/* ZOPA Visualization — FIX 5: Bounded by Reservation Values, not BATNAs */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">ZOPA Visualization</span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-xs font-medium cursor-help underline decoration-dotted decoration-amber-500/40 underline-offset-4">
+                              {SECTION_LABELS.zopa}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[260px] text-xs">
+                            <p>{SECTION_TOOLTIPS.zopa}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <span className="text-xs text-muted-foreground">
                         €{zopaLow.toLocaleString()} — €{zopaHigh.toLocaleString()}
                       </span>
                     </div>
+                    <p className="text-[11px] text-muted-foreground/60">{SECTION_HELPERS.zopa}</p>
                     <div className="zopa-bar">
-                      {/* ZOPA overlap zone */}
+                      {/* ZOPA overlap zone — bounded by Reservation Values */}
                       <div
                         className="overlap-zone"
                         style={{ left: `${zopaLeft}%`, width: `${zopaWidth}%` }}
                       />
-                      {/* Client BATNA marker */}
+                      {/* Client Reservation Value marker */}
                       <div
                         className="marker client"
                         style={{ left: `${clientPos}%` }}
                       >
                         <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[11px] text-emerald-400 whitespace-nowrap font-medium">
-                          Client
+                          {ZOPA_LEGEND.clientRV}
                         </span>
                       </div>
-                      {/* Counterparty BATNA marker */}
+                      {/* Counterparty Reservation Value marker */}
                       <div
                         className="marker counterparty"
                         style={{ left: `${cpPos}%` }}
                       >
                         <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[11px] text-orange-400 whitespace-nowrap font-medium">
-                          CP
+                          {ZOPA_LEGEND.counterpartyRV}
                         </span>
                       </div>
                       {/* ZOPA label */}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className="text-[11px] font-bold text-amber-400">ZOPA</span>
+                        <span className="text-[11px] font-bold text-amber-400">{SECTION_LABELS.zopa}</span>
                       </div>
-                      {/* Reservation value marker */}
+                      {/* Reservation value marker (user's estimate) */}
                       {rvPos > 0 && (
                         <div
                           className="absolute top-0 h-full w-0.5 bg-red-500 z-10"
                           style={{ left: `${Math.min(100, rvPos)}%` }}
                         >
                           <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[11px] text-red-400 whitespace-nowrap font-medium">
-                            Your RV
+                            {ZOPA_LEGEND.yourRV}
                           </span>
                         </div>
+                      )}
+                      {/* Aspiration marker (green diamond) */}
+                      {aspirationPos > 0 && (
+                        <div
+                          className="absolute top-0 h-full flex items-center z-10"
+                          style={{ left: `${Math.min(100, aspirationPos)}%` }}
+                        >
+                          <div className="w-2 h-2 rotate-45 bg-emerald-400" />
+                          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[11px] text-emerald-400 whitespace-nowrap font-medium">
+                            Target
+                          </span>
+                        </div>
+                      )}
+                      {/* FIX 3: BATNA estimate ghost marker — stays visible even at edges */}
+                      {batnaEstimate !== 0 && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div
+                                className="absolute top-0 h-full w-0.5 border-l-2 border-dashed border-cyan-400/60 z-10 cursor-help"
+                                style={{ left: `${Math.max(0, Math.min(100, batnaEstimate > 0 ? (batnaEstimate / maxVal) * 100 : 0))}%` }}
+                              >
+                                <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[11px] text-cyan-400 whitespace-nowrap font-medium">
+                                  {ZOPA_LEGEND.batnaEquiv}
+                                </span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              <p>Your BATNA monetary equivalent: €{batnaEstimate.toLocaleString()}</p>
+                              {batnaEstimate < 0 && <p className="text-red-400">This value is negative and outside the visible range.</p>}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                       {/* Scale labels */}
                       <div className="absolute bottom-0 left-0 right-0 flex justify-between px-1">
@@ -437,23 +629,43 @@ export function StrategyBoard() {
                         <span className="text-[11px] text-muted-foreground">€{Math.round(maxVal).toLocaleString()}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 mt-1">
+                    {/* No-ZOPA warning */}
+                    {zopaWidth <= 0 && (
+                      <p className="text-[11px] text-amber-400 flex items-center gap-1 mt-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        {INLINE_WARNINGS.noZopa}
+                      </p>
+                    )}
+                    {/* FIX 5: Legend uses microcopy constants */}
+                    <div className="flex flex-wrap items-center gap-4 mt-1">
                       <div className="flex items-center gap-1.5">
                         <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                        <span className="text-[11px] text-muted-foreground">Client BATNA</span>
+                        <span className="text-[11px] text-muted-foreground">{ZOPA_LEGEND.clientRV}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="h-2 w-2 rounded-full bg-orange-500" />
-                        <span className="text-[11px] text-muted-foreground">CP BATNA</span>
+                        <span className="text-[11px] text-muted-foreground">{ZOPA_LEGEND.counterpartyRV}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="h-2 w-2 rounded-full bg-amber-500/50" />
-                        <span className="text-[11px] text-muted-foreground">ZOPA Zone</span>
+                        <span className="text-[11px] text-muted-foreground">{ZOPA_LEGEND.zopaZone}</span>
                       </div>
                       {rvPos > 0 && (
                         <div className="flex items-center gap-1.5">
                           <div className="h-2 w-0.5 bg-red-500" />
-                          <span className="text-[11px] text-muted-foreground">Your RV</span>
+                          <span className="text-[11px] text-muted-foreground">{ZOPA_LEGEND.yourRV}</span>
+                        </div>
+                      )}
+                      {aspirationPos > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rotate-45 bg-emerald-400" />
+                          <span className="text-[11px] text-muted-foreground">{ZOPA_LEGEND.yourAspiration}</span>
+                        </div>
+                      )}
+                      {batnaEstimate !== 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-2 w-0.5 border-l-2 border-dashed border-cyan-400/60" />
+                          <span className="text-[11px] text-muted-foreground">{ZOPA_LEGEND.batnaEquiv}</span>
                         </div>
                       )}
                     </div>
@@ -857,7 +1069,7 @@ export function StrategyBoard() {
                         ) : (
                           <Lightbulb className="h-3.5 w-3.5 text-amber-400" />
                         )}
-                        <h3 className="text-xs font-semibold text-amber-400">BATNA Assessment</h3>
+                        <h3 className="text-xs font-semibold text-amber-400">Alternative Assessment</h3>
                       </div>
                       <p className={`text-xs ${
                         batnaLevel === 'low'

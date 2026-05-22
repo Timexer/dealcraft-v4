@@ -90,9 +90,11 @@ export const case07: Scenario = {
   batna: {
     clientBATNA: 'License to competitor platform at lower fee (€3M/year)',
     clientBATNAValue: 3000000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 3500000,
     counterpartyBATNA: 'License different content (weaker audience fit)',
     counterpartyBATNAValue: 2500000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 4000000,
     estimatedZOPALow: 3500000,
     estimatedZOPAHigh: 5000000,

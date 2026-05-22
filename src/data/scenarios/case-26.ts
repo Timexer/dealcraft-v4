@@ -83,9 +83,11 @@ export const case26: Scenario = {
   batna: {
     clientBATNA: 'Litigate — risk of large verdict + public exposure of defect',
     clientBATNAValue: 1500000,
+    clientBATNAStrength: 'strong',
     clientReservationValue: 3500000,
     counterpartyBATNA: 'Go to trial — risk of losing + years of litigation',
     counterpartyBATNAValue: 500000,
+    counterpartyBATNAStrength: 'weak',
     counterpartyReservationValue: 800000,
     estimatedZOPALow: 800000,
     estimatedZOPAHigh: 3500000,

@@ -241,6 +241,7 @@ export function Dashboard() {
     useGameStore.getState().resetNegotiation();
     useGameStore.getState().setBatnaEstimate(0);
     useGameStore.getState().setReservationEstimate(0);
+    useGameStore.getState().setAspirationEstimate(0);
     useGameStore.getState().setOpeningStrategy('');
     useGameStore.getState().assumptions = [];
     useGameStore.getState().setChallengeTimer(0);
@@ -258,6 +259,7 @@ export function Dashboard() {
     useGameStore.getState().resetNegotiation();
     useGameStore.getState().setBatnaEstimate(0);
     useGameStore.getState().setReservationEstimate(0);
+    useGameStore.getState().setAspirationEstimate(0);
     useGameStore.getState().setOpeningStrategy('');
     useGameStore.getState().assumptions = [];
     setPhase('intake');

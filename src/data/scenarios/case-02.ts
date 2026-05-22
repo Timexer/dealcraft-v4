@@ -88,9 +88,11 @@ export const case02: Scenario = {
   batna: {
     clientBATNA: 'List equipment at auction (6-8 week process)',
     clientBATNAValue: 38000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 45000,
     counterpartyBATNA: 'Wait 3 months for new equipment (costs €75K+)',
     counterpartyBATNAValue: 45000,
+    counterpartyBATNAStrength: 'weak',
     counterpartyReservationValue: 62000,
     estimatedZOPALow: 45000,
     estimatedZOPAHigh: 58000,

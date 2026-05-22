@@ -59,8 +59,9 @@ export interface GameState {
   maxInvestigationPoints: number;
   discoveredFacts: string[];
   investigationHistory: string[];
-  spendInvestigationPoint: (actionId: string, revealedFacts: string[]) => void;
+  spendInvestigationPoint: (actionId: string, revealedFacts: string[], cost?: number) => void;
   resetInvestigation: () => void;
+  initInvestigationPoints: (tier: number) => void;
 
   // Technique tracking
   techniquesUsed: NegotiationTechnique[];
@@ -91,6 +92,8 @@ export interface GameState {
   setBatnaEstimate: (value: number) => void;
   reservationEstimate: number;
   setReservationEstimate: (value: number) => void;
+  aspirationEstimate: number;
+  setAspirationEstimate: (value: number) => void;
   openingStrategy: string;
   setOpeningStrategy: (strategy: string) => void;
   assumptions: string[];
@@ -142,6 +145,10 @@ export interface GameState {
   // Black Swans
   discoveredBlackSwans: string[];
   discoverBlackSwan: (id: string) => void;
+
+  // Case Notepad
+  caseNotes: string;
+  setCaseNotes: (notes: string) => void;
 
   // Session cleanup (called when leaving postmortem)
   clearCaseSession: () => void;
@@ -224,9 +231,9 @@ export const useGameStore = create<GameState>()(
       maxInvestigationPoints: 5,
       discoveredFacts: [],
       investigationHistory: [],
-      spendInvestigationPoint: (actionId, revealedFacts) =>
+      spendInvestigationPoint: (actionId, revealedFacts, cost = 1) =>
         set((s) => ({
-          investigationPoints: Math.max(0, s.investigationPoints - 1),
+          investigationPoints: Math.max(0, s.investigationPoints - cost),
           discoveredFacts: [...new Set([...s.discoveredFacts, ...revealedFacts])],
           investigationHistory: [...s.investigationHistory, actionId],
         })),
@@ -238,6 +245,17 @@ export const useGameStore = create<GameState>()(
           investigationHistory: [],
           discoveredBlackSwans: [],
         }),
+      initInvestigationPoints: (tier) => {
+        // Scale investigation points by difficulty tier:
+        // Tier 1 (Beginner): 7 points — more room to explore
+        // Tier 2 (Intermediate): 6 points
+        // Tier 3 (Advanced): 5 points — standard
+        // Tier 4 (Expert): 4 points — tighter budget
+        // Tier 5 (Master): 3 points — harsh constraints
+        const pointsMap: Record<number, number> = { 1: 2, 2: 6, 3: 5, 4: 4, 5: 3 };
+        const pts = pointsMap[tier] ?? 5;
+        set({ investigationPoints: pts, maxInvestigationPoints: pts });
+      },
 
       techniquesUsed: [],
       addTechniqueUsed: (technique) =>
@@ -821,10 +839,15 @@ export const useGameStore = create<GameState>()(
       caseAccepted: false,
       setCaseAccepted: (accepted) => set({ caseAccepted: accepted }),
 
+      caseNotes: '',
+      setCaseNotes: (notes) => set({ caseNotes: notes }),
+
       batnaEstimate: 0,
-      setBatnaEstimate: (value) => set({ batnaEstimate: value }),
+      setBatnaEstimate: (value) => set({ batnaEstimate: Math.max(0, value) }),
       reservationEstimate: 0,
-      setReservationEstimate: (value) => set({ reservationEstimate: value }),
+      setReservationEstimate: (value) => set({ reservationEstimate: Math.max(0, value) }),
+      aspirationEstimate: 0,
+      setAspirationEstimate: (value) => set({ aspirationEstimate: Math.max(0, value) }),
       openingStrategy: '',
       setOpeningStrategy: (strategy) => set({ openingStrategy: strategy }),
       assumptions: [],
@@ -881,6 +904,7 @@ export const useGameStore = create<GameState>()(
           negotiation: { ...defaultNegotiation },
           batnaEstimate: 0,
           reservationEstimate: 0,
+          aspirationEstimate: 0,
           openingStrategy: '',
           assumptions: [],
           unlockedCases: ['case-01', 'case-02', 'case-03'],
@@ -915,6 +939,7 @@ export const useGameStore = create<GameState>()(
           negotiation: { ...defaultNegotiation },
           batnaEstimate: 0,
           reservationEstimate: 0,
+          aspirationEstimate: 0,
           openingStrategy: '',
           assumptions: [],
           unlockedCases: [],
@@ -1000,7 +1025,12 @@ export const useGameStore = create<GameState>()(
           techniquesUsed: [],
           batnaEstimate: 0,
           reservationEstimate: 0,
+          aspirationEstimate: 0,
+          openingStrategy: '',
           assumptions: [],
+          caseNotes: '',
+          investigationPoints: 5,
+          maxInvestigationPoints: 5,
         }),
     }),
     {
@@ -1024,8 +1054,10 @@ export const useGameStore = create<GameState>()(
         isReplay: state.isReplay,
         batnaEstimate: state.batnaEstimate,
         reservationEstimate: state.reservationEstimate,
+        aspirationEstimate: state.aspirationEstimate,
         openingStrategy: state.openingStrategy,
         assumptions: state.assumptions,
+        caseNotes: state.caseNotes,
         investigationPoints: state.investigationPoints,
         maxInvestigationPoints: state.maxInvestigationPoints,
         discoveredFacts: state.discoveredFacts,

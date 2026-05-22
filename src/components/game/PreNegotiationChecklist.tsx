@@ -30,14 +30,14 @@ const SECTIONS: ChecklistSection[] = [
     items: [
       {
         id: 'power-1',
-        label: 'Identified your BATNA',
+        label: 'Identified your best alternative if no deal',
         description: 'What will you do if this negotiation fails?',
         tip: 'Your BATNA is your greatest source of power. The better your alternative, the more leverage you have.',
         category: 'essential',
       },
       {
         id: 'power-2',
-        label: 'Estimated their BATNA',
+        label: 'Estimated their alternative if no deal',
         description: 'What options does the other side have if they walk away?',
         tip: 'Understanding their alternatives tells you how hard they need this deal.',
         category: 'essential',
@@ -48,6 +48,13 @@ const SECTIONS: ChecklistSection[] = [
         description: 'Which side has more to lose from no deal?',
         tip: 'Leverage flows to the side with less to lose. Time pressure shifts leverage.',
         category: 'recommended',
+      },
+      {
+        id: 'power-4',
+        label: 'Set your walk-away point',
+        description: 'What is the minimum acceptable outcome before you choose your alternative?',
+        tip: 'Your walk-away point (reservation value) is NOT the same as your BATNA. Your BATNA is what you do; your walk-away point is where you stop negotiating.',
+        category: 'essential',
       },
     ],
   },

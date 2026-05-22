@@ -83,9 +83,11 @@ export const case25: Scenario = {
   batna: {
     clientBATNA: 'Whistleblow to anti-corruption authority',
     clientBATNAValue: -100000,
+    clientBATNAStrength: 'strong',
     clientReservationValue: 0,
     counterpartyBATNA: 'Override the director\'s recommendation and force selection',
     counterpartyBATNAValue: 5000000,
+    counterpartyBATNAStrength: 'strong',
     counterpartyReservationValue: 15000000,
     estimatedZOPALow: 0,
     estimatedZOPAHigh: 15000000,

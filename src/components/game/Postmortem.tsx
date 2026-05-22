@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS, type EndingScores } from '@/data/scenarios/types';
-import { calculateFinalScore, getScoreGrade, getReputationType, calculateReputationDelta, calculateStatsDelta } from '@/lib/game-engine';
+import { calculateFinalScore, getScoreGrade, getReputationType, calculateReputationDelta, calculateStatsDelta, calculateDynamicScores, getScoreExplanation, type BehaviorContext } from '@/lib/game-engine';
 import { StreakIndicator } from '@/components/game/StreakIndicator';
 import { TechniqueBadge, TECHNIQUE_INFO, getTechniqueInfo } from '@/components/game/TechniqueBadge';
 import { NegotiationTechnique } from '@/data/scenarios/types';
@@ -60,30 +60,36 @@ const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string;
   { key: 'strategicDiscipline', label: 'Strategic Discipline', color: 'bg-cyan-500', maxColor: 'bg-cyan-500/30' },
 ];
 
-const SCORE_DIMENSION_DETAILS: Record<string, { explanation: string; tip: string }> = {
+const SCORE_DIMENSION_DETAILS: Record<string, { explanation: string; tip: string; behaviorDrivers: string }> = {
   clientEconomicValue: {
     explanation: "How well you protected and advanced your client's financial interests in the deal",
-    tip: "Always quantify your BATNA before negotiating. A strong alternative gives you leverage to claim more value."
+    tip: "Always identify your best alternative before negotiating. A strong alternative gives you leverage to claim more value.",
+    behaviorDrivers: "Value claimed, client satisfaction, alternative preparedness, balanced concessions",
   },
   jointValueCreated: {
     explanation: "How much additional value you created through logrolling, contingency contracts, and creative problem-solving",
-    tip: "Look for differences in risk preferences, time preferences, and assessments to create value that both sides can share."
+    tip: "Look for differences in risk preferences, time preferences, and assessments to create value that both sides can share.",
+    behaviorDrivers: "Value created, counterparty satisfaction, mutual concessions, creative techniques",
   },
   infoDiscovered: {
     explanation: "How effectively you uncovered hidden information and used it to make better decisions",
-    tip: "Ask diagnostic questions before making offers. The more you know about the other side's interests, the more value you can create."
+    tip: "Ask diagnostic questions before making offers. The more you know about the other side's interests, the more value you can create.",
+    behaviorDrivers: "Facts investigated, info revealed in negotiation, calibrated questions, assumptions logged",
   },
   relationshipPreserved: {
     explanation: "How well you maintained the relationship with the counterparty for future dealings",
-    tip: "Separate the people from the problem. Face-saving concessions and empathetic listening preserve relationships without sacrificing value."
+    tip: "Separate the people from the problem. Face-saving concessions and empathetic listening preserve relationships without sacrificing value.",
+    behaviorDrivers: "Trust level, anger management, relationship impact, empathy techniques",
   },
   ethicalIntegrity: {
     explanation: "Whether you maintained ethical standards or used deception and manipulation",
-    tip: "Ethical negotiation builds long-term reputation. Deception may win a single deal but destroys future opportunities."
+    tip: "Ethical negotiation builds long-term reputation. Deception may win a single deal but destroys future opportunities.",
+    behaviorDrivers: "Ethical impact of choices, aggressive tactics avoided, transparency, ethics constraints",
   },
   strategicDiscipline: {
     explanation: "How well you stuck to your strategy and avoided common biases and traps",
-    tip: "Watch for anchoring bias, fixed-pie assumptions, and escalation of commitment. Discipline prevents costly mistakes."
+    tip: "Watch for anchoring bias, fixed-pie assumptions, and escalation of commitment. Discipline prevents costly mistakes.",
+    behaviorDrivers: "Bias traps avoided, patience maintained, strategy preparation, disciplined techniques",
   }
 };
 
@@ -235,6 +241,8 @@ export function Postmortem() {
     reputation, addReputation,
     currentStreak, bestStreak, streakType,
     techniquesUsed, clearCaseSession,
+    batnaEstimate, openingStrategy, assumptions,
+    challengeMode,
   } = useGameStore();
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
@@ -308,6 +316,31 @@ export function Postmortem() {
   const totalInfo = scenario.investigationActions.reduce((sum, a) => sum + a.reveals.length, 0);
   const infoFound = (negotiation.informationRevealed?.length || 0) + discoveredFacts.length;
   const statsDelta = calculateStatsDelta(scenario, endingType, infoFound, totalInfo);
+
+  // Build behavior context for score explanations
+  const behaviorContext: BehaviorContext = {
+    trust: negotiation.trust,
+    anger: negotiation.anger,
+    patience: negotiation.patience,
+    valueClaimed: negotiation.valueClaimed,
+    valueCreated: negotiation.valueCreated,
+    relationshipImpact: negotiation.relationshipImpact,
+    ethicalImpact: negotiation.ethicalImpact,
+    clientSatisfaction: negotiation.clientSatisfaction,
+    counterpartySatisfaction: negotiation.counterpartySatisfaction,
+    concessionsGiven: negotiation.concessionsGiven,
+    concessionsReceived: negotiation.concessionsReceived,
+    biasTrapsTriggered: negotiation.biasTrapsTriggered,
+    choicesMade: negotiation.choicesMade,
+    informationRevealed: negotiation.informationRevealed,
+    discoveredFacts,
+    totalFactsAvailable: totalInfo,
+    batnaEstimate,
+    openingStrategy,
+    assumptionsCount: assumptions.length,
+    techniquesUsed,
+    challengeMode,
+  };
 
   // Determine if this is a good ending for sparkle effect
   const isGoodEnding = endingType === 'master' || endingType === 'cooperative';
@@ -524,11 +557,14 @@ export function Postmortem() {
                 <CardContent className="pt-0 space-y-2">
                   {SCORE_DIMENSIONS.map((dim, i) => {
                     const playerScore = latestResult.scores[dim.key];
-                    const maxScore = masterScores ? masterScores[dim.key] : 100;
+                    // All scores are now out of 100 (dynamic scoring system)
+                    const maxScore = 100;
                     const isExpanded = expandedDimensions.has(dim.key);
                     const quality = getScoreQuality(playerScore);
                     const details = SCORE_DIMENSION_DETAILS[dim.key];
-                    const scoreGap = maxScore - playerScore;
+                    const scoreExplanation = getScoreExplanation(dim.key, playerScore, behaviorContext);
+                    // Master score for comparison (what the best ending gives)
+                    const masterDimScore = masterScores ? masterScores[dim.key] : 100;
 
                     return (
                       <motion.div
@@ -574,12 +610,12 @@ export function Postmortem() {
                                 </Badge>
                               </div>
                             </div>
-                            {/* Mini progress bar */}
+                            {/* Mini progress bar - fills relative to /100 */}
                             <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
                               <motion.div
                                 className={`h-full rounded-full ${dim.color}`}
                                 initial={{ width: 0 }}
-                                animate={{ width: `${playerScore}%` }}
+                                animate={{ width: `${Math.min(100, (playerScore / maxScore) * 100)}%` }}
                                 transition={{ duration: 0.8, delay: 0.7 + i * 0.08, ease: 'easeOut' }}
                               />
                             </div>
@@ -613,12 +649,26 @@ export function Postmortem() {
                                   </p>
                                 </div>
 
+                                {/* Behavior drivers - what affected this score */}
+                                {details?.behaviorDrivers && (
+                                  <div className="p-2 rounded-md bg-muted/15 border border-border/10">
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Key Factors</p>
+                                    <p className="text-[11px] text-muted-foreground/80">{details.behaviorDrivers}</p>
+                                  </div>
+                                )}
+
+                                {/* Score explanation - why this specific score */}
+                                <div className="p-2 rounded-md bg-card/50 border border-border/15">
+                                  <p className="text-[10px] text-cyan-400 uppercase tracking-wider mb-1">Why This Score</p>
+                                  <p className="text-[11px] text-foreground/80 leading-relaxed">{scoreExplanation}</p>
+                                </div>
+
                                 {/* Mini comparison: you vs master */}
                                 <div className="flex items-center gap-3 p-2.5 rounded-md bg-muted/20">
                                   <div className="flex-1">
                                     <div className="flex items-center justify-between mb-1">
                                       <span className="text-[11px] text-muted-foreground">Your Score</span>
-                                      <span className="text-[11px] font-bold">{playerScore}</span>
+                                      <span className="text-[11px] font-bold">{playerScore}/100</span>
                                     </div>
                                     <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
                                       <div
@@ -633,26 +683,26 @@ export function Postmortem() {
                                         <Crown className="h-2.5 w-2.5" />
                                         Master
                                       </span>
-                                      <span className="text-[11px] font-bold text-yellow-300">{maxScore}</span>
+                                      <span className="text-[11px] font-bold text-yellow-300">{masterDimScore}/100</span>
                                     </div>
                                     <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
                                       <div
                                         className="h-full rounded-full bg-yellow-500/50 stat-bar-gradient"
-                                        style={{ width: `${maxScore}%` }}
+                                        style={{ width: `${masterDimScore}%` }}
                                       />
                                     </div>
                                   </div>
                                 </div>
 
                                 {/* Score gap indicator */}
-                                {scoreGap > 0 && (
+                                {playerScore < masterDimScore && (
                                   <div className="flex items-center gap-1.5 text-[11px] text-amber-400 stat-decrease">
-                                    <span>{scoreGap} pts below master</span>
+                                    <span>{masterDimScore - playerScore} pts below master deal</span>
                                   </div>
                                 )}
-                                {scoreGap <= 0 && (
+                                {playerScore >= masterDimScore && (
                                   <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 stat-increase">
-                                    <span>Matched or exceeded master!</span>
+                                    <span>Matched or exceeded master deal!</span>
                                   </div>
                                 )}
 
@@ -788,6 +838,72 @@ export function Postmortem() {
                 </CardContent>
               </Card>
             </motion.div>
+
+            {/* Assumption Tracker - showing what you assumed vs what was true */}
+            {assumptions.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.72 }}>
+                <Card className="bg-orange-500/10 border-orange-500/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2 text-orange-300">
+                      <Target className="h-4 w-4" />
+                      Your Assumptions
+                      <span className="text-[11px] font-normal text-orange-400 ml-1">What you assumed before negotiating vs what happened</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0 space-y-2">
+                    {assumptions.map((assumption, i) => {
+                      // Check if this assumption was validated or invalidated by discovered facts
+                      const wasValidated = discoveredFacts.some(fact =>
+                        fact.toLowerCase().includes(assumption.toLowerCase().split(' ').slice(0, 3).join(' '))
+                      );
+                      const wasInvalidated = !wasValidated && (
+                        scenario.postmortem.keyHiddenFact.toLowerCase().includes(assumption.toLowerCase().split(' ').slice(0, 2).join(' ')) ||
+                        scenario.postmortem.missedOpportunity.toLowerCase().includes(assumption.toLowerCase().split(' ').slice(0, 2).join(' '))
+                      );
+                      const status = wasValidated ? 'validated' : wasInvalidated ? 'challenged' : 'untested';
+
+                      return (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.82 + i * 0.1 }}
+                          className="flex items-start gap-3 p-2.5 rounded-lg bg-card/30 border border-border/20"
+                        >
+                          <div className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                            status === 'validated' ? 'bg-emerald-500/20 text-emerald-400' :
+                            status === 'challenged' ? 'bg-amber-500/20 text-amber-400' :
+                            'bg-slate-500/20 text-slate-400'
+                          }`}>
+                            {status === 'validated' ? '✓' : status === 'challenged' ? '?' : '—'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-foreground leading-relaxed">{assumption}</p>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] px-1.5 py-0 mt-1 border-0 ${
+                                status === 'validated' ? 'bg-emerald-500/15 text-emerald-400' :
+                                status === 'challenged' ? 'bg-amber-500/15 text-amber-400' :
+                                'bg-slate-500/15 text-slate-400'
+                              }`}
+                            >
+                              {status === 'validated' ? 'Confirmed by evidence' :
+                               status === 'challenged' ? 'Challenged by findings' :
+                               'Not tested this case'}
+                            </Badge>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                    <div className="mt-3 p-2.5 rounded-lg bg-orange-500/5 border border-orange-500/10">
+                      <p className="text-[11px] text-orange-300/80">
+                        💡 Documenting assumptions helps you think systematically. Compare your assumptions to outcomes to sharpen your intuition for future cases.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* Technique Reflection */}
             {techniquesUsed.length > 0 && (

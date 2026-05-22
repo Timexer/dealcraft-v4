@@ -83,9 +83,11 @@ export const case29: Scenario = {
   batna: {
     clientBATNA: 'Litigate fair use doctrine — expensive, uncertain, takes years',
     clientBATNAValue: 500000000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 2000000000,
     counterpartyBATNA: 'Push for full ban — risk regulatory overcorrection that kills negotiation leverage',
     counterpartyBATNAValue: 200000000,
+    counterpartyBATNAStrength: 'weak',
     counterpartyReservationValue: 800000000,
     estimatedZOPALow: 800000000,
     estimatedZOPAHigh: 2000000000,

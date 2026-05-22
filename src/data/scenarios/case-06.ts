@@ -91,9 +91,11 @@ export const case06: Scenario = {
   batna: {
     clientBATNA: 'Acquire a different manufacturing company (less strategic fit)',
     clientBATNAValue: 6000000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 10000000,
     counterpartyBATNA: 'Continue operating independently (declining market position)',
     counterpartyBATNAValue: 7000000,
+    counterpartyBATNAStrength: 'weak',
     counterpartyReservationValue: 9000000,
     estimatedZOPALow: 9000000,
     estimatedZOPAHigh: 11000000,

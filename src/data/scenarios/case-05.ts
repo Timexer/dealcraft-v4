@@ -92,9 +92,11 @@ export const case05: Scenario = {
   batna: {
     clientBATNA: 'Partner with a lesser-known chef (less impact, less cost)',
     clientBATNAValue: 20000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 100000,
     counterpartyBATNA: 'Other brand partnerships (less innovative, less aligned)',
     counterpartyBATNAValue: 50000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 80000,
     estimatedZOPALow: 50000,
     estimatedZOPAHigh: 100000,

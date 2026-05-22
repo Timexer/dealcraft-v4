@@ -84,9 +84,11 @@ export const case11: Scenario = {
   batna: {
     clientBATNA: 'Sell through online-only channels for holiday season',
     clientBATNAValue: 2500000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 4000000,
     counterpartyBATNA: 'Stock competitor wearables on shelves',
     counterpartyBATNAValue: 3000000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 5500000,
     estimatedZOPALow: 4000000,
     estimatedZOPAHigh: 5500000,

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lightbulb, ChevronRight, X, HelpCircle, LayoutDashboard, FileSearch, Brain, Search, MessageSquare, BarChart3 } from 'lucide-react';
+import { Lightbulb, ChevronRight, X, HelpCircle, LayoutDashboard, FileSearch, Brain, Search, MessageSquare, BarChart3, Shield, Target, Star, Handshake } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -44,10 +44,28 @@ const TUTORIAL_CONTENT: Partial<Record<GamePhase, TutorialPhaseConfig>> = {
   strategy: {
     steps: [
       {
-        title: 'Plan Your Approach',
+        title: 'Define Your Alternative',
         description:
-          'Before negotiating, prepare your strategy. Estimate your BATNA (walk-away point), identify trade opportunities in the Issue Priority Matrix, and choose your opening approach.',
-        icon: <Brain className="size-5 text-amber-500" />,
+          'First, define your BATNA: what will you do if talks fail? This is an action, not a price — it might involve going to court, finding another partner, or walking away entirely.',
+        icon: <Shield className="size-5 text-amber-500" />,
+      },
+      {
+        title: 'Set Your Walk-Away Point',
+        description:
+          'Next, set your walk-away point: the minimum acceptable outcome before you choose your alternative. This is a number, and it should typically be at least as high as your BATNA\'s financial equivalent.',
+        icon: <Target className="size-5 text-amber-500" />,
+      },
+      {
+        title: 'Set Your Target',
+        description:
+          'Then set your target outcome — your ambitious but realistic goal. This is NOT your minimum; it\'s where you want to land. Aim high but stay credible.',
+        icon: <Star className="size-5 text-amber-500" />,
+      },
+      {
+        title: 'Find the Deal Zone',
+        description:
+          'If your walk-away point and theirs leave overlap, there may be a deal zone. The ZOPA (Possible Deal Zone) is based on walk-away points, not BATNAs.',
+        icon: <Handshake className="size-5 text-amber-500" />,
       },
     ],
   },

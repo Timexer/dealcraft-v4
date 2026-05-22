@@ -83,9 +83,11 @@ export const case27: Scenario = {
   batna: {
     clientBATNA: 'Cancel season, form rival league — high risk, massive cost',
     clientBATNAValue: 500000000,
+    clientBATNAStrength: 'weak',
     clientReservationValue: 800000000,
     counterpartyBATNA: 'Cancel season, hire replacement players — catastrophic PR',
     counterpartyBATNAValue: 600000000,
+    counterpartyBATNAStrength: 'weak',
     counterpartyReservationValue: 900000000,
     estimatedZOPALow: 800000000,
     estimatedZOPAHigh: 1500000000,

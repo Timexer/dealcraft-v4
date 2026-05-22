@@ -83,9 +83,11 @@ export const case22: Scenario = {
   batna: {
     clientBATNA: 'Litigate the patent claim in court',
     clientBATNAValue: -200000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: -50000,
     counterpartyBATNA: 'File lawsuit and seek injunction',
     counterpartyBATNAValue: -300000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 15000,
     estimatedZOPALow: -50000,
     estimatedZOPAHigh: 15000,

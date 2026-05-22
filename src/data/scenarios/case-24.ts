@@ -83,9 +83,11 @@ export const case24: Scenario = {
   batna: {
     clientBATNA: 'Develop own standard independently',
     clientBATNAValue: 5000000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 8000000,
     counterpartyBATNA: 'Develop own standard independently',
     counterpartyBATNAValue: 4000000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 15000000,
     estimatedZOPALow: 8000000,
     estimatedZOPAHigh: 15000000,

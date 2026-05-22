@@ -84,9 +84,11 @@ export const case15: Scenario = {
   batna: {
     clientBATNA: 'Bootstrap on remaining funding, seek niche distribution channels',
     clientBATNAValue: 500000,
+    clientBATNAStrength: 'weak',
     clientReservationValue: 1500000,
     counterpartyBATNA: 'Build competing AI capability in-house (18+ months)',
     counterpartyBATNAValue: 3000000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 5000000,
     estimatedZOPALow: 1500000,
     estimatedZOPAHigh: 5000000,

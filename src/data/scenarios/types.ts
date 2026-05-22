@@ -40,18 +40,75 @@ export interface NegotiableIssue {
   resolvedValue?: string;
 }
 
+export type BATNAStrength = 'strong' | 'moderate' | 'weak';
+
 export interface BATNAInfo {
-  clientBATNA: string;
-  clientBATNAValue: number;
-  clientReservationValue: number;
-  counterpartyBATNA: string;
-  counterpartyBATNAValue: number;
-  counterpartyReservationValue: number;
+  clientBATNA: string;                          // Alternative action description (text-first, not monetary)
+  clientBATNAValue: number;                     // Financial equivalent (optional secondary, not BATNA itself)
+  clientBATNAStrength?: BATNAStrength;           // Strength of client's alternative (scenario-based, not monetary)
+  clientReservationValue: number;               // Walk-away point — minimum acceptable outcome
+  clientAspirationPrice?: number;               // Target outcome — ambitious but realistic goal
+  counterpartyBATNA: string;                    // Counterparty's alternative action description
+  counterpartyBATNAValue: number;               // Counterparty's financial equivalent
+  counterpartyBATNAStrength?: BATNAStrength;     // Strength of counterparty's alternative
+  counterpartyReservationValue: number;         // Counterparty's walk-away point
   estimatedZOPALow: number;
   estimatedZOPAHigh: number;
   trueZOPALow: number;
   trueZOPAHigh: number;
 }
+
+// ─── Display Labels (Microcopy) ──────────────────────────────────────
+// Centralized microcopy so all components use the same terminology.
+// BATNA = action-first, text-first, strength-based.
+// Reservation Value = numeric walk-away threshold.
+// Aspiration Price = target goal, not minimum.
+// ZOPA = overlap between reservation values.
+
+export const SECTION_LABELS = {
+  batna: 'Best Alternative if No Deal',
+  reservationValue: 'Walk-Away Point',
+  aspirationPrice: 'Target Outcome',
+  zopa: 'Possible Deal Zone',
+} as const;
+
+export const SECTION_DEFINITIONS = {
+  batna: 'What you will realistically do if this negotiation fails.',
+  reservationValue: 'The minimum outcome you can accept before choosing your alternative.',
+  aspirationPrice: 'Your ideal realistic result if the negotiation goes well.',
+  zopa: 'The estimated range where both sides may still prefer a deal over walking away.',
+} as const;
+
+export const SECTION_HELPERS = {
+  batnaCard: 'BATNA is an action, not a price. Describe the best realistic next step if no agreement is reached.',
+  batnaStrength: 'How strong is that alternative in practice, given cost, speed, leverage, and risk?',
+  batnaMonetary: 'Optional: estimate the financial effect of your alternative. This is not the BATNA itself, only one way to compare options.',
+  reservationValue: 'Set the point where you would stop negotiating and take your BATNA instead.',
+  aspirationPrice: 'Set your ambitious but credible target, not your fantasy number.',
+  zopa: 'This zone is based on reservation values, not BATNAs.',
+} as const;
+
+export const SECTION_TOOLTIPS = {
+  batna: 'Your BATNA is your best realistic fallback plan if talks collapse. It may involve money, time, reputation, legal action, delay, or a different partner.',
+  reservationValue: 'This is your walk-away threshold. If the deal drops below this point, your BATNA should be better.',
+  aspirationPrice: 'Your aspiration is where you want to land. It guides your strategy but is not your minimum.',
+  zopa: 'ZOPA exists when your estimated walk-away point and theirs still leave overlap.',
+} as const;
+
+export const INLINE_WARNINGS = {
+  rvBelowBatnaEquiv: 'Your walk-away point is below your BATNA monetary equivalent. Recheck whether your threshold is too low.',
+  noZopa: 'No clear deal zone yet. You may need better information, different issues, or a no-deal strategy.',
+  nonMonetaryBatna: 'This case includes non-monetary value. Do not treat BATNA as cash only.',
+} as const;
+
+export const ZOPA_LEGEND = {
+  clientRV: 'Your walk-away point',
+  counterpartyRV: 'Their estimated walk-away point',
+  batnaEquiv: 'BATNA monetary estimate',
+  zopaZone: 'Possible deal zone',
+  yourRV: 'Your walk-away estimate',
+  yourAspiration: 'Your target outcome',
+} as const;
 
 export interface InvestigationAction {
   id: string;

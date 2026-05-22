@@ -83,9 +83,11 @@ export const case12: Scenario = {
   batna: {
     clientBATNA: 'Source from alternative supplier at 20% higher cost',
     clientBATNAValue: 600000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 1000000,
     counterpartyBATNA: 'Lose BlueHarbor as client, face industry reputation damage',
     counterpartyBATNAValue: 400000,
+    counterpartyBATNAStrength: 'weak',
     counterpartyReservationValue: 700000,
     estimatedZOPALow: 700000,
     estimatedZOPAHigh: 1000000,

@@ -84,9 +84,11 @@ export const case16: Scenario = {
   batna: {
     clientBATNA: 'Lawsuit challenging IP clause enforceability',
     clientBATNAValue: 50000,
+    clientBATNAStrength: 'strong',
     clientReservationValue: 100000,
     counterpartyBATNA: 'Litigate IP claim, risk public precedent',
     counterpartyBATNAValue: 200000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 500000,
     estimatedZOPALow: 100000,
     estimatedZOPAHigh: 500000,

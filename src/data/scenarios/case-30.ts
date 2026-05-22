@@ -83,9 +83,11 @@ export const case30: Scenario = {
   batna: {
     clientBATNA: 'Status quo — fragile ceasefire, ongoing violence, international irrelevance',
     clientBATNAValue: 10000000,
+    clientBATNAStrength: 'weak',
     clientReservationValue: 50000000,
     counterpartyBATNA: 'Return to conflict — each faction believes they can win militarily',
     counterpartyBATNAValue: 5000000,
+    counterpartyBATNAStrength: 'weak',
     counterpartyReservationValue: 30000000,
     estimatedZOPALow: 30000000,
     estimatedZOPAHigh: 100000000,

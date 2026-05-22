@@ -10,7 +10,7 @@ import { useThemeApplication } from '@/components/game/ThemeSelector';
 
 // Floating negotiation term badges
 const NEGOTIATION_TERMS = [
-  'BATNA', 'ZOPA', 'Anchoring', 'Logrolling', 'Reservation Value',
+  'BATNA', 'ZOPA', 'Walk-Away Point', 'Anchoring', 'Logrolling',
   'Aspiration Price', 'Value Creation', 'Fixed Pie', 'Escalation',
   'Empathic Listening', 'Face-saving', 'Walk Away', 'Contingency',
   'Package Offer', 'Silence as a Tool',
@@ -110,38 +110,29 @@ export function TitleScreen() {
       <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-cyan-500/3 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute top-1/2 right-1/4 w-[300px] h-[300px] bg-amber-600/3 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Floating negotiation term badges — z-[1] keeps them below the z-10 content card */}
-      <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden">
-        {/* Radial gradient fade: clear zone in center so terms don't overlap the input card */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'radial-gradient(ellipse 50% 45% at 50% 50%, var(--background) 30%, transparent 70%)',
-          }}
-        />
-        {NEGOTIATION_TERMS.slice(0, 8).map((term, i) => {
-          const top = 10 + (i * 11) % 80;
-          const left = (i * 17 + 5) % 90;
-          return (
-            <div
-              key={term}
-              className="floating-badge glass-card px-3 py-1 rounded-full text-[11px] text-amber-500/40 font-medium tracking-wider"
-              style={{
-                top: `${top}%`,
-                left: `${left}%`,
-                ['--float-duration' as string]: `${12 + i * 2}s`,
-                ['--float-delay' as string]: `${i * 1.5}s`,
-                ['--drift-x' as string]: `${-30 + i * 10}px`,
-                ['--drift-y' as string]: `${-20 + i * 8}px`,
-                ['--float-start-opacity' as string]: '0.12',
-                ['--float-mid-opacity' as string]: '0.22',
-              } as React.CSSProperties}
-            >
-              {term}
-            </div>
-          );
-        })}
-      </div>
+      {/* Floating negotiation term badges */}
+      {NEGOTIATION_TERMS.slice(0, 8).map((term, i) => {
+        const top = 10 + (i * 11) % 80;
+        const left = (i * 17 + 5) % 90;
+        return (
+          <div
+            key={term}
+            className="floating-badge glass-card px-3 py-1 rounded-full text-[11px] text-amber-500/40 font-medium tracking-wider pointer-events-none"
+            style={{
+              top: `${top}%`,
+              left: `${left}%`,
+              ['--float-duration' as string]: `${12 + i * 2}s`,
+              ['--float-delay' as string]: `${i * 1.5}s`,
+              ['--drift-x' as string]: `${-30 + i * 10}px`,
+              ['--drift-y' as string]: `${-20 + i * 8}px`,
+              ['--float-start-opacity' as string]: '0.12',
+              ['--float-mid-opacity' as string]: '0.22',
+            } as React.CSSProperties}
+          >
+            {term}
+          </div>
+        );
+      })}
 
       {/* Animated corner accents */}
       <div className="absolute top-0 left-0 w-40 h-40 pointer-events-none">
@@ -267,24 +258,22 @@ export function TitleScreen() {
           </div>
         </motion.div>
 
-        {/* Premium footer */}
+        {/* Feature badges with glass-card style + parallax */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 1.2 }}
-          className="pt-6"
+          transition={{ duration: 0.5, delay: 1.0 }}
+          className="flex flex-wrap justify-center gap-2 pt-4"
+          style={{
+            transform: `translate(${mousePos.x * 2}px, ${mousePos.y * 2}px)`,
+            transition: 'transform 0.3s ease-out',
+          }}
         >
-          <p className="text-xs text-muted-foreground/40">
-            © 2026 by Timothy Hannum |{' '}
-            <a
-              href="https://englishbreakfast.pl"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="transition-colors duration-300 hover:text-amber-500/70 hover:underline"
-            >
-              Englishbreakfast.pl
-            </a>
-          </p>
+          {['30 Cases', '5 Tiers', 'Career Mode', 'Postmortem Analysis', 'Reputation System', 'Glossary', 'AI Advisor', 'Bias Traps', 'Streaks', 'Themes'].map((badge) => (
+            <span key={badge} className="glass-card px-3 py-1.5 rounded-full text-xs text-muted-foreground hover:text-amber-400 transition-colors duration-200 card-hover-lift cursor-default">
+              {badge}
+            </span>
+          ))}
         </motion.div>
       </motion.div>
     </div>

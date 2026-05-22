@@ -91,9 +91,11 @@ export const case04: Scenario = {
   batna: {
     clientBATNA: 'Synthetic alternative (inferior quality, brand risk)',
     clientBATNAValue: 30000,
+    clientBATNAStrength: 'weak',
     clientReservationValue: 80000,
     counterpartyBATNA: 'Status quo — continue selling to multiple buyers',
     counterpartyBATNAValue: 60000,
+    counterpartyBATNAStrength: 'strong',
     counterpartyReservationValue: 50000,
     estimatedZOPALow: 50000,
     estimatedZOPAHigh: 80000,

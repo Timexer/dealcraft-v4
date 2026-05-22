@@ -84,9 +84,11 @@ export const case13: Scenario = {
   batna: {
     clientBATNA: 'Invest in competing cloud startup at lower valuation',
     clientBATNAValue: 8000000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 18000000,
     counterpartyBATNA: 'Wait for competing bidder or raise next funding round',
     counterpartyBATNAValue: 15000000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 22000000,
     estimatedZOPALow: 18000000,
     estimatedZOPAHigh: 22000000,

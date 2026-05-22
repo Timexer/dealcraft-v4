@@ -83,9 +83,11 @@ export const case23: Scenario = {
   batna: {
     clientBATNA: 'Keep the company and continue operating independently',
     clientBATNAValue: 15000000,
+    clientBATNAStrength: 'moderate',
     clientReservationValue: 40000000,
     counterpartyBATNA: 'Find another acquisition target',
     counterpartyBATNAValue: 30000000,
+    counterpartyBATNAStrength: 'moderate',
     counterpartyReservationValue: 55000000,
     estimatedZOPALow: 40000000,
     estimatedZOPAHigh: 55000000,

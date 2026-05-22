@@ -33,34 +33,34 @@ const GLOSSARY_TERMS: GlossaryTerm[] = [
   // Core Concepts
   {
     name: 'BATNA',
-    short: 'Best Alternative to a Negotiated Agreement — Your walk-away option',
+    short: 'Best Alternative to a Negotiated Agreement — Your best alternative if talks fail',
     explanation:
-      'Your BATNA is the most advantageous alternative course of action you can take if negotiations fail and an agreement cannot be reached. It represents your source of power in any negotiation: the better your BATNA, the greater your ability to walk away from an unsatisfactory deal. Before entering any negotiation, you must identify and improve your BATNA. A strong BATNA transforms your psychology from needy to confident, allowing you to negotiate from strength rather than desperation.',
-    tip: 'Never enter a negotiation without knowing your BATNA. Spend time improving it before you sit at the table — even a small improvement in your alternative dramatically shifts the power balance in your favor.',
+      'Your BATNA is your best realistic fallback plan if talks collapse and no agreement can be reached. It is an ACTION — what you will actually do — not a number. A BATNA may involve finding another supplier, going to court, walking away, or pursuing a completely different strategy. The strength of your BATNA (weak, moderate, or strong) determines your negotiating power: a strong alternative gives you confidence to walk away from bad deals, while a weak one makes you dependent on reaching agreement. Before entering any negotiation, identify and strengthen your BATNA. It may involve money, time, reputation, legal action, delay, or a different partner — do not reduce it to cash only.',
+    tip: 'Never enter a negotiation without knowing your BATNA — your best alternative ACTION if talks fail. Spend time strengthening it before you sit at the table. A strong BATNA transforms your psychology from needy to confident.',
     category: 'core',
   },
   {
     name: 'ZOPA',
-    short: 'Zone of Possible Agreement — The range where both sides can agree',
+    short: 'Zone of Possible Agreement — The overlap where both sides prefer a deal over walking away',
     explanation:
-      'The ZOPA is the overlap between each party\'s reservation values — the range of outcomes that both sides would accept over their respective BATNAs. If no ZOPA exists, no deal is possible. The key insight is that identifying the ZOPA requires information about the other side\'s reservation value, which they have every incentive to conceal. Skilled negotiators probe for the boundaries of the ZOPA without revealing their own.',
-    tip: 'Map out the ZOPA mentally before negotiating. If you suspect no ZOPA exists, focus on creating one by adding issues, changing the structure, or finding creative solutions that expand the zone.',
+      'The ZOPA is the overlap between each party\'s reservation values (walk-away points) — the range of outcomes that both sides would accept rather than choose their alternatives. ZOPA is computed from reservation values, not BATNAs. If no ZOPA exists, no deal is possible unless new issues are added or the structure changes. The key insight is that identifying the ZOPA requires information about the other side\'s walk-away point, which they have every incentive to conceal.',
+    tip: 'Map out the ZOPA mentally before negotiating, based on estimated walk-away points. If you suspect no ZOPA exists, focus on creating one by adding issues, changing the structure, or finding creative solutions that expand the zone.',
     category: 'core',
   },
   {
     name: 'Reservation Value',
-    short: 'The worst acceptable outcome you would still agree to',
+    short: 'Your walk-away point — the worst outcome you would still accept',
     explanation:
-      'Your reservation value is the point at which you are indifferent between accepting the deal and walking away to your BATNA. It is the absolute minimum (or maximum, depending on which side you\'re on) that you would accept. Anything worse than your reservation value should lead you to walk away. Crucially, your reservation value should be determined before the negotiation begins and should not shift based on the other party\'s offers or persuasive tactics.',
-    tip: 'Write down your reservation value before every negotiation and commit to it. The most dangerous moment is when you start rationalizing why "just a little bit worse" is still acceptable — that\'s the slippery slope to a bad deal.',
+      'Your reservation value is your walk-away threshold — the point at which you are indifferent between accepting the deal and walking away to your BATNA. It is a NUMBER, unlike your BATNA which is an action. Anything worse than your reservation value should lead you to walk away. Crucially, your reservation value should be determined before the negotiation begins and should not shift based on the other party\'s offers or persuasive tactics. It is NOT the same as your BATNA — your BATNA is what you do, your reservation value is where you stop negotiating.',
+    tip: 'Write down your walk-away point before every negotiation and commit to it. The most dangerous moment is when you start rationalizing why "just a little bit worse" is still acceptable — that\'s the slippery slope to a bad deal.',
     category: 'core',
   },
   {
     name: 'Aspiration Price',
-    short: 'Your ideal outcome — the best realistically achievable result',
+    short: 'Your target outcome — the best realistically achievable result',
     explanation:
-      'Your aspiration price is the ambitious but realistic target you aim to achieve in a negotiation. Research consistently shows that negotiators who set higher aspirations achieve better outcomes, because aspirations shape your behavior, your first offers, and your persistence. The key is to distinguish between aspiration (ambitious but possible) and fantasy (wishful thinking). Aspirations should be grounded in research and analysis of what the market or situation can bear.',
-    tip: 'Set your aspiration price high but justifiable. Negotiators who make ambitious first offers anchored in credible reasoning consistently outperform those who start moderate — the first offer anchors the entire conversation.',
+      'Your aspiration price is your target — the ambitious but realistic goal you aim to achieve in a negotiation. It is NOT your minimum (that\'s your reservation value) and it is NOT your alternative (that\'s your BATNA). Research consistently shows that negotiators who set higher aspirations achieve better outcomes, because aspirations shape your behavior, your first offers, and your persistence. The key is to distinguish between aspiration (ambitious but possible) and fantasy (wishful thinking).',
+    tip: 'Set your target high but justifiable. Negotiators who make ambitious first offers anchored in credible reasoning consistently outperform those who start moderate. Your target should be above your walk-away point — if it isn\'t, you\'re aiming too low.',
     category: 'core',
   },
   {
@@ -501,6 +501,11 @@ export function NegotiationGlossary({
         className="sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[92vh] p-0 gap-0 overflow-hidden border-amber-500/20 bg-zinc-950/95 backdrop-blur-xl"
         showCloseButton={false}
       >
+        {/* Accessible title for screen readers */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>Negotiation Glossary</DialogTitle>
+          <DialogDescription>Key terms and concepts from Negotiation Genius by Deepak Malhotra and Max Bazerman</DialogDescription>
+        </DialogHeader>
         {/* ─── Glassmorphism Header ─── */}
         <div
           className="relative overflow-hidden border-b border-amber-500/15"
