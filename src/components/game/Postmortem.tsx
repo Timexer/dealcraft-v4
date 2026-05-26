@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
-import { CATEGORY_COLORS, CATEGORY_LABELS, type EndingScores } from '@/data/scenarios/types';
+import { CATEGORY_COLORS, CATEGORY_LABELS, type EndingScores, SECTION_LABELS, SECTION_DEFINITIONS, type BATNAStrength } from '@/data/scenarios/types';
 import { calculateFinalScore, getScoreGrade, getReputationType, calculateReputationDelta, calculateStatsDelta, calculateDynamicScores, getScoreExplanation, type BehaviorContext } from '@/lib/game-engine';
 import { StreakIndicator } from '@/components/game/StreakIndicator';
 import { TechniqueBadge, TECHNIQUE_INFO, getTechniqueInfo } from '@/components/game/TechniqueBadge';
@@ -49,6 +49,10 @@ import {
   XCircle,
   BookOpen,
   Clock,
+  Scale,
+  ArrowLeftRight,
+  Crosshair,
+  ShieldCheck,
 } from 'lucide-react';
 
 const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string; maxColor: string }[] = [
@@ -128,6 +132,24 @@ const GRADE_COLORS: Record<string, string> = {
   C: 'text-amber-400 border-amber-500/50 bg-amber-500/10',
   D: 'text-orange-400 border-orange-500/50 bg-orange-500/10',
   F: 'text-red-400 border-red-500/50 bg-red-500/10',
+};
+
+// Helper: resolve BATNA strength with fallback derivation
+function resolveBATNAStrength(strength: BATNAStrength | undefined, clientValue: number, counterpartyValue: number, side: 'client' | 'counterparty'): BATNAStrength {
+  if (strength) return strength;
+  const value = side === 'client' ? clientValue : counterpartyValue;
+  const otherValue = side === 'client' ? counterpartyValue : clientValue;
+  if (value === 0) return 'weak';
+  const ratio = otherValue > 0 ? value / otherValue : 1;
+  if (ratio >= 1.3) return 'strong';
+  if (ratio >= 0.7) return 'moderate';
+  return 'weak';
+}
+
+const BATNA_STRENGTH_STYLES: Record<BATNAStrength, { badge: string; label: string }> = {
+  strong: { badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', label: 'Strong' },
+  moderate: { badge: 'bg-amber-500/20 text-amber-400 border-amber-500/30', label: 'Moderate' },
+  weak: { badge: 'bg-red-500/20 text-red-400 border-red-500/30', label: 'Weak' },
 };
 
 function AnimatedNumber({ value, duration = 1500 }: { value: number; duration?: number }) {
@@ -241,7 +263,7 @@ export function Postmortem() {
     reputation, addReputation,
     currentStreak, bestStreak, streakType,
     techniquesUsed, clearCaseSession,
-    batnaEstimate, openingStrategy, assumptions,
+    batnaEstimate, reservationEstimate, openingStrategy, assumptions,
     challengeMode,
   } = useGameStore();
 
@@ -449,6 +471,256 @@ export function Postmortem() {
                         &ldquo;{scenario.postmortem.lesson}&rdquo;
                       </p>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Negotiation Power Analysis */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}>
+              <Card className="bg-amber-500/10 border-amber-500/20 overflow-hidden">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-300">
+                    <Scale className="h-4 w-4" />
+                    Negotiation Power Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0 space-y-5">
+                  {/* 1. Alternative Comparison */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <ShieldCheck className="h-3.5 w-3.5 text-amber-400" />
+                      <p className="text-xs font-bold text-amber-400 uppercase tracking-wider">{SECTION_LABELS.batna}</p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mb-3">{SECTION_DEFINITIONS.batna}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Client BATNA */}
+                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-amber-300">Your Client&apos;s Alternative</span>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] px-2 py-0 border-0 ${BATNA_STRENGTH_STYLES[resolveBATNAStrength(scenario.batna.clientBATNAStrength, scenario.batna.clientBATNAValue, scenario.batna.counterpartyBATNAValue, 'client')].badge}`}
+                          >
+                            {BATNA_STRENGTH_STYLES[resolveBATNAStrength(scenario.batna.clientBATNAStrength, scenario.batna.clientBATNAValue, scenario.batna.counterpartyBATNAValue, 'client')].label}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-amber-100 leading-relaxed italic">&ldquo;{scenario.batna.clientBATNA}&rdquo;</p>
+                        {scenario.batna.clientBATNAValue > 0 && (
+                          <p className="text-[11px] text-muted-foreground">Financial equivalent: €{scenario.batna.clientBATNAValue.toLocaleString()}</p>
+                        )}
+                      </div>
+                      {/* Counterparty BATNA */}
+                      <div className="p-3 rounded-lg bg-orange-500/8 border border-orange-500/20 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-orange-400">Counterparty&apos;s Alternative</span>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] px-2 py-0 border-0 ${BATNA_STRENGTH_STYLES[resolveBATNAStrength(scenario.batna.counterpartyBATNAStrength, scenario.batna.clientBATNAValue, scenario.batna.counterpartyBATNAValue, 'counterparty')].badge}`}
+                          >
+                            {BATNA_STRENGTH_STYLES[resolveBATNAStrength(scenario.batna.counterpartyBATNAStrength, scenario.batna.clientBATNAValue, scenario.batna.counterpartyBATNAValue, 'counterparty')].label}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-orange-100 leading-relaxed italic">&ldquo;{scenario.batna.counterpartyBATNA}&rdquo;</p>
+                        {scenario.batna.counterpartyBATNAValue > 0 && (
+                          <p className="text-[11px] text-muted-foreground">Financial equivalent: €{scenario.batna.counterpartyBATNAValue.toLocaleString()}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator className="bg-amber-500/15" />
+
+                  {/* 2. Walk-Away Point Analysis */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="h-3.5 w-3.5 text-amber-400" />
+                      <p className="text-xs font-bold text-amber-400 uppercase tracking-wider">{SECTION_LABELS.reservationValue}</p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mb-3">{SECTION_DEFINITIONS.reservationValue}</p>
+                    <div className="space-y-2">
+                      {/* Client reservation value */}
+                      <div className="flex items-center justify-between p-2 rounded-md bg-amber-500/8 border border-amber-500/15">
+                        <span className="text-[11px] text-amber-300">Client&apos;s Walk-Away Point</span>
+                        <span className="text-xs font-bold text-amber-200">€{scenario.batna.clientReservationValue.toLocaleString()}</span>
+                      </div>
+                      {/* Counterparty reservation value */}
+                      <div className="flex items-center justify-between p-2 rounded-md bg-orange-500/8 border border-orange-500/15">
+                        <span className="text-[11px] text-orange-300">Counterparty&apos;s Est. Walk-Away Point</span>
+                        <span className="text-xs font-bold text-orange-200">€{scenario.batna.counterpartyReservationValue.toLocaleString()}</span>
+                      </div>
+                      {/* Player's estimate */}
+                      <div className="flex items-center justify-between p-2 rounded-md bg-card/50 border border-border/30">
+                        <span className="text-[11px] text-muted-foreground">Your Estimated Walk-Away Point</span>
+                        <span className="text-xs font-bold">
+                          {reservationEstimate > 0
+                            ? <>€{reservationEstimate.toLocaleString()}
+                              {(() => {
+                                const actual = scenario.batna.clientReservationValue;
+                                const diff = Math.abs(reservationEstimate - actual);
+                                const pct = actual > 0 ? Math.round((1 - diff / actual) * 100) : 0;
+                                const accuracy = Math.max(0, pct);
+                                const isAccurate = accuracy >= 80;
+                                const isClose = accuracy >= 50;
+                                return (
+                                  <span className={`ml-2 text-[10px] font-normal ${isAccurate ? 'text-emerald-400' : isClose ? 'text-amber-400' : 'text-red-400'}`}>
+                                    {isAccurate ? '✓ Accurate' : isClose ? '≈ Close' : '✗ Off'} ({accuracy}% match)
+                                  </span>
+                                );
+                              })()}
+                            </>
+                            : <span className="text-[11px] text-muted-foreground/60 italic">Not set</span>
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator className="bg-amber-500/15" />
+
+                  {/* 3. ZOPA Analysis */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <ArrowLeftRight className="h-3.5 w-3.5 text-amber-400" />
+                      <p className="text-xs font-bold text-amber-400 uppercase tracking-wider">{SECTION_LABELS.zopa}</p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mb-3">{SECTION_DEFINITIONS.zopa}</p>
+                    <div className="space-y-2">
+                      {/* Estimated ZOPA */}
+                      <div className="p-2.5 rounded-md bg-cyan-500/8 border border-cyan-500/15">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] text-cyan-300">Estimated ZOPA Range</span>
+                          <span className="text-xs font-bold text-cyan-200">€{scenario.batna.estimatedZOPALow.toLocaleString()} – €{scenario.batna.estimatedZOPAHigh.toLocaleString()}</span>
+                        </div>
+                        <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full bg-gradient-to-r from-cyan-500/40 to-cyan-400/60" style={{ width: '100%' }} />
+                        </div>
+                      </div>
+                      {/* True ZOPA */}
+                      <div className="p-2.5 rounded-md bg-emerald-500/8 border border-emerald-500/15">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] text-emerald-300">True ZOPA Range</span>
+                          <span className="text-xs font-bold text-emerald-200">€{scenario.batna.trueZOPALow.toLocaleString()} – €{scenario.batna.trueZOPAHigh.toLocaleString()}</span>
+                        </div>
+                        <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full bg-gradient-to-r from-emerald-500/40 to-emerald-400/60" style={{ width: '100%' }} />
+                        </div>
+                      </div>
+                      {/* ZOPA existence indicator */}
+                      {(() => {
+                        const zopaExists = scenario.batna.trueZOPALow < scenario.batna.trueZOPAHigh;
+                        const estimatedZopaExists = scenario.batna.estimatedZOPALow < scenario.batna.estimatedZOPAHigh;
+                        return (
+                          <div className={`flex items-center gap-2 p-2 rounded-md text-xs ${zopaExists ? 'bg-emerald-500/10 border border-emerald-500/15' : 'bg-red-500/10 border border-red-500/15'}`}>
+                            {zopaExists ? (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                            ) : (
+                              <XCircle className="h-3.5 w-3.5 text-red-400" />
+                            )}
+                            <span className={zopaExists ? 'text-emerald-200' : 'text-red-200'}>
+                              {zopaExists
+                                ? 'A deal zone existed — both sides could have done better than walking away'
+                                : 'No deal zone existed — at least one side would be better off walking away'}
+                            </span>
+                            {estimatedZopaExists !== zopaExists && (
+                              <span className="text-[10px] text-amber-400 ml-1">
+                                (Your estimate disagreed)
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  <Separator className="bg-amber-500/15" />
+
+                  {/* 4. BATNA Accuracy Assessment */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Crosshair className="h-3.5 w-3.5 text-amber-400" />
+                      <p className="text-xs font-bold text-amber-400 uppercase tracking-wider">BATNA Accuracy Assessment</p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mb-3">How well did you estimate your client&apos;s BATNA value?</p>
+                    {batnaEstimate > 0 ? (() => {
+                      const actual = scenario.batna.clientBATNAValue;
+                      if (actual === 0) {
+                        return (
+                          <div className="p-3 rounded-md bg-muted/20 border border-border/20">
+                            <p className="text-xs text-muted-foreground">
+                              This case has no monetary BATNA equivalent, so accuracy cannot be numerically compared. Your estimate: €{batnaEstimate.toLocaleString()}
+                            </p>
+                          </div>
+                        );
+                      }
+                      const diff = Math.abs(batnaEstimate - actual);
+                      const pct = Math.max(0, Math.round((1 - diff / actual) * 100));
+                      const gradeInfo =
+                        pct >= 90 ? { grade: 'S', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30', label: 'Expert Intuition' } :
+                        pct >= 70 ? { grade: 'A', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', label: 'Strong Read' } :
+                        pct >= 50 ? { grade: 'B', color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30', label: 'Reasonable Estimate' } :
+                        pct >= 30 ? { grade: 'C', color: 'text-amber-400 bg-amber-500/10 border-amber-500/30', label: 'Rough Approximation' } :
+                        { grade: 'F', color: 'text-red-400 bg-red-500/10 border-red-500/30', label: 'Significant Miscalculation' };
+                      const direction = batnaEstimate > actual ? 'overestimated' : batnaEstimate < actual ? 'underestimated' : 'exactly right';
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-4 p-3 rounded-lg bg-card/50 border border-border/30">
+                            <div className={`w-14 h-14 rounded-full border-2 flex items-center justify-center text-lg font-black ${gradeInfo.color}`}>
+                              {gradeInfo.grade}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-bold text-foreground">{gradeInfo.label}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Your estimate: €{batnaEstimate.toLocaleString()} — Actual: €{actual.toLocaleString()}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground mt-0.5">
+                                {direction === 'exactly right'
+                                  ? 'You nailed it!'
+                                  : `You ${direction} by €${diff.toLocaleString()} (${pct}% match)`}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-2xl font-black text-amber-400">{pct}%</p>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Accuracy</p>
+                            </div>
+                          </div>
+                          {/* Visual accuracy bar */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] text-muted-foreground">Your Estimate</span>
+                              <span className="text-[11px] font-bold text-amber-300">€{batnaEstimate.toLocaleString()}</span>
+                            </div>
+                            <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+                              <motion.div
+                                className="h-full rounded-full bg-amber-500/60"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(100, (batnaEstimate / Math.max(actual, batnaEstimate, 1)) * 100)}%` }}
+                                transition={{ duration: 0.8, delay: 0.6, ease: 'easeOut' }}
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] text-muted-foreground">Actual Value</span>
+                              <span className="text-[11px] font-bold text-emerald-300">€{actual.toLocaleString()}</span>
+                            </div>
+                            <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+                              <motion.div
+                                className="h-full rounded-full bg-emerald-500/60"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(100, (actual / Math.max(actual, batnaEstimate, 1)) * 100)}%` }}
+                                transition={{ duration: 0.8, delay: 0.7, ease: 'easeOut' }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })() : (
+                      <div className="flex items-center gap-2 p-3 rounded-md bg-muted/15 border border-border/15">
+                        <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
+                        <p className="text-xs text-muted-foreground">No BATNA estimate was set. Setting a BATNA estimate before negotiating helps you understand your leverage and walk-away point.</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

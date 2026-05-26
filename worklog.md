@@ -2334,3 +2334,143 @@ Unresolved Issues / Risks:
 - Should add clientAspirationPrice to case data files for scenario-specific aspiration defaults
 - Could expand the scoring engine to give bonuses for setting walk-away point close to actual reservation value
 - Could add more interactive ZOPA visualization (drag markers)
+
+---
+Task ID: 4-a
+Agent: Feature Developer
+Task: Add "Negotiation Power Analysis" section to the Postmortem component
+
+Work Log:
+- Read worklog.md to understand project context and previous development history
+- Read Postmortem.tsx to understand current structure and component patterns
+- Read types.ts to find SECTION_LABELS, SECTION_DEFINITIONS, BATNAStrength, and BATNAInfo type definitions
+- Read game-store.ts to confirm batnaEstimate, reservationEstimate, aspirationEstimate are available in the store
+- Read StrategyBoard.tsx to find deriveBATNAStrength helper function for reference
+- Added new imports to Postmortem.tsx:
+  - SECTION_LABELS, SECTION_DEFINITIONS, BATNAStrength from @/data/scenarios/types
+  - Scale, ArrowLeftRight, Crosshair, ShieldCheck icons from lucide-react
+  - reservationEstimate added to useGameStore destructuring
+- Added resolveBATNAStrength helper function (simplified version of deriveBATNAStrength from StrategyBoard.tsx)
+- Added BATNA_STRENGTH_STYLES constant for consistent strength badge styling
+- Added "Negotiation Power Analysis" section between Key Takeaway card and Negotiation Duration section
+- Section contains 4 sub-sections:
+  1. Alternative Comparison Card - Side-by-side client vs counterparty BATNA with strength badges and financial equivalents, using SECTION_LABELS.batna
+  2. Walk-Away Point Analysis - Shows client/counterparty reservation values, player's reservationEstimate with accuracy indicator (✓ Accurate / ≈ Close / ✗ Off with percentage match)
+  3. ZOPA Analysis - Estimated and true ZOPA ranges with visual bars, ZOPA existence indicator using CheckCircle2/XCircle icons, SECTION_LABELS.zopa label
+  4. BATNA Accuracy Assessment - Compares player's batnaEstimate against scenario.batna.clientBATNAValue with grade system (S/A/B/C/F), visual comparison bars, direction indicator (overestimated/underestimated), and "No BATNA estimate was set" fallback
+- Used consistent amber/gold accent colors matching game design language
+- Used motion.div with initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} pattern
+- Used Card, CardContent, CardHeader, CardTitle, Badge, Separator components
+- All existing sections preserved — only additions made
+- Lint passes cleanly with zero errors
+- Page compiles and loads successfully
+
+Stage Summary:
+- Added Negotiation Power Analysis section to Postmortem component with 4 sub-sections
+- Alternative Comparison: side-by-side BATNA display with strength badges
+- Walk-Away Point: reservation values with player accuracy indicator
+- ZOPA Analysis: estimated vs true ranges with existence check
+- BATNA Accuracy: grade system (S/A/B/C/F) comparing estimate to actual value
+- Consistent with existing component patterns and design language
+- No modifications to existing sections
+- Lint passes cleanly
+
+---
+Task ID: 4-b
+Agent: Schema & ZOPA Developer
+Task: Add V4 schema interfaces to types.ts and enhance ZOPA visualization in StrategyBoard
+
+Work Log:
+- Read worklog.md for project history and context
+- Read existing types.ts (381 lines) to understand BATNAInfo structure and placement
+- Read existing StrategyBoard.tsx to understand current ZOPA visualization (dashed BATNA marker, no-ZOPA warning, legend)
+- Task 1: Added V4 Schema interfaces to types.ts after BATNAInfo interface (line 59):
+  - AlternativePlan: description, strength, financialEquivalent?, confidence?, notes?
+  - NegotiationThresholds: reservationValue?, aspirationValue?, estimatedCounterpartyReservationValue?
+  - ZOPAEstimate: estimatedLow?, estimatedHigh?, actualLow?, actualHigh?, confidence?
+  - NegotiationPowerModel: clientAlternative, counterpartyAlternative, thresholds, zopa
+  - batnaInfoToPowerModel() converter function mapping legacy BATNAInfo fields to V4 structure
+- Task 2: Enhanced StrategyBoard ZOPA visualization:
+  1. Ghost markers for out-of-range BATNA equivalent values:
+     - Added batnaEstimateOutOfRange and clientBatnaOutOfRange detection
+     - Ghost arrow indicators at chart edges (left/right) with CSS triangle arrows pointing outward
+     - Tooltips explain value is outside visible range and whether above/below chart scale
+     - Cyan color for client BATNA, orange for counterparty
+  2. Counterparty BATNA equivalent ghost marker (orange dashed):
+     - New dashed marker using batna.counterpartyBATNAValue with orange-400/60 styling
+     - Label "CP BATNA monetary estimate" below the bar
+     - Tooltip showing counterparty value with out-of-range explanation
+     - Added to legend with orange dashed swatch and "CP BATNA monetary estimate" label
+  3. Improved "no zone" ZOPA state:
+     - When zopaWidth <= 0: shows two colored zones (emerald for client, orange for counterparty) with gap between
+     - Gap zone has red dashed border, red background tint, and "No overlap" text
+     - ZOPA label only shown when there IS a ZOPA (not in no-overlap state)
+  4. ZOPA width indicator:
+     - Below ZOPA bar: "Deal zone: €X wide" with CheckCircle2 icon (amber) when ZOPA exists
+     - "No deal zone (gap: €X)" with AlertTriangle icon (red) when no ZOPA
+     - Uses zopaWidthEuros and noZopaGap calculated values
+- Extended maxVal to include BATNA values (clientBATNAValue, counterpartyBATNAValue) so markers stay within range more often
+- All lint checks pass cleanly with zero errors
+- Dev server compiles successfully
+
+Stage Summary:
+- V4 Schema: 4 new interfaces (AlternativePlan, NegotiationThresholds, ZOPAEstimate, NegotiationPowerModel) + converter function added to types.ts
+- ZOPA ghost markers: out-of-range BATNA equivalents show arrow indicators at chart edges with explanatory tooltips
+- Counterparty BATNA marker: orange dashed line with tooltip showing CP financial equivalent
+- No-ZOPA visualization: two colored zones with "No overlap" gap instead of just a warning
+- ZOPA width indicator: "Deal zone: €X wide" / "No deal zone (gap: €X)" below the bar
+- All existing functionality preserved; microcopy constants reused throughout
+---
+Task ID: v4-session
+Agent: Main Developer
+Task: Fix site connectivity, implement v4 BATNA UX improvements (Postmortem Power Analysis, ZOPA visualization enhancements, new schema types)
+
+Work Log:
+- Diagnosed site connectivity issue: dev server was running (HTTP 200) but external preview URL was temporarily down (transient gateway issue)
+- Restarted dev server to ensure clean state
+- Performed full QA test via agent-browser: Title → Dashboard → Intake → Strategy → Investigation → Negotiation → Postmortem → Dashboard - ALL WORKING
+- Confirmed existing v4 BATNA UX implementations already in place from previous sessions:
+  - StrategyBoard: scenario cards with strength badges (not progress bars)
+  - SECTION_LABELS, SECTION_DEFINITIONS, SECTION_HELPERS, SECTION_TOOLTIPS, INLINE_WARNINGS, ZOPA_LEGEND microcopy constants
+  - NegotiationGlossary: BATNA=action, ZOPA=from RVs, RV=walk-away, Aspiration=target
+  - TutorialOverlay: 4-step strategy tutorial distinguishing BATNA from walk-away
+  - BATNAStrength type and per-case strength values in all 30 case files
+- Added "Negotiation Power Analysis" section to Postmortem (Task 4-a, delegated):
+  - Alternative Comparison Card: side-by-side client vs counterparty BATNA with strength badges and financial equivalents
+  - Walk-Away Point Analysis: actual vs player-estimated reservation values with accuracy indicator
+  - ZOPA Analysis: estimated and true ZOPA ranges with visual bars and existence indicator
+  - BATNA Accuracy Assessment: grade system comparing player estimate to actual value
+- Added V4 schema types to types.ts (Task 4-b, delegated):
+  - AlternativePlan, NegotiationThresholds, ZOPAEstimate, NegotiationPowerModel interfaces
+  - batnaInfoToPowerModel() converter function for legacy-to-V4 migration
+- Enhanced ZOPA visualization in StrategyBoard (Task 4-b, delegated):
+  - Ghost markers for out-of-range BATNA equivalent values with directional arrows
+  - Counterparty BATNA equivalent marker (orange dashed)
+  - Improved no-ZOPA state with colored zones and "No overlap" text
+  - ZOPA width indicator below bar: "Deal zone: €X wide" or "No deal zone (gap: €X)"
+- All lint checks pass cleanly
+- Dev server running successfully with no critical errors
+
+Stage Summary:
+- Site connectivity confirmed working (was transient gateway issue)
+- Full game loop QA passed with zero errors
+- Postmortem now shows Negotiation Power Analysis section with BATNA comparison, walk-away accuracy, ZOPA analysis, and BATNA accuracy assessment
+- New V4 schema types added for future migration (AlternativePlan, NegotiationThresholds, ZOPAEstimate, NegotiationPowerModel)
+- ZOPA visualization enhanced with ghost markers, counterparty BATNA marker, improved no-ZOPA state, and width indicator
+- All BATNA terminology standardized across StrategyBoard, Tutorial, Glossary, and Postmortem
+
+Current Project Status:
+- Dealcraft v4.0 is a fully playable, feature-rich negotiation career simulator
+- 30 cases with RICH dialogue trees
+- Complete game loop with dynamic scoring, reputation, achievements, career progression, replay
+- V4 BATNA UX: BATNA = action-first/strength-based, RV = walk-away threshold, ZOPA = from RVs only
+- LLM AI Advisor, Challenge Mode, Sound Effects, Bias Traps, Tutorial, Glossary
+- Negotiation Power Analysis in Postmortem for post-game learning
+- Premium visual design with 35+ CSS animations
+
+Unresolved Issues / Next Steps:
+- Framer-motion color animation warning (cosmetic, non-breaking)
+- Could implement full field migration from BATNAInfo to NegotiationPowerModel across all 30 case files
+- Could add social sharing of scores
+- Could add multiplayer/competitive negotiation mode
+- Could add case difficulty scaling based on player skill

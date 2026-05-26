@@ -277,7 +277,7 @@ export function StrategyBoard() {
   // FIX 5: ZOPA is bounded by Reservation Values, NOT BATNA values
   const clientRV = batna.clientReservationValue;
   const cpRV = batna.counterpartyReservationValue;
-  const maxVal = Math.max(clientRV, cpRV, batna.estimatedZOPAHigh) * 1.1;
+  const maxVal = Math.max(clientRV, cpRV, batna.estimatedZOPAHigh, batna.clientBATNAValue, batna.counterpartyBATNAValue) * 1.1;
   const zopaLow = batna.estimatedZOPALow;
   const zopaHigh = batna.estimatedZOPAHigh;
 
@@ -292,6 +292,23 @@ export function StrategyBoard() {
 
   // Aspiration value position
   const aspirationPos = aspirationEstimate > 0 && maxVal > 0 ? (aspirationEstimate / maxVal) * 100 : 0;
+
+  // Client BATNA equivalent position (for ghost marker detection)
+  const clientBatnaPos = maxVal > 0 ? (batna.clientBATNAValue / maxVal) * 100 : 0;
+  const clientBatnaOutOfRange = batna.clientBATNAValue > 0 && (clientBatnaPos < 0 || clientBatnaPos > 100);
+
+  // Counterparty BATNA equivalent position
+  const cpBatnaPos = maxVal > 0 ? (batna.counterpartyBATNAValue / maxVal) * 100 : 0;
+  const cpBatnaOutOfRange = batna.counterpartyBATNAValue > 0 && (cpBatnaPos < 0 || cpBatnaPos > 100);
+
+  // Player BATNA estimate position
+  const batnaEstimatePos = maxVal > 0 && batnaEstimate > 0 ? (batnaEstimate / maxVal) * 100 : 0;
+  const batnaEstimateOutOfRange = batnaEstimate > 0 && (batnaEstimatePos < 0 || batnaEstimatePos > 100);
+
+  // ZOPA width in euros for indicator text
+  const zopaWidthEuros = zopaHigh - zopaLow;
+  const noZopa = zopaWidth <= 0;
+  const noZopaGap = noZopa ? Math.abs(zopaLow - zopaHigh) : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -553,10 +570,33 @@ export function StrategyBoard() {
                     <p className="text-[11px] text-muted-foreground/60">{SECTION_HELPERS.zopa}</p>
                     <div className="zopa-bar">
                       {/* ZOPA overlap zone — bounded by Reservation Values */}
-                      <div
-                        className="overlap-zone"
-                        style={{ left: `${zopaLeft}%`, width: `${zopaWidth}%` }}
-                      />
+                      {noZopa ? (
+                        /* No-ZOPA state: show two reservation markers with gap */
+                        <>
+                          <div
+                            className="absolute top-0 h-full bg-emerald-500/10"
+                            style={{ left: '0%', width: `${Math.min(clientPos, cpPos)}%` }}
+                          />
+                          <div
+                            className="absolute top-0 h-full bg-orange-500/10"
+                            style={{ left: `${Math.max(clientPos, cpPos)}%`, width: `${100 - Math.max(clientPos, cpPos)}%` }}
+                          />
+                          {/* Gap zone between RVs */}
+                          <div
+                            className="absolute top-0 h-full flex items-center justify-center border-x border-dashed border-red-400/30 bg-red-500/5"
+                            style={{ left: `${Math.min(clientPos, cpPos)}%`, width: `${Math.abs(clientPos - cpPos)}%` }}
+                          >
+                            <span className="text-[11px] font-semibold text-red-400 whitespace-nowrap">
+                              No overlap
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div
+                          className="overlap-zone"
+                          style={{ left: `${zopaLeft}%`, width: `${zopaWidth}%` }}
+                        />
+                      )}
                       {/* Client Reservation Value marker */}
                       <div
                         className="marker client"
@@ -575,10 +615,12 @@ export function StrategyBoard() {
                           {ZOPA_LEGEND.counterpartyRV}
                         </span>
                       </div>
-                      {/* ZOPA label */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className="text-[11px] font-bold text-amber-400">{SECTION_LABELS.zopa}</span>
-                      </div>
+                      {/* ZOPA label — only shown when there IS a ZOPA */}
+                      {!noZopa && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <span className="text-[11px] font-bold text-amber-400">{SECTION_LABELS.zopa}</span>
+                        </div>
+                      )}
                       {/* Reservation value marker (user's estimate) */}
                       {rvPos > 0 && (
                         <div
@@ -602,23 +644,90 @@ export function StrategyBoard() {
                           </span>
                         </div>
                       )}
-                      {/* FIX 3: BATNA estimate ghost marker — stays visible even at edges */}
+                      {/* Client BATNA estimate ghost marker */}
                       {batnaEstimate !== 0 && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div
                                 className="absolute top-0 h-full w-0.5 border-l-2 border-dashed border-cyan-400/60 z-10 cursor-help"
-                                style={{ left: `${Math.max(0, Math.min(100, batnaEstimate > 0 ? (batnaEstimate / maxVal) * 100 : 0))}%` }}
+                                style={{ left: `${Math.max(0, Math.min(100, batnaEstimatePos))}%` }}
                               >
                                 <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[11px] text-cyan-400 whitespace-nowrap font-medium">
                                   {ZOPA_LEGEND.batnaEquiv}
                                 </span>
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="text-xs">
+                            <TooltipContent side="top" className="text-xs max-w-[260px]">
                               <p>Your BATNA monetary equivalent: €{batnaEstimate.toLocaleString()}</p>
-                              {batnaEstimate < 0 && <p className="text-red-400">This value is negative and outside the visible range.</p>}
+                              {batnaEstimateOutOfRange && (
+                                <p className="text-amber-400 mt-1">Your BATNA equivalent (€{batnaEstimate.toLocaleString()}) is outside the visible range.</p>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {/* Ghost arrow for out-of-range client BATNA estimate */}
+                      {batnaEstimateOutOfRange && batnaEstimate !== 0 && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div
+                                className={`absolute top-0 h-full z-20 cursor-help ${batnaEstimatePos > 100 ? 'right-0' : 'left-0'}`}
+                              >
+                                <div className={`flex items-center h-full ${batnaEstimatePos > 100 ? 'flex-row' : 'flex-row-reverse'}`}>
+                                  <div className={`w-0 h-0 ${batnaEstimatePos > 100 ? 'border-t-[5px] border-b-[5px] border-r-[6px] border-transparent border-r-cyan-400/80' : 'border-t-[5px] border-b-[5px] border-l-[6px] border-transparent border-l-cyan-400/80'}`} />
+                                  <div className="w-1.5 h-full bg-cyan-400/40 border-dashed" />
+                                </div>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs max-w-[260px]">
+                              <p>Your BATNA equivalent (€{batnaEstimate.toLocaleString()}) is outside the visible range.</p>
+                            <p className="text-muted-foreground mt-1">The actual value is {batnaEstimatePos > 100 ? 'above' : 'below'} the chart scale.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {/* Counterparty BATNA equivalent ghost marker (orange dashed) */}
+                      {batna.counterpartyBATNAValue > 0 && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div
+                                className="absolute top-0 h-full w-0.5 border-l-2 border-dashed border-orange-400/60 z-10 cursor-help"
+                                style={{ left: `${Math.max(0, Math.min(100, cpBatnaPos))}%` }}
+                              >
+                                <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[11px] text-orange-400 whitespace-nowrap font-medium">
+                                  CP {ZOPA_LEGEND.batnaEquiv}
+                                </span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs max-w-[260px]">
+                              <p>Counterparty BATNA monetary equivalent: €{batna.counterpartyBATNAValue.toLocaleString()}</p>
+                              {cpBatnaOutOfRange && (
+                                <p className="text-amber-400 mt-1">Counterparty BATNA equivalent (€{batna.counterpartyBATNAValue.toLocaleString()}) is outside the visible range.</p>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {/* Ghost arrow for out-of-range counterparty BATNA equivalent */}
+                      {cpBatnaOutOfRange && batna.counterpartyBATNAValue > 0 && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div
+                                className={`absolute top-0 h-full z-20 cursor-help ${cpBatnaPos > 100 ? 'right-0 -mr-1' : 'left-0 -ml-1'}`}
+                              >
+                                <div className={`flex items-center h-full ${cpBatnaPos > 100 ? 'flex-row' : 'flex-row-reverse'}`}>
+                                  <div className={`w-0 h-0 ${cpBatnaPos > 100 ? 'border-t-[5px] border-b-[5px] border-r-[6px] border-transparent border-r-orange-400/80' : 'border-t-[5px] border-b-[5px] border-l-[6px] border-transparent border-l-orange-400/80'}`} />
+                                  <div className="w-1.5 h-full bg-orange-400/40 border-dashed" />
+                                </div>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs max-w-[260px]">
+                              <p>Counterparty BATNA equivalent (€{batna.counterpartyBATNAValue.toLocaleString()}) is outside the visible range.</p>
+                              <p className="text-muted-foreground mt-1">The actual value is {cpBatnaPos > 100 ? 'above' : 'below'} the chart scale.</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -629,9 +738,23 @@ export function StrategyBoard() {
                         <span className="text-[11px] text-muted-foreground">€{Math.round(maxVal).toLocaleString()}</span>
                       </div>
                     </div>
+                    {/* ZOPA width indicator */}
+                    <div className="flex items-center gap-2 mt-1">
+                      {!noZopa ? (
+                        <span className="text-[11px] text-amber-400/80 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Deal zone: €{zopaWidthEuros.toLocaleString()} wide
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-red-400/80 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          No deal zone (gap: €{noZopaGap.toLocaleString()})
+                        </span>
+                      )}
+                    </div>
                     {/* No-ZOPA warning */}
-                    {zopaWidth <= 0 && (
-                      <p className="text-[11px] text-amber-400 flex items-center gap-1 mt-1">
+                    {noZopa && (
+                      <p className="text-[11px] text-amber-400 flex items-center gap-1">
                         <AlertTriangle className="h-3 w-3" />
                         {INLINE_WARNINGS.noZopa}
                       </p>
@@ -666,6 +789,12 @@ export function StrategyBoard() {
                         <div className="flex items-center gap-1.5">
                           <div className="h-2 w-0.5 border-l-2 border-dashed border-cyan-400/60" />
                           <span className="text-[11px] text-muted-foreground">{ZOPA_LEGEND.batnaEquiv}</span>
+                        </div>
+                      )}
+                      {batna.counterpartyBATNAValue > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-2 w-0.5 border-l-2 border-dashed border-orange-400/60" />
+                          <span className="text-[11px] text-muted-foreground">CP {ZOPA_LEGEND.batnaEquiv}</span>
                         </div>
                       )}
                     </div>

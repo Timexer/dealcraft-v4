@@ -58,6 +58,67 @@ export interface BATNAInfo {
   trueZOPAHigh: number;
 }
 
+// ─── V4 Schema: Future-facing power model ────────────────────────────
+// These interfaces represent the target schema for the BATNA UX refactor.
+// They coexist with BATNAInfo during migration. Eventually BATNAInfo
+// fields will be deprecated in favor of these nested structures.
+
+export interface AlternativePlan {
+  description: string;                // Action description (was clientBATNA/counterpartyBATNA)
+  strength: BATNAStrength;            // Scenario-based strength (was clientBATNAStrength)
+  financialEquivalent?: number;       // Optional monetary value (was clientBATNAValue)
+  confidence?: 'low' | 'medium' | 'high';
+  notes?: string[];
+}
+
+export interface NegotiationThresholds {
+  reservationValue?: number;          // Walk-away point (was clientReservationValue)
+  aspirationValue?: number;           // Target outcome (was clientAspirationPrice)
+  estimatedCounterpartyReservationValue?: number;  // Their walk-away (was counterpartyReservationValue)
+}
+
+export interface ZOPAEstimate {
+  estimatedLow?: number;              // Player-estimated ZOPA low
+  estimatedHigh?: number;             // Player-estimated ZOPA high
+  actualLow?: number;                 // True ZOPA low (was trueZOPALow)
+  actualHigh?: number;                // True ZOPA high (was trueZOPAHigh)
+  confidence?: 'low' | 'medium' | 'high';
+}
+
+export interface NegotiationPowerModel {
+  clientAlternative: AlternativePlan;
+  counterpartyAlternative: AlternativePlan;
+  thresholds: NegotiationThresholds;
+  zopa: ZOPAEstimate;
+}
+
+// ─── Legacy-to-V4 Schema Converter ───────────────────────────────────
+export function batnaInfoToPowerModel(batna: BATNAInfo): NegotiationPowerModel {
+  return {
+    clientAlternative: {
+      description: batna.clientBATNA,
+      strength: batna.clientBATNAStrength ?? 'moderate',
+      financialEquivalent: batna.clientBATNAValue > 0 ? batna.clientBATNAValue : undefined,
+    },
+    counterpartyAlternative: {
+      description: batna.counterpartyBATNA,
+      strength: batna.counterpartyBATNAStrength ?? 'moderate',
+      financialEquivalent: batna.counterpartyBATNAValue > 0 ? batna.counterpartyBATNAValue : undefined,
+    },
+    thresholds: {
+      reservationValue: batna.clientReservationValue,
+      aspirationValue: batna.clientAspirationPrice,
+      estimatedCounterpartyReservationValue: batna.counterpartyReservationValue,
+    },
+    zopa: {
+      estimatedLow: batna.estimatedZOPALow,
+      estimatedHigh: batna.estimatedZOPAHigh,
+      actualLow: batna.trueZOPALow,
+      actualHigh: batna.trueZOPAHigh,
+    },
+  };
+}
+
 // ─── Display Labels (Microcopy) ──────────────────────────────────────
 // Centralized microcopy so all components use the same terminology.
 // BATNA = action-first, text-first, strength-based.
