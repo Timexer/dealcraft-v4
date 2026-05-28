@@ -11,7 +11,7 @@ export const case09: Scenario = {
   stakesValue: 2800000,
   stakesValue: 2800000,
   difficulty: {
-    economicComplexity: 3,
+    economicComplexity: 4,
     emotionalComplexity: 2,
     ethicalComplexity: 2,
     informationAsymmetry: 4,

@@ -22,7 +22,9 @@ import {
   Flame,
   RotateCcw,
   AlertTriangle,
+  Coffee,
 } from 'lucide-react';
+import { MONETIZATION_CONFIG, getBuyMeACoffeeLink } from '@/lib/monetization-config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -189,6 +191,30 @@ export function GameHeader() {
               </TooltipTrigger>
               <TooltipContent side="bottom">
                 <p>{soundEnabled ? 'Sound on — click to mute (S)' : 'Sound off — click to unmute (S)'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {/* Support / Buy me a coffee button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-amber-500 hover:text-amber-600 hover:bg-amber-500/10 transition-colors"
+                  asChild
+                >
+                  <a
+                    href={getBuyMeACoffeeLink()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Coffee className="h-3.5 w-3.5" />
+                  </a>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Support Dealcraft's development (Buy Me a Coffee)</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

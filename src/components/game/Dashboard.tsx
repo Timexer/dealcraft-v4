@@ -617,7 +617,7 @@ export function Dashboard() {
                             scenario.difficulty.timePressure +
                             scenario.difficulty.relationshipStakes
                           ) / 7;
-                          return avg.toFixed(1);
+                          return Math.round(avg);
                         })()}/5
                       </span>
                     </div>

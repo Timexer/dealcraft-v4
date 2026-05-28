@@ -10,10 +10,10 @@ export const case25: Scenario = {
   stakesLabel: '€50M government contract',
   stakesValue: 50000000,
   difficulty: {
-    economicComplexity: 4,
-    emotionalComplexity: 4,
+    economicComplexity: 5,
+    emotionalComplexity: 5,
     ethicalComplexity: 5,
-    informationAsymmetry: 4,
+    informationAsymmetry: 5,
     powerImbalance: 5,
     timePressure: 3,
     relationshipStakes: 5,

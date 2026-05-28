@@ -53,7 +53,9 @@ import {
   ArrowLeftRight,
   Crosshair,
   ShieldCheck,
+  Coffee,
 } from 'lucide-react';
+import { getEnglishBreakfastLink, getBuyMeACoffeeLink } from '@/lib/monetization-config';
 
 const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string; maxColor: string }[] = [
   { key: 'clientEconomicValue', label: 'Client Economic Value', color: 'bg-amber-500', maxColor: 'bg-amber-500/30' },
@@ -1429,6 +1431,85 @@ export function Postmortem() {
             </motion.div>
           </div>
         </ScrollArea>
+
+        {/* English Breakfast & Support Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.4 }}
+        >
+          <Card className="bg-gradient-to-r from-amber-500/15 to-orange-500/10 border-amber-500/30 overflow-hidden relative shadow-lg">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-amber-400 via-amber-500 to-orange-500" />
+            <CardContent className="p-5 pl-7 space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="mt-1 shrink-0 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
+                  <Sparkles className="h-5 w-5 text-amber-400" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-bold text-amber-300 uppercase tracking-wider">
+                    {['S', 'A', 'B'].includes(grade.grade) ? '🏆 Master-Level Negotiation!' : '💡 Negotiation is a Practice'}
+                  </h4>
+                  <p className="text-sm font-semibold text-foreground mt-1">
+                    {['S', 'A', 'B'].includes(grade.grade) 
+                      ? 'You have strong strategic instincts. Ready to apply them live in fluent English?'
+                      : 'Difficult conversations can be challenging, especially in professional English.'}
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                    {['S', 'A', 'B'].includes(grade.grade)
+                      ? 'Take your professional skills live. Join custom Business English workshops at English Breakfast Poland to practice calibrated questioning, face-saving exits, and value creation with native speaker mentors.'
+                      : 'Practice your ZOPA estimates, calibrated questions, and tactical empathy in a safe, guided setting. Join active Business English coaching at English Breakfast Poland to negotiate with complete confidence.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2 sm:items-center justify-between">
+                <div className="flex items-center gap-1 text-[11px] text-muted-foreground italic">
+                  <span>Brought to you by</span>
+                  <a 
+                    href="https://www.englishbreakfast.pl" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-amber-400 hover:underline font-semibold"
+                  >
+                    English Breakfast Poland
+                  </a>
+                </div>
+                
+                <div className="flex flex-wrap gap-2.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10"
+                    asChild
+                  >
+                    <a
+                      href={getBuyMeACoffeeLink()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Coffee className="h-3.5 w-3.5" />
+                      Support Game
+                    </a>
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-amber-600 hover:bg-amber-700 text-white font-semibold h-8 gap-1.5 text-xs px-4"
+                    asChild
+                  >
+                    <a
+                      href={getEnglishBreakfastLink(grade.grade, scenario.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Practice Negotiation Live
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Continue Button */}
         <motion.div

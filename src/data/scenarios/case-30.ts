@@ -10,7 +10,7 @@ export const case30: Scenario = {
   stakesLabel: 'Regional stability',
   stakesValue: 1000000000,
   difficulty: {
-    economicComplexity: 4,
+    economicComplexity: 5,
     emotionalComplexity: 5,
     ethicalComplexity: 5,
     informationAsymmetry: 5,

@@ -10,12 +10,12 @@ export const case26: Scenario = {
   stakesLabel: 'Public safety',
   stakesValue: 300000000,
   difficulty: {
-    economicComplexity: 4,
+    economicComplexity: 5,
     emotionalComplexity: 5,
     ethicalComplexity: 5,
-    informationAsymmetry: 4,
-    powerImbalance: 3,
-    timePressure: 4,
+    informationAsymmetry: 5,
+    powerImbalance: 4,
+    timePressure: 5,
     relationshipStakes: 4,
   },
   client: {

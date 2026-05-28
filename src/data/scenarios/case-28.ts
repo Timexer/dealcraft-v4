@@ -11,12 +11,12 @@ export const case28: Scenario = {
   stakesValue: 400000000,
   difficulty: {
     economicComplexity: 5,
-    emotionalComplexity: 3,
-    ethicalComplexity: 3,
+    emotionalComplexity: 4,
+    ethicalComplexity: 4,
     informationAsymmetry: 5,
-    powerImbalance: 4,
-    timePressure: 4,
-    relationshipStakes: 4,
+    powerImbalance: 5,
+    timePressure: 5,
+    relationshipStakes: 5,
   },
   client: {
     name: 'Mayor of Riverside',
