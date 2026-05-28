@@ -4,7 +4,7 @@ This document outlines the development phases of **DealCraft**, mapping its jour
 
 ---
 
-## 🌟 Current Phase: Phase 1 — The Foundation (Complete)
+## 🌟 Current Phase: Phase 1 — The Foundation
 *   [x] Immersive, fully-responsive web application.
 *   [x] Live interactive chat interface with realistic AI opponents.
 *   [x] Real-time AI Advisor sidebar providing feedback on every turn.
@@ -12,6 +12,7 @@ This document outlines the development phases of **DealCraft**, mapping its jour
 *   [x] Game-over postmortem analysis showing core strengths and areas of improvement.
 *   [x] Integrated Lemon Squeezy tips/donations functionality.
 *   [x] Version control, Git-integrated repository, and instant hosting deployments via Vercel.
+*   [ ] **Domain Integration**: Connect custom subdomain (`dealcraft.englishbreakfast.pl`) on Vercel and point DNS CNAME record from Bluehost dashboard.
 
 ---
 
