@@ -322,7 +322,7 @@ export function Dashboard() {
         >
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Welcome back, <span className="gradient-text-themed ambient-name-glow">{playerName}</span>
+              {casesCompleted > 0 ? 'Welcome back,' : 'Welcome,'} <span className="gradient-text-themed ambient-name-glow">{playerName}</span>
             </h1>
             <div className="flex items-center gap-3 mt-1">
               <p className="text-muted-foreground">{tierName} — {tierDesc}</p>
