@@ -8,7 +8,7 @@
  * `set()` to update ALL slice state at once, and `get()` to read cross-slice state.
  */
 import { StateCreator } from 'zustand';
-import type { NegotiationState, NegotiationTechnique, CaseResult } from '@/data/scenarios/types';
+import type { NegotiationState, NegotiationTechnique, CaseResult, StateEffect } from '@/data/scenarios/types';
 import { getScenariosByCategory, getScenarioById } from '@/data/scenarios';
 import {
   getTierFromCases,
@@ -40,8 +40,8 @@ export interface NegotiationSlice {
   // Negotiation state
   negotiation: NegotiationState;
   updateNegotiation: (delta: Partial<NegotiationState>) => void;
-  applyEffects: (effects: Record<string, number>) => void;
-  makeChoice: (choiceId: string, effects: Record<string, number>, infoRevealed?: string[]) => void;
+  applyEffects: (effects: StateEffect) => void;
+  makeChoice: (choiceId: string, effects: StateEffect, infoRevealed?: string[]) => void;
   resetNegotiation: () => void;
 
   // Case results (cross-cutting: also updates player & meta state)

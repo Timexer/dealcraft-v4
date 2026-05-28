@@ -2,15 +2,15 @@
  * Dealcraft Central Monetization & Lead Generation Configuration
  * 
  * Customize these values to change the destination URLs and tracking parameters
- * for your language school (www.englishbreakfast.pl) and donation links.
+ * for your language school (www.englishbreakfast.pl) and payment links.
  */
 
 export const MONETIZATION_CONFIG = {
   // Primary Lead Generation target: Your language school URL
   ENGLISH_BREAKFAST_URL: 'https://www.englishbreakfast.pl',
 
-  // Donation target: Buy Me a Coffee, Patreon, or Stripe support page
-  BUY_ME_A_COFFEE_URL: 'https://buymeacoffee.com/yourprofile', // Replace with your actual profile link!
+  // Lemon Squeezy Checkout URLs for supporting Dealcraft
+  LEMON_SQUEEZY_URL: 'https://dealcraft-mastery.lemonsqueezy.com/checkout/buy/2504b165-7f75-4963-b5c1-65edcb7c6a43',
 
   // Tracking query parameters
   UTM_SOURCE: 'dealcraft',
@@ -34,8 +34,9 @@ export function getEnglishBreakfastLink(grade?: string, scenarioId?: string): st
 }
 
 /**
- * Builds the Buy Me a Coffee link with optional tracking or message.
+ * Builds the Lemon Squeezy payment link. Optionally appends embed query parameter.
  */
-export function getBuyMeACoffeeLink(): string {
-  return MONETIZATION_CONFIG.BUY_ME_A_COFFEE_URL;
+export function getLemonSqueezyLink(embed: boolean = true): string {
+  const baseUrl = MONETIZATION_CONFIG.LEMON_SQUEEZY_URL;
+  return embed ? `${baseUrl}?embed=1` : baseUrl;
 }

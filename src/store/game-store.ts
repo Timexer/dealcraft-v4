@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { GamePhase, NegotiationState, NegotiationTechnique, PlayerStats, ReputationScores, CaseResult } from '@/data/scenarios/types';
+import type { GamePhase, NegotiationState, NegotiationTechnique, PlayerStats, ReputationScores, CaseResult, StateEffect } from '@/data/scenarios/types';
 import { getScenariosByCategory, getScenarioById } from '@/data/scenarios';
 
 export interface Achievement {
@@ -70,8 +70,8 @@ export interface GameState {
   // Negotiation state
   negotiation: NegotiationState;
   updateNegotiation: (delta: Partial<NegotiationState>) => void;
-  applyEffects: (effects: Record<string, number>) => void;
-  makeChoice: (choiceId: string, effects: Record<string, number>, infoRevealed?: string[]) => void;
+  applyEffects: (effects: StateEffect) => void;
+  makeChoice: (choiceId: string, effects: StateEffect, infoRevealed?: string[]) => void;
   resetNegotiation: () => void;
 
   // Case results

@@ -24,7 +24,7 @@ import {
   AlertTriangle,
   Coffee,
 } from 'lucide-react';
-import { MONETIZATION_CONFIG, getBuyMeACoffeeLink } from '@/lib/monetization-config';
+import { MONETIZATION_CONFIG, getLemonSqueezyLink } from '@/lib/monetization-config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -194,7 +194,7 @@ export function GameHeader() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          {/* Support / Buy me a coffee button */}
+          {/* Support / Lemon Squeezy payment button */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -205,7 +205,7 @@ export function GameHeader() {
                   asChild
                 >
                   <a
-                    href={getBuyMeACoffeeLink()}
+                    href={getLemonSqueezyLink(false)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -214,7 +214,7 @@ export function GameHeader() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>Support Dealcraft's development (Buy Me a Coffee)</p>
+                <p>Support Dealcraft's development (Lemon Squeezy)</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

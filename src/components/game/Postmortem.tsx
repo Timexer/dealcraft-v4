@@ -55,7 +55,7 @@ import {
   ShieldCheck,
   Coffee,
 } from 'lucide-react';
-import { getEnglishBreakfastLink, getBuyMeACoffeeLink } from '@/lib/monetization-config';
+import { getEnglishBreakfastLink, getLemonSqueezyLink } from '@/lib/monetization-config';
 
 const SCORE_DIMENSIONS: { key: keyof EndingScores; label: string; color: string; maxColor: string }[] = [
   { key: 'clientEconomicValue', label: 'Client Economic Value', color: 'bg-amber-500', maxColor: 'bg-amber-500/30' },
@@ -1471,7 +1471,7 @@ export function Postmortem() {
                     rel="noopener noreferrer"
                     className="text-amber-400 hover:underline font-semibold"
                   >
-                    English Breakfast Poland
+                    English Breakfast
                   </a>
                 </div>
                 
@@ -1483,7 +1483,7 @@ export function Postmortem() {
                     asChild
                   >
                     <a
-                      href={getBuyMeACoffeeLink()}
+                      href={getLemonSqueezyLink(false)}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
