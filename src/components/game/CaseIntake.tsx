@@ -106,6 +106,7 @@ export function CaseIntake() {
   const stakesText = scenario?.briefing.stakes ?? '';
   useEffect(() => {
     if (!stakesText) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayedStakes('');
     setStakesComplete(false);
     let i = 0;

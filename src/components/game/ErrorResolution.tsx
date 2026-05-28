@@ -22,6 +22,7 @@ export function ErrorResolution() {
 
   useEffect(() => {
     const saved = getEmergencyCache();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCache(saved);
   }, []);
 

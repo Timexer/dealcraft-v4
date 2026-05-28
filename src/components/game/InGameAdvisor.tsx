@@ -287,8 +287,11 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
   const contextKey = `${props.negotiation.trust}-${props.negotiation.anger}-${props.negotiation.patience}-${props.negotiation.choicesMade.length}-${props.negotiation.biasTrapsTriggered.length}`;
 
   // Invalidate cache if context changes significantly
+  // eslint-disable-next-line react-hooks/refs
   if (contextKey !== lastContextRef.current) {
+    // eslint-disable-next-line react-hooks/refs
     lastContextRef.current = contextKey;
+    // eslint-disable-next-line react-hooks/refs
     if (cachedAdviceRef.current) {
       // Context changed, but keep the advice until a new request
     }
