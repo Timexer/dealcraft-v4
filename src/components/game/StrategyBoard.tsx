@@ -224,6 +224,7 @@ export function StrategyBoard() {
     aspirationEstimate, setAspirationEstimate,
     openingStrategy, setOpeningStrategy,
     assumptions, addAssumption, removeAssumption,
+    alternativePowerReflection, setAlternativePowerReflection,
   } = useGameStore();
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
@@ -320,7 +321,7 @@ export function StrategyBoard() {
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => setPhase('intake')} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setPhase('investigation')} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
@@ -437,6 +438,23 @@ export function StrategyBoard() {
                     }`}>
                       <Info className="h-3 w-3 shrink-0" />
                       <span>{getBATNAAdvantageDescription(batna)}</span>
+                    </div>
+
+                    {/* Alternative Power Analysis Reflection */}
+                    <div className="space-y-2 pt-2 bg-amber-500/5 p-3 rounded-lg border border-amber-500/15">
+                      <Label className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                        <Lightbulb className="h-3.5 w-3.5" />
+                        Alternative Power Analysis & Leverage Reflection
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground leading-normal">
+                        Based on the alternatives above and what you discovered in your investigation, who holds more leverage in this deal? What is your tactical approach to balance the power?
+                      </p>
+                      <textarea
+                        value={alternativePowerReflection}
+                        onChange={(e) => setAlternativePowerReflection(e.target.value)}
+                        placeholder="Write down your strategic power assessment (e.g. 'Although we need cash, our certified technician gives us leverage because the clinic machine catastrophically broke down...')"
+                        className="w-full min-h-[90px] bg-background/60 border border-border/40 rounded-lg p-2.5 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-amber-500/40 resize-y"
+                      />
                     </div>
                   </div>
 
@@ -1271,19 +1289,19 @@ export function StrategyBoard() {
             onClick={() => {
               if (isTransitioning) return;
               setIsTransitioning(true);
-              // Reset negotiation state before entering investigation
+              // Reset negotiation state before entering negotiation
               useGameStore.getState().resetNegotiation();
               // Use a small timeout to prevent AnimatePresence race conditions
               setTimeout(() => {
-                setPhase('investigation');
+                setPhase('negotiation');
                 setIsTransitioning(false);
               }, 50);
             }}
             disabled={isTransitioning}
-            className="bg-amber-600 hover:bg-amber-700 text-white gap-2 relative z-30"
+            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white gap-2 premium-button dramatic-glow relative z-30 font-semibold"
             size="lg"
           >
-            {isTransitioning ? 'Loading...' : 'Proceed to Investigation'}
+            {isTransitioning ? 'Loading...' : 'Start Negotiation'}
             {!isTransitioning && <ArrowRight className="h-4 w-4" />}
           </Button>
         </motion.div>

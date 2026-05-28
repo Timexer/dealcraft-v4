@@ -126,10 +126,9 @@ export function Investigation() {
   const handleProceed = () => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-    useGameStore.getState().resetNegotiation();
-    // Small delay to prevent AnimatePresence race conditions
+    // Transition to Strategy Board instead of active Negotiation
     setTimeout(() => {
-      setPhase('negotiation');
+      setPhase('strategy');
       setIsTransitioning(false);
     }, 50);
   };
@@ -151,7 +150,7 @@ export function Investigation() {
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => setPhase('strategy')} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setPhase('intake')} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
@@ -682,7 +681,7 @@ export function Investigation() {
             className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white gap-2 premium-button dramatic-glow relative z-30"
             size="lg"
           >
-            {isTransitioning ? 'Loading...' : 'Proceed to Negotiation'}
+            {isTransitioning ? 'Loading...' : 'Formulate Strategy'}
             {!isTransitioning && <ArrowRight className="h-4 w-4" />}
           </Button>
         </motion.div>

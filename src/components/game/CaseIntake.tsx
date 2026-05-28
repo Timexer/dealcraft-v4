@@ -150,7 +150,7 @@ export function CaseIntake() {
       initInvestigationPoints(scenario.tier);
     }
     setCaseAccepted(true);
-    setPhase('strategy');
+    setPhase('investigation');
   };
 
   const handleRequestMoreInfo = () => {

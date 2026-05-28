@@ -99,6 +99,8 @@ export interface GameState {
   assumptions: string[];
   addAssumption: (assumption: string) => void;
   removeAssumption: (index: number) => void;
+  alternativePowerReflection: string;
+  setAlternativePowerReflection: (value: string) => void;
 
   // Challenge Mode
   challengeMode: 'none' | 'speed' | 'limited_choices' | 'ethics_lock';
@@ -855,6 +857,8 @@ export const useGameStore = create<GameState>()(
         set((s) => ({ assumptions: [...s.assumptions, assumption] })),
       removeAssumption: (index) =>
         set((s) => ({ assumptions: s.assumptions.filter((_, i) => i !== index) })),
+      alternativePowerReflection: '',
+      setAlternativePowerReflection: (value) => set({ alternativePowerReflection: value }),
 
       tutorialCompleted: false,
       setTutorialCompleted: () => set({ tutorialCompleted: true }),
@@ -1031,6 +1035,7 @@ export const useGameStore = create<GameState>()(
           caseNotes: '',
           investigationPoints: 5,
           maxInvestigationPoints: 5,
+          alternativePowerReflection: '',
         }),
     }),
     {
