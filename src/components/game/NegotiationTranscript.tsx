@@ -33,6 +33,23 @@ const SPEAKER_STYLES: Record<string, { bg: string; border: string; label: string
   advisor: { bg: 'bg-violet-500/10', border: 'border-l-violet-500/40', label: 'Advisor', iconClass: 'text-violet-400' },
 };
 
+const formatDialogueText = (text: string) => {
+  if (!text) return '';
+  const parts = text.split('*');
+  if (parts.length === 1) return text;
+  return parts.map((part, index) => {
+    // Odd indices are text inside asterisks (i.e. *action*)
+    if (index % 2 !== 0) {
+      return (
+        <span key={index} className="italic text-muted-foreground font-light">
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+};
+
 export function NegotiationTranscript({ scenarioId, transcript, choicesMade }: NegotiationTranscriptProps) {
   const scenario = getScenarioById(scenarioId);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
@@ -247,7 +264,7 @@ export function NegotiationTranscript({ scenarioId, transcript, choicesMade }: N
                     )}
                   </div>
                   <p className={`text-sm leading-relaxed ${entry.speaker === 'narrator' ? 'italic text-muted-foreground' : ''}`}>
-                    {entry.text}
+                    {formatDialogueText(entry.text)}
                   </p>
                 </div>
 

@@ -45,6 +45,24 @@ function getStartNode(scenario: ReturnType<typeof getScenarioById>): DialogueNod
   return scenario.dialogueTree.find(n => n.id === 'start') || null;
 }
 
+const formatDialogueText = (text: string) => {
+  if (!text) return '';
+  const parts = text.split('*');
+  if (parts.length === 1) return text;
+  return parts.map((part, index) => {
+    // Odd indices are text inside asterisks (i.e. *action*)
+    if (index % 2 !== 0) {
+      return (
+        <span key={index} className="italic text-muted-foreground font-light">
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+};
+
+
 export function NegotiationTable() {
   const {
     currentScenarioId, setPhase,
@@ -1027,7 +1045,7 @@ export function NegotiationTable() {
                         {speakerLabels[entry.node.speaker]?.label}
                       </span>
                     </div>
-                    <p className="text-sm leading-relaxed">{entry.node.text}</p>
+                    <p className="text-sm leading-relaxed">{formatDialogueText(entry.node.text)}</p>
                   </motion.div>
 
                   {/* Chosen choice display */}
