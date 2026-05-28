@@ -342,7 +342,7 @@ export interface ReputationScores {
   fixer: number;
 }
 
-export type GamePhase = 'title' | 'dashboard' | 'intake' | 'strategy' | 'investigation' | 'negotiation' | 'postmortem' | 'career' | 'case_history';
+export type GamePhase = 'title' | 'dashboard' | 'intake' | 'strategy' | 'investigation' | 'pre-negotiation' | 'negotiation' | 'postmortem' | 'career' | 'case_history';
 
 export interface NegotiationState {
   trust: number;

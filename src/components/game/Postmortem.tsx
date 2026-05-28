@@ -54,8 +54,6 @@ import {
   Crosshair,
   ShieldCheck,
   Coffee,
-  Brain,
-  Info,
 } from 'lucide-react';
 import { getEnglishBreakfastLink, getLemonSqueezyLink } from '@/lib/monetization-config';
 
@@ -269,7 +267,6 @@ export function Postmortem() {
     techniquesUsed, clearCaseSession,
     batnaEstimate, reservationEstimate, openingStrategy, assumptions,
     challengeMode,
-    alternativePowerReflection,
   } = useGameStore();
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
@@ -595,46 +592,20 @@ export function Postmortem() {
                       <div className="p-2.5 rounded-md bg-cyan-500/8 border border-cyan-500/15">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-[11px] text-cyan-300">Estimated ZOPA Range</span>
-                          {scenario.batna.estimatedZOPALow < scenario.batna.estimatedZOPAHigh ? (
-                            <span className="text-xs font-bold text-cyan-200">
-                              €{scenario.batna.estimatedZOPALow.toLocaleString()} – €{scenario.batna.estimatedZOPAHigh.toLocaleString()}
-                            </span>
-                          ) : (
-                            <div className="text-right">
-                              <span className="text-xs font-bold text-red-300 block">
-                                No Overlap (Gap: €{(scenario.batna.estimatedZOPALow - scenario.batna.estimatedZOPAHigh).toLocaleString()})
-                              </span>
-                              <span className="text-[10px] text-muted-foreground block mt-0.5">
-                                Seller Min: €{scenario.batna.estimatedZOPALow.toLocaleString()} | Buyer Max: €{scenario.batna.estimatedZOPAHigh.toLocaleString()}
-                              </span>
-                            </div>
-                          )}
+                          <span className="text-xs font-bold text-cyan-200">€{scenario.batna.estimatedZOPALow.toLocaleString()} – €{scenario.batna.estimatedZOPAHigh.toLocaleString()}</span>
                         </div>
                         <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${scenario.batna.estimatedZOPALow < scenario.batna.estimatedZOPAHigh ? 'bg-gradient-to-r from-cyan-500/40 to-cyan-400/60' : 'bg-red-500/40'}`} style={{ width: '100%' }} />
+                          <div className="h-full rounded-full bg-gradient-to-r from-cyan-500/40 to-cyan-400/60" style={{ width: '100%' }} />
                         </div>
                       </div>
                       {/* True ZOPA */}
                       <div className="p-2.5 rounded-md bg-emerald-500/8 border border-emerald-500/15">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-[11px] text-emerald-300">True ZOPA Range</span>
-                          {scenario.batna.trueZOPALow < scenario.batna.trueZOPAHigh ? (
-                            <span className="text-xs font-bold text-emerald-200">
-                              €{scenario.batna.trueZOPALow.toLocaleString()} – €{scenario.batna.trueZOPAHigh.toLocaleString()}
-                            </span>
-                          ) : (
-                            <div className="text-right">
-                              <span className="text-xs font-bold text-red-300 block">
-                                No Overlap (Gap: €{(scenario.batna.trueZOPALow - scenario.batna.trueZOPAHigh).toLocaleString()})
-                              </span>
-                              <span className="text-[10px] text-muted-foreground block mt-0.5">
-                                Seller Min: €{scenario.batna.trueZOPALow.toLocaleString()} | Buyer Max: €{scenario.batna.trueZOPAHigh.toLocaleString()}
-                              </span>
-                            </div>
-                          )}
+                          <span className="text-xs font-bold text-emerald-200">€{scenario.batna.trueZOPALow.toLocaleString()} – €{scenario.batna.trueZOPAHigh.toLocaleString()}</span>
                         </div>
                         <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${scenario.batna.trueZOPALow < scenario.batna.trueZOPAHigh ? 'bg-gradient-to-r from-emerald-500/40 to-emerald-400/60' : 'bg-red-500/40'}`} style={{ width: '100%' }} />
+                          <div className="h-full rounded-full bg-gradient-to-r from-emerald-500/40 to-emerald-400/60" style={{ width: '100%' }} />
                         </div>
                       </div>
                       {/* ZOPA existence indicator */}
@@ -753,38 +724,6 @@ export function Postmortem() {
                       </div>
                     )}
                   </div>
-
-                  {/* 5. Alternative Power Reflection Review */}
-                  {alternativePowerReflection && (
-                    <>
-                      <Separator className="bg-amber-500/15" />
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Brain className="h-4 w-4 text-amber-400 shrink-0" />
-                          <p className="text-xs font-bold text-amber-400 uppercase tracking-wider">Your Pre-Negotiation Power Assessment</p>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground leading-normal">
-                          How you evaluated the balance of leverage and alternatives before entering the room:
-                        </p>
-                        <div className="p-3.5 rounded-lg bg-amber-500/5 border border-amber-500/15">
-                          <p className="text-xs text-amber-200/90 leading-relaxed italic whitespace-pre-wrap">&ldquo;{alternativePowerReflection}&rdquo;</p>
-                        </div>
-                        
-                        <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/25">
-                          <Info className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-emerald-300">Advisor Strategy Review</p>
-                            <p className="text-[11px] text-emerald-200/80 leading-relaxed mt-1">
-                              <strong>Key Lever:</strong> {scenario.postmortem.keyHiddenFact}
-                            </p>
-                            <p className="text-[11px] text-emerald-200/80 leading-relaxed mt-1">
-                              <strong>The Master Path:</strong> {scenario.postmortem.masterSolution}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
                 </CardContent>
               </Card>
             </motion.div>

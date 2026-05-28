@@ -39,7 +39,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function GameHeader() {
-  const { playerName, careerTier, casesCompleted, totalScore, reputation, phase, setPhase, currentScenarioId, challengeMode, currentStreak, streakType, clearCaseSession } = useGameStore();
+  const { 
+    playerName, careerTier, casesCompleted, totalScore, reputation, 
+    phase, setPhase, currentScenarioId, challengeMode, currentStreak, 
+    streakType, clearCaseSession
+  } = useGameStore();
   const [showMiniStats, setShowMiniStats] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);

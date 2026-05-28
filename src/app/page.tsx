@@ -6,6 +6,7 @@ import { Dashboard } from '@/components/game/Dashboard';
 import { CaseIntake } from '@/components/game/CaseIntake';
 import { StrategyBoard } from '@/components/game/StrategyBoard';
 import { Investigation } from '@/components/game/Investigation';
+import { PreNegotiation } from '@/components/game/PreNegotiation';
 import { NegotiationTable } from '@/components/game/NegotiationTable';
 import { Postmortem } from '@/components/game/Postmortem';
 import { CareerProgression } from '@/components/game/CareerProgression';
@@ -33,6 +34,8 @@ export default function Home() {
         return <StrategyBoard />;
       case 'investigation':
         return <Investigation />;
+      case 'pre-negotiation':
+        return <PreNegotiation />;
       case 'negotiation':
         return <NegotiationTable />;
       case 'postmortem':

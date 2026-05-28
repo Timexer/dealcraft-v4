@@ -5,12 +5,20 @@ import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/data/scenarios/types';
 import type { BlackSwan } from '@/data/scenarios/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { NotesAndAssumptions } from './NotesAndAssumptions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -61,7 +69,6 @@ export function Investigation() {
   const [discoveredSwans, setDiscoveredSwans] = useState<BlackSwan[]>([]);
   const [latestSwan, setLatestSwan] = useState<BlackSwan | null>(null);
   const [showNotepad, setShowNotepad] = useState(false);
-  const [showAssumptions, setShowAssumptions] = useState(true);
   const prevFactsCount = useRef(discoveredFacts.length);
 
   // Track discovery flash animation - must be before early return
@@ -102,7 +109,6 @@ export function Investigation() {
     const action = investigationActions.find(a => a.id === actionId);
     if (!action || revealedActions.has(actionId)) return;
 
-    // CRITICAL FIX: Check if we have enough points for this action's cost
     if (investigationPoints < action.cost) return;
 
     spendInvestigationPoint(actionId, action.reveals, action.cost);
@@ -126,14 +132,13 @@ export function Investigation() {
   const handleProceed = () => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-    // Transition to Strategy Board instead of active Negotiation
+    // Small delay to prevent AnimatePresence race conditions
     setTimeout(() => {
-      setPhase('strategy');
+      setPhase('pre-negotiation');
       setIsTransitioning(false);
     }, 50);
   };
 
-  // Check if a specific action can be afforded
   const canAfford = (cost: number) => investigationPoints >= cost;
 
   return (
@@ -150,7 +155,7 @@ export function Investigation() {
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => setPhase('intake')} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setPhase('strategy')} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
@@ -160,29 +165,13 @@ export function Investigation() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={`gap-1.5 ${showNotepad ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : ''}`}
-                    onClick={() => setShowNotepad(!showNotepad)}
-                  >
-                    <StickyNote className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline text-xs">Notes</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Case Notepad — keep your thoughts organized</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
             <Badge variant="outline" className={CATEGORY_COLORS[scenario.category]}>
               {CATEGORY_LABELS[scenario.category]}
             </Badge>
           </div>
         </motion.div>
 
-        {/* Action Points Tracker — Redesigned with cost awareness */}
+        {/* Action Points Tracker */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card className="bg-card/50 border-border/50 glass-card-hover">
             <CardContent className="p-4">
@@ -211,7 +200,6 @@ export function Investigation() {
                   className="fill"
                   style={{ width: `${progressPercent}%` }}
                 />
-                {/* Milestone markers at 25%, 50%, 75%, 100% */}
                 {[25, 50, 75, 100].map(milestone => (
                   <div
                     key={milestone}
@@ -240,150 +228,6 @@ export function Investigation() {
                 </div>
               </div>
             </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Case Notepad — Collapsible panel */}
-        <AnimatePresence>
-          {showNotepad && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="bg-amber-500/5 border-amber-500/20">
-                <CardHeader className="pb-2 pt-3 px-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                      <StickyNote className="h-4 w-4 text-amber-400" />
-                      Case Notepad
-                    </CardTitle>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setShowNotepad(false)}>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0 px-4 pb-3">
-                  <textarea
-                    value={caseNotes}
-                    onChange={(e) => setCaseNotes(e.target.value)}
-                    placeholder="Jot down your thoughts, observations, and strategy notes here. These notes persist throughout the case..."
-                    className="w-full min-h-[100px] bg-background/50 border border-border/30 rounded-lg p-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-amber-500/40 resize-y"
-                  />
-                  {assumptions.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-[10px] text-amber-400/70 font-medium mb-1">YOUR STRATEGIC ASSUMPTIONS:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {assumptions.map((a, i) => (
-                          <Badge key={i} variant="outline" className="text-[10px] bg-amber-500/10 text-amber-300/80 border-amber-500/20">
-                            {a}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Assumption Tracker — Collapsible section showing strategy-phase assumptions */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <Card className="bg-orange-500/10 border-orange-500/20">
-            <CardHeader className="pb-2 pt-3 px-4">
-              <button
-                onClick={() => setShowAssumptions(!showAssumptions)}
-                className="w-full flex items-center justify-between"
-              >
-                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-orange-300">
-                  <Target className="h-4 w-4" />
-                  Your Assumptions
-                  <span className="text-[11px] font-normal text-orange-400/70 ml-1">
-                    {assumptions.length > 0
-                      ? `${assumptions.length} assumption${assumptions.length > 1 ? 's' : ''} from strategy phase`
-                      : 'No assumptions logged'}
-                  </span>
-                </CardTitle>
-                <motion.div
-                  animate={{ rotate: showAssumptions ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown className="h-4 w-4 text-orange-400/60" />
-                </motion.div>
-              </button>
-            </CardHeader>
-            <AnimatePresence initial={false}>
-              {showAssumptions && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  <CardContent className="pt-0 px-4 pb-3">
-                    {assumptions.length > 0 ? (
-                      <div className="space-y-2">
-                        {assumptions.map((assumption, i) => {
-                          const relatedFacts = discoveredFacts.filter(fact =>
-                            assumption.toLowerCase().split(' ').some(word =>
-                              word.length > 3 && fact.toLowerCase().includes(word)
-                            )
-                          );
-                          const hasRelated = relatedFacts.length > 0;
-                          return (
-                            <motion.div
-                              key={i}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: i * 0.06 }}
-                            >
-                              <div className={`flex items-start gap-2 p-2 rounded-md border ${
-                                hasRelated
-                                  ? 'bg-emerald-500/10 border-emerald-500/20'
-                                  : 'bg-orange-500/5 border-orange-500/15'
-                              }`}>
-                                <Target className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${
-                                  hasRelated ? 'text-emerald-400' : 'text-orange-400/60'
-                                }`} />
-                                <div className="min-w-0 flex-1">
-                                  <p className={`text-xs leading-relaxed ${
-                                    hasRelated ? 'text-emerald-300' : 'text-orange-200/80'
-                                  }`}>
-                                    {assumption}
-                                  </p>
-                                  <div className="flex items-center gap-1.5 mt-1">
-                                    {hasRelated ? (
-                                      <Badge className="text-[10px] bg-emerald-500/15 text-emerald-400 border-emerald-500/25 py-0 px-1.5">
-                                        <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
-                                        Intel supports this
-                                      </Badge>
-                                    ) : (
-                                      <Badge className="text-[10px] bg-orange-500/15 text-orange-400 border-orange-500/25 py-0 px-1.5">
-                                        <Search className="h-2.5 w-2.5 mr-0.5" />
-                                        Test this
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                        <p className="text-[10px] text-orange-400/50 pt-1">
-                          Investigate to validate or invalidate your assumptions before negotiating.
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-orange-400/40 italic">
-                        No assumptions logged during strategy phase
-                      </p>
-                    )}
-                  </CardContent>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </Card>
         </motion.div>
 
@@ -443,8 +287,7 @@ export function Investigation() {
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Badge variant="outline" className="text-[11px] bg-red-500/10 text-red-400 border-red-500/20 gap-1">
-                                    <Lock className="h-3 w-3" />
-                                    Insufficient
+                                    <Lock className="h-3 w-3" /> Insufficient
                                   </Badge>
                                 </TooltipTrigger>
                                 <TooltipContent side="bottom">
@@ -462,13 +305,11 @@ export function Investigation() {
                                 handleInvestigate(action.id);
                               }}
                             >
-                              <Search className="h-3 w-3" />
-                              Investigate
+                              <Search className="h-3 w-3" /> Investigate
                             </Button>
                           )}
                         </div>
 
-                        {/* Show response after investigation */}
                         <AnimatePresence>
                           {actionResponses[action.id] && (
                             <motion.div
@@ -499,56 +340,11 @@ export function Investigation() {
 
           {/* Intelligence Gathered Sidebar */}
           <div className="space-y-4">
-            {/* Strategy Assumptions Review */}
-            {assumptions.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4 text-amber-400" />
-                  Your Assumptions
-                </h3>
-                <Card className="bg-amber-500/5 border-amber-500/15">
-                  <CardContent className="p-3 space-y-1.5">
-                    {assumptions.map((assumption, i) => {
-                      // Check if any discovered fact relates to this assumption
-                      const relatedFacts = discoveredFacts.filter(fact =>
-                        assumption.toLowerCase().split(' ').some(word =>
-                          word.length > 3 && fact.toLowerCase().includes(word)
-                        )
-                      );
-                      const hasRelated = relatedFacts.length > 0;
-                      return (
-                        <div key={i} className="flex items-start gap-1.5">
-                          {hasRelated ? (
-                            <CheckCircle2 className="h-3 w-3 text-emerald-400 mt-0.5 shrink-0" />
-                          ) : (
-                            <AlertTriangle className="h-3 w-3 text-amber-400/50 mt-0.5 shrink-0" />
-                          )}
-                          <div className="min-w-0">
-                            <p className={`text-xs ${hasRelated ? 'text-emerald-300' : 'text-amber-200/70'}`}>
-                              {assumption}
-                            </p>
-                            {hasRelated && (
-                              <p className="text-[10px] text-emerald-400/60 mt-0.5">
-                                Intel found related to this assumption
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <p className="text-[10px] text-muted-foreground/50 pt-1 border-t border-amber-500/10">
-                      Assumptions from your strategy phase. Green checkmarks indicate discovered supporting intel.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <Shield className="h-4 w-4 text-emerald-400" />
               Intelligence Gathered
             </h2>
-            <ScrollArea className="max-h-[50vh]">
+            <ScrollArea className="max-h-[60vh]">
               <div className="space-y-2 pr-2">
                 {discoveredFacts.length > 0 ? (
                   discoveredFacts.map((factId) => {
@@ -594,7 +390,7 @@ export function Investigation() {
                     <CardContent className="p-6 text-center">
                       <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                       <p className="text-xs text-muted-foreground">
-                        No intelligence gathered yet. Spend investigation points to uncover information.
+                        No intelligence gathered yet. Spend points to uncover information.
                       </p>
                     </CardContent>
                   </Card>
@@ -606,8 +402,7 @@ export function Investigation() {
             {discoveredSwans.length > 0 && (
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <span>🦢</span>
-                  Black Swans
+                  <span>🦢</span> Black Swans
                 </h3>
                 {discoveredSwans.map(swan => (
                   <Card key={swan.id} className="bg-violet-500/10 border-violet-500/20">
@@ -625,10 +420,17 @@ export function Investigation() {
                 ))}
               </div>
             )}
+
+            <div className="animated-line opacity-50 my-4" />
+
+            {/* Notes & Assumptions */}
+            <div className="glass-card overflow-hidden bg-card/80 border-border/50 shadow-inner">
+              <NotesAndAssumptions />
+            </div>
           </div>
         </div>
 
-        {/* Black Swan Discovery Popup — FIXED: Top-right positioning to avoid overlap */}
+        {/* Black Swan Discovery Popup */}
         <AnimatePresence>
           {latestSwan && (
             <motion.div
@@ -673,7 +475,7 @@ export function Investigation() {
           <p className="text-xs text-muted-foreground">
             {investigationPoints > 0
               ? `You have ${investigationPoints} investigation point${investigationPoints > 1 ? 's' : ''} remaining. More intel leads to better outcomes.`
-              : 'All investigation points spent. Ready to negotiate!'}
+              : 'All investigation points spent. Ready to prepare for negotiation!'}
           </p>
           <Button
             onClick={handleProceed}
@@ -681,7 +483,7 @@ export function Investigation() {
             className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white gap-2 premium-button dramatic-glow relative z-30"
             size="lg"
           >
-            {isTransitioning ? 'Loading...' : 'Formulate Strategy'}
+            {isTransitioning ? 'Loading...' : 'Proceed to Pre-Negotiation'}
             {!isTransitioning && <ArrowRight className="h-4 w-4" />}
           </Button>
         </motion.div>

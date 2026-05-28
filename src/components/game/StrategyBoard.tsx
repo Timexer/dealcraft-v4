@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useGameStore } from '@/store/game-store';
 import { getScenarioById } from '@/data/scenarios';
+import { StrategyAdvisorSidebar } from './StrategyAdvisorSidebar';
 import { CATEGORY_COLORS, CATEGORY_LABELS, type BATNAStrength, SECTION_LABELS, SECTION_DEFINITIONS, SECTION_HELPERS, SECTION_TOOLTIPS, INLINE_WARNINGS, ZOPA_LEGEND } from '@/data/scenarios/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -35,7 +37,7 @@ import {
   CheckCircle2,
   Zap,
 } from 'lucide-react';
-import { PreNegotiationChecklist } from '@/components/game/PreNegotiationChecklist';
+import { useSound } from '@/hooks/use-sound';
 
 const ADVISOR_TIPS: Record<string, string> = {
   fundamentals: 'Start with your best alternative — know your alternative if talks fail, then set your walk-away point.',
@@ -224,13 +226,15 @@ export function StrategyBoard() {
     aspirationEstimate, setAspirationEstimate,
     openingStrategy, setOpeningStrategy,
     assumptions, addAssumption, removeAssumption,
-    alternativePowerReflection, setAlternativePowerReflection,
+    issueEstimates, setIssueEstimates,
   } = useGameStore();
 
   const scenario = currentScenarioId ? getScenarioById(currentScenarioId) : null;
+  const [wizardStep, setWizardStep] = useState<1 | 2>(1);
   const [newAssumption, setNewAssumption] = useState('');
   const [isAdvisorExpanded, setIsAdvisorExpanded] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isEstimatesVerified, setIsEstimatesVerified] = useState(false);
 
   // Determine BATNA level based on player estimate vs actual client BATNA
   const batnaLevel = useMemo<'low' | 'medium' | 'high' | null>(() => {
@@ -321,18 +325,20 @@ export function StrategyBoard() {
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => setPhase('investigation')} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => wizardStep > 1 ? setWizardStep(1) : setPhase('intake')} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {wizardStep > 1 ? 'Back' : 'Back to Case Intake'}
             </Button>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold">Strategy Board</h1>
               <p className="text-xs text-muted-foreground">{scenario.title}</p>
             </div>
           </div>
-          <Badge variant="outline" className={CATEGORY_COLORS[category]}>
-            {CATEGORY_LABELS[category]}
-          </Badge>
+          <div className="flex items-center gap-2">
+             <div className={`h-2 w-8 rounded-full transition-colors duration-300 ${wizardStep >= 1 ? 'bg-amber-500' : 'bg-border'}`} />
+             <div className={`h-2 w-8 rounded-full transition-colors duration-300 ${wizardStep >= 2 ? 'bg-amber-500' : 'bg-border'}`} />
+             <span className="text-xs text-muted-foreground ml-2 hidden sm:inline-block">Step {wizardStep} of 2</span>
+          </div>
         </motion.div>
 
         {/* Two-column layout: main content + Strategy Advisor Panel */}
@@ -341,6 +347,9 @@ export function StrategyBoard() {
           <div className="flex-1 min-w-0">
           <ScrollArea className="h-[calc(100vh-14rem)]">
           <div className="space-y-6 pr-2">
+            <AnimatePresence mode="wait">
+              {wizardStep === 1 && (
+                <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-6">
             {/* BATNA Analysis with Scenario Cards + ZOPA */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <Card className="bg-card/50 border-border/50">
@@ -438,23 +447,6 @@ export function StrategyBoard() {
                     }`}>
                       <Info className="h-3 w-3 shrink-0" />
                       <span>{getBATNAAdvantageDescription(batna)}</span>
-                    </div>
-
-                    {/* Alternative Power Analysis Reflection */}
-                    <div className="space-y-2 pt-2 bg-amber-500/5 p-3 rounded-lg border border-amber-500/15">
-                      <Label className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
-                        <Lightbulb className="h-3.5 w-3.5" />
-                        Alternative Power Analysis & Leverage Reflection
-                      </Label>
-                      <p className="text-[11px] text-muted-foreground leading-normal">
-                        Based on the alternatives above and what you discovered in your investigation, who holds more leverage in this deal? What is your tactical approach to balance the power?
-                      </p>
-                      <textarea
-                        value={alternativePowerReflection}
-                        onChange={(e) => setAlternativePowerReflection(e.target.value)}
-                        placeholder="Write down your strategic power assessment (e.g. 'Although we need cash, our certified technician gives us leverage because the clinic machine catastrophically broke down...')"
-                        className="w-full min-h-[90px] bg-background/60 border border-border/40 rounded-lg p-2.5 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-amber-500/40 resize-y"
-                      />
                     </div>
                   </div>
 
@@ -820,7 +812,17 @@ export function StrategyBoard() {
                 </CardContent>
               </Card>
             </motion.div>
-
+            
+            <div className="flex justify-end pt-4 pb-4">
+              <Button onClick={() => setWizardStep(2)} className="bg-amber-600 hover:bg-amber-700 text-white gap-2" size="lg">
+                Next: Prioritize Issues <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+            </motion.div>
+            )}
+            
+            {wizardStep === 2 && (
+              <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-6">
             {/* Issue Priority Matrix with Tooltips */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               <Card className="bg-card/50 border-border/50">
@@ -832,479 +834,199 @@ export function StrategyBoard() {
                   <CardDescription className="text-xs">
                     Identify trade opportunities where priorities differ. Each issue rated out of 10.
                   </CardDescription>
-                  {/* Star legend */}
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
-                    <div className="flex items-center gap-1.5">
-                      <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                      <span className="text-[10px] text-muted-foreground">Client Priority</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Star className="h-3 w-3 text-cyan-400 fill-cyan-400" />
-                      <span className="text-[10px] text-muted-foreground">CP Priority</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Star className="h-3 w-3 text-emerald-400 fill-emerald-400" />
-                      <span className="text-[10px] text-muted-foreground">Value to Client</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Star className="h-3 w-3 text-orange-400 fill-orange-400" />
-                      <span className="text-[10px] text-muted-foreground">Value to CP</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 ml-auto">
-                      <Star className="h-3 w-3 text-muted-foreground/15 fill-muted-foreground/8" />
-                      <span className="text-[10px] text-muted-foreground">Remaining capacity</span>
-                    </div>
-                  </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    {issues.map((issue) => (
-                      <div
-                        key={issue.id}
-                        className="p-3 rounded-lg bg-background/50 border border-border/30 space-y-2 priority-issue-card"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">{issue.name}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{issue.description}</p>
-                          </div>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge variant="outline" className={`text-[11px] shrink-0 cursor-help ${TRADEABILITY_COLORS[issue.tradeability]}`}>
-                                  {issue.tradeability} trade
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-[240px] text-xs">
-                                <p>{TRADEABILITY_TOOLTIPS[issue.tradeability]}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                        {/* Priority Stars - Client & Counterparty */}
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-                          {/* Client Priority */}
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[11px] text-muted-foreground">Client Priority</span>
-                              <span className="text-[11px] font-semibold text-amber-400 tabular-nums">{issue.clientPriority}/10</span>
-                            </div>
-                            <div className="flex items-center gap-[2px]">
-                              {Array.from({ length: 10 }).map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-3.5 w-3.5 transition-all duration-200 ${
-                                    i < issue.clientPriority
-                                      ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_3px_rgba(251,191,36,0.4)]'
-                                      : 'text-muted-foreground/15 fill-muted-foreground/8'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          {/* Counterparty Priority */}
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[11px] text-muted-foreground">Counterparty Priority</span>
-                              <span className="text-[11px] font-semibold text-cyan-400 tabular-nums">{issue.counterpartyPriority}/10</span>
-                            </div>
-                            <div className="flex items-center gap-[2px]">
-                              {Array.from({ length: 10 }).map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-3.5 w-3.5 transition-all duration-200 ${
-                                    i < issue.counterpartyPriority
-                                      ? 'text-cyan-400 fill-cyan-400 drop-shadow-[0_0_3px_rgba(34,211,238,0.4)]'
-                                      : 'text-muted-foreground/15 fill-muted-foreground/8'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          {/* Value to Client - derived from counterparty priority (logrolling opportunity) */}
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span className="text-[11px] text-muted-foreground flex items-center gap-1 cursor-help">
-                                      Value to Client
-                                      <Info className="h-2.5 w-2.5 text-muted-foreground/50" />
-                                    </span>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="max-w-[200px] text-xs">
-                                    <p>How much trade value this issue represents for your client. Higher counterparty priority = more leverage in logrolling.</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              <span className="text-[11px] font-semibold text-emerald-400 tabular-nums">{issue.counterpartyPriority}/10</span>
-                            </div>
-                            <div className="flex items-center gap-[2px]">
-                              {Array.from({ length: 10 }).map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-3.5 w-3.5 transition-all duration-200 ${
-                                    i < issue.counterpartyPriority
-                                      ? 'text-emerald-400 fill-emerald-400 drop-shadow-[0_0_3px_rgba(52,211,153,0.4)]'
-                                      : 'text-muted-foreground/15 fill-muted-foreground/8'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          {/* Value to Counterparty - derived from client priority */}
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span className="text-[11px] text-muted-foreground flex items-center gap-1 cursor-help">
-                                      Value to Counterparty
-                                      <Info className="h-2.5 w-2.5 text-muted-foreground/50" />
-                                    </span>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="max-w-[200px] text-xs">
-                                    <p>How much trade value this issue represents for the counterparty. Higher client priority = more they can demand in exchange.</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              <span className="text-[11px] font-semibold text-orange-400 tabular-nums">{issue.clientPriority}/10</span>
-                            </div>
-                            <div className="flex items-center gap-[2px]">
-                              {Array.from({ length: 10 }).map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-3.5 w-3.5 transition-all duration-200 ${
-                                    i < issue.clientPriority
-                                      ? 'text-orange-400 fill-orange-400 drop-shadow-[0_0_3px_rgba(251,146,60,0.4)]'
-                                      : 'text-muted-foreground/15 fill-muted-foreground/8'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        {/* Trade opportunity indicator */}
-                        {issue.clientPriority !== issue.counterpartyPriority && (
-                          <div className="flex items-center gap-1.5 pt-1 border-t border-border/20 mt-1">
-                            <Lightbulb className="h-3 w-3 text-amber-400" />
-                            <span className="text-[11px] text-amber-400">
-                              {Math.abs(issue.clientPriority - issue.counterpartyPriority) >= 4
-                                ? issue.clientPriority > issue.counterpartyPriority
-                                  ? '🔥 Strong trade opportunity — you value this much more, consider conceding for a bigger gain elsewhere'
-                                  : '🎯 High logrolling potential — they value this much more, trade it for something you want'
-                                : issue.clientPriority > issue.counterpartyPriority
-                                  ? 'You value this more — potential concession for the counterparty'
-                                  : 'They value this more — opportunity to trade for something you want'
-                              }
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                  <div className="space-y-4">
+                    {issues.map((issue) => {
+                      const estimate = issueEstimates[issue.id] || { clientPriority: 5, counterpartyPriority: 5 };
+                      
+                      let coachingComment = null;
+                      if (isEstimatesVerified) {
+                        const clientDiff = Math.abs(estimate.clientPriority - issue.clientPriority);
+                        const cpDiff = Math.abs(estimate.counterpartyPriority - issue.counterpartyPriority);
+                        const totalDiff = clientDiff + cpDiff;
+                        
+                        if (totalDiff === 0) {
+                          coachingComment = { text: "🎯 Spot on! You read them perfectly.", color: "text-emerald-400" };
+                        } else if (totalDiff <= 2) {
+                          coachingComment = { text: "✅ Very close! Good read.", color: "text-emerald-400" };
+                        } else if (totalDiff <= 5) {
+                          coachingComment = { text: "💡 You're in the right ballpark, but missing some nuances.", color: "text-yellow-400" };
+                        } else {
+                          if (estimate.counterpartyPriority < issue.counterpartyPriority && cpDiff > 3) {
+                            coachingComment = { text: "⚠️ You underestimated how much they care about this.", color: "text-red-400" };
+                          } else if (estimate.clientPriority < issue.clientPriority && clientDiff > 3) {
+                            coachingComment = { text: "⚠️ You underestimated how important this is to your client.", color: "text-red-400" };
+                          } else {
+                            coachingComment = { text: "⚠️ Your estimates are quite far off from the reality.", color: "text-red-400" };
+                          }
+                        }
+                      }
 
-            {/* Opening Strategy */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <Card className="bg-card/50 border-border/50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Target className="h-4 w-4 text-violet-400" />
-                    Opening Strategy
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    How will you begin the negotiation?
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <RadioGroup
-                    value={openingStrategy}
-                    onValueChange={setOpeningStrategy}
-                    className="grid grid-cols-1 sm:grid-cols-2 gap-3"
-                  >
-                    {OPENING_STRATEGIES.map((strategy) => (
-                      <Label
-                        key={strategy.id}
-                        htmlFor={strategy.id}
-                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                          openingStrategy === strategy.id
-                            ? 'border-amber-500/50 bg-amber-500/10'
-                            : 'border-border/30 bg-background/50 hover:border-border/60'
-                        }`}
-                      >
-                        <RadioGroupItem value={strategy.id} id={strategy.id} className="mt-0.5" />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <strategy.icon className="h-4 w-4 text-amber-400" />
-                            <span className="text-sm font-medium">{strategy.label}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">{strategy.description}</p>
-                        </div>
-                      </Label>
-                    ))}
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Assumption Tracker */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <Card className="bg-card/50 border-border/50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Lightbulb className="h-4 w-4 text-yellow-400" />
-                    Assumption Tracker
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Track what you believe to be true — verify them during investigation
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0 space-y-3">
-                  {assumptions.length > 0 && (
-                    <ul className="space-y-2">
-                      {assumptions.map((assumption, i) => (
-                        <motion.li
-                          key={i}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="flex items-center justify-between gap-2 p-2 rounded-md bg-background/50 border border-border/30"
+                      return (
+                        <div
+                          key={issue.id}
+                          className="p-4 rounded-xl bg-background/50 border border-border/30 space-y-4 priority-issue-card"
                         >
-                          <span className="text-sm text-muted-foreground flex-1">{assumption}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeAssumption(i)}
-                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        </motion.li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Add an assumption..."
-                      value={newAssumption}
-                      onChange={(e) => setNewAssumption(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAddAssumption}
-                      disabled={!newAssumption.trim()}
-                      className="gap-1"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium">{issue.name}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{issue.description}</p>
+                            </div>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className={`text-[11px] shrink-0 cursor-help ${TRADEABILITY_COLORS[issue.tradeability]}`}>
+                                    {issue.tradeability} trade
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-[240px] text-xs">
+                                  <p>{TRADEABILITY_TOOLTIPS[issue.tradeability]}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                            {/* Importance to Us */}
+                            <div className="space-y-3">
+                              <div className="flex justify-between items-center">
+                                <Label className="text-xs text-amber-500">Importance to Us</Label>
+                                <span className="text-xs font-mono font-semibold text-amber-400">{estimate.clientPriority}/10</span>
+                              </div>
+                              <Slider
+                                disabled={isEstimatesVerified}
+                                min={1}
+                                max={10}
+                                step={1}
+                                value={[estimate.clientPriority]}
+                                onValueChange={(val) => setIssueEstimates({ ...issueEstimates, [issue.id]: { ...estimate, clientPriority: val[0] } })}
+                                className="[&_[role=slider]]:bg-amber-400 [&_[role=slider]]:border-amber-400 [&>.relative>.absolute]:bg-amber-400/50"
+                              />
+                              {isEstimatesVerified && (
+                                <div className="flex items-center gap-1.5 text-[11px] mt-1">
+                                  <span className="text-muted-foreground">True value:</span>
+                                  <span className="font-semibold text-amber-400">{issue.clientPriority}/10</span>
+                                </div>
+                              )}
+                            </div>
 
-            {/* Advisor Tip */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="lg:hidden">
-              <Card className="bg-amber-500/10 border-amber-500/20">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Lightbulb className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold text-amber-400 mb-1">Advisor Tip</p>
-                      <p className="text-sm text-amber-200 italic">
-                        {ADVISOR_TIPS[category] || ADVISOR_TIPS.fundamentals}
-                      </p>
+                            {/* Importance to Them */}
+                            <div className="space-y-3">
+                              <div className="flex justify-between items-center">
+                                <Label className="text-xs text-cyan-500">Importance to Them</Label>
+                                <span className="text-xs font-mono font-semibold text-cyan-400">{estimate.counterpartyPriority}/10</span>
+                              </div>
+                              <Slider
+                                disabled={isEstimatesVerified}
+                                min={1}
+                                max={10}
+                                step={1}
+                                value={[estimate.counterpartyPriority]}
+                                onValueChange={(val) => setIssueEstimates({ ...issueEstimates, [issue.id]: { ...estimate, counterpartyPriority: val[0] } })}
+                                className="[&_[role=slider]]:bg-cyan-400 [&_[role=slider]]:border-cyan-400 [&>.relative>.absolute]:bg-cyan-400/50"
+                              />
+                              {isEstimatesVerified && (
+                                <div className="flex items-center gap-1.5 text-[11px] mt-1">
+                                  <span className="text-muted-foreground">True value:</span>
+                                  <span className="font-semibold text-cyan-400">{issue.counterpartyPriority}/10</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Coaching Comment */}
+                          {isEstimatesVerified && coachingComment && (
+                            <motion.div 
+                              initial={{ opacity: 0, height: 0 }} 
+                              animate={{ opacity: 1, height: 'auto' }} 
+                              className="pt-3 border-t border-border/20"
+                            >
+                              <div className="flex flex-col gap-1.5">
+                                <span className={`text-xs font-medium ${coachingComment.color}`}>
+                                  {coachingComment.text}
+                                </span>
+                                {issue.clientPriority !== issue.counterpartyPriority && (
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <Lightbulb className="h-3 w-3 text-amber-400/70" />
+                                    <span className="text-[11px] text-muted-foreground italic">
+                                      {Math.abs(issue.clientPriority - issue.counterpartyPriority) >= 4
+                                        ? issue.clientPriority > issue.counterpartyPriority
+                                          ? '🔥 Strong trade opportunity — you value this much more, consider conceding for a bigger gain elsewhere'
+                                          : '🎯 High logrolling potential — they value this much more, trade it for something you want'
+                                        : issue.clientPriority > issue.counterpartyPriority
+                                          ? 'You value this more — potential concession for the counterparty'
+                                          : 'They value this more — opportunity to trade for something you want'
+                                      }
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {!isEstimatesVerified ? (
+                    <div className="mt-6 flex justify-center">
+                      <Button 
+                        onClick={() => setIsEstimatesVerified(true)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)] transition-all gap-2"
+                      >
+                        <Shield className="h-4 w-4" />
+                        Verify Estimates
+                      </Button>
                     </div>
-                  </div>
+                  ) : (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }} 
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="mt-6 flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20"
+                    >
+                      <div className="flex items-center gap-2 text-emerald-400 font-medium">
+                        <CheckCircle2 className="h-5 w-5" />
+                        <span>Estimates Verified</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center">
+                        Your estimates are locked in. You can now proceed to the investigation phase.
+                      </p>
+                    </motion.div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
-
-            {/* Pre-Negotiation Checklist (NAP Method) */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
-              <PreNegotiationChecklist />
+            
+            <div className="flex justify-end pt-4 pb-4">
+              <Button
+                onClick={() => {
+                  if (isTransitioning) return;
+                  setIsTransitioning(true);
+                  setTimeout(() => {
+                    setPhase('investigation');
+                    setIsTransitioning(false);
+                  }, 50);
+                }}
+                disabled={isTransitioning || !isEstimatesVerified}
+                className="bg-amber-600 hover:bg-amber-700 text-white gap-2 relative z-30 disabled:opacity-50"
+                size="lg"
+              >
+                {isTransitioning ? 'Loading...' : 'Proceed to Investigation'}
+                {!isTransitioning && <ArrowRight className="h-4 w-4" />}
+              </Button>
+            </div>
             </motion.div>
+            )}
+            </AnimatePresence>
           </div>
         </ScrollArea>
         </div>
 
-        {/* Right column: Strategy Advisor Panel (sticky on desktop) */}
-        <div className="w-full lg:w-80 xl:w-96 shrink-0">
-          <div className="lg:sticky lg:top-24 space-y-4">
-            {/* Mobile toggle button */}
-            <Button
-              variant="outline"
-              onClick={() => setIsAdvisorExpanded(!isAdvisorExpanded)}
-              className="w-full lg:hidden flex items-center justify-between bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300"
-            >
-              <span className="flex items-center gap-2">
-                <Lightbulb className="h-4 w-4" />
-                Strategy Tips
-              </span>
-              {isAdvisorExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
-
-            {/* Desktop always-visible header */}
-            <div className="hidden lg:flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">💡</span>
-                <h2 className="text-sm font-semibold text-amber-400">Strategy Advisor</h2>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsAdvisorExpanded(!isAdvisorExpanded)}
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-amber-400"
-              >
-                {isAdvisorExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              </Button>
-            </div>
-
-            {/* Advisor content */}
-            <AnimatePresence>
-              {isAdvisorExpanded && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25, ease: 'easeInOut' }}
-                  className="overflow-hidden space-y-3"
-                >
-                  {/* Category Tips Card */}
-                  {categoryTip && (
-                    <div className="glass-card p-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">{categoryTip.icon}</span>
-                        <h3 className="text-xs font-semibold text-amber-400">{categoryTip.title}</h3>
-                      </div>
-                      <ul className="space-y-2">
-                        {categoryTip.tips.map((tip, i) => (
-                          <motion.li
-                            key={i}
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                            className="flex items-start gap-2 text-xs text-muted-foreground"
-                          >
-                            <Zap className="h-3 w-3 text-amber-500 mt-0.5 shrink-0" />
-                            <span>{tip}</span>
-                          </motion.li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* BATNA Assessment Card */}
-                  {batnaLevel && (
-                    <div className={`glass-card p-4 space-y-2 ${
-                      batnaLevel === 'low'
-                        ? 'border-orange-500/30'
-                        : batnaLevel === 'high'
-                        ? 'border-emerald-500/30'
-                        : 'border-amber-500/30'
-                    }`}>
-                      <div className="flex items-center gap-2">
-                        {batnaLevel === 'low' ? (
-                          <AlertTriangle className="h-3.5 w-3.5 text-orange-400" />
-                        ) : batnaLevel === 'high' ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                        ) : (
-                          <Lightbulb className="h-3.5 w-3.5 text-amber-400" />
-                        )}
-                        <h3 className="text-xs font-semibold text-amber-400">Alternative Assessment</h3>
-                      </div>
-                      <p className={`text-xs ${
-                        batnaLevel === 'low'
-                          ? 'text-orange-300'
-                          : batnaLevel === 'high'
-                          ? 'text-emerald-300'
-                          : 'text-amber-300'
-                      }`}>
-                        {BATNA_TIPS[batnaLevel].text}
-                      </p>
-                      {batnaEstimate > 0 && (
-                        <div className="mt-2 flex items-center gap-2">
-                          <div className="flex-1 h-1.5 rounded-full bg-background/50 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ${
-                                batnaLevel === 'low'
-                                  ? 'bg-gradient-to-r from-orange-500 to-orange-400'
-                                  : batnaLevel === 'high'
-                                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
-                                  : 'bg-gradient-to-r from-amber-500 to-amber-400'
-                              }`}
-                              style={{
-                                width: `${Math.min(100, Math.max(10, (batnaEstimate / (scenario.batna.clientBATNAValue * 1.5 || 1)) * 100))}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-[11px] text-muted-foreground">€{batnaEstimate.toLocaleString()}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Strategy Recommendation Card */}
-                  {strategyTipKey && STRATEGY_TIPS[strategyTipKey] && (
-                    <div className="glass-card p-4 space-y-2 border-violet-500/20">
-                      <div className="flex items-center gap-2">
-                        <Target className="h-3.5 w-3.5 text-violet-400" />
-                        <h3 className="text-xs font-semibold text-amber-400">Opening Strategy</h3>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {STRATEGY_TIPS[strategyTipKey]}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Quick Advisor Tip (from original) */}
-                  <div className="glass-card p-4 space-y-2 border-amber-500/20">
-                    <div className="flex items-start gap-2">
-                      <Lightbulb className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
-                      <p className="text-xs text-amber-200 italic">
-                        {ADVISOR_TIPS[category] || ADVISOR_TIPS.fundamentals}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+        {/* Right column: Strategy Advisor Panel */}
+        <StrategyAdvisorSidebar batnaEstimate={batnaEstimate} />
         </div>
 
-        {/* Proceed Button — BUG-001 fix: add loading state, guard against double-click, reset negotiation state */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="flex justify-end pb-4"
-        >
-          <Button
-            onClick={() => {
-              if (isTransitioning) return;
-              setIsTransitioning(true);
-              // Reset negotiation state before entering negotiation
-              useGameStore.getState().resetNegotiation();
-              // Use a small timeout to prevent AnimatePresence race conditions
-              setTimeout(() => {
-                setPhase('negotiation');
-                setIsTransitioning(false);
-              }, 50);
-            }}
-            disabled={isTransitioning}
-            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white gap-2 premium-button dramatic-glow relative z-30 font-semibold"
-            size="lg"
-          >
-            {isTransitioning ? 'Loading...' : 'Start Negotiation'}
-            {!isTransitioning && <ArrowRight className="h-4 w-4" />}
-          </Button>
-        </motion.div>
       </div>
     </div>
   );

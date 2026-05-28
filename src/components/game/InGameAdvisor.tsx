@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { NotesAndAssumptions } from './NotesAndAssumptions';
 
 interface InGameAdvisorProps {
   negotiation: {
@@ -521,6 +522,17 @@ export function InGameAdvisor(props: InGameAdvisorProps) {
                       </p>
                     </motion.div>
                   )}
+
+                  {/* Notes & Assumptions */}
+                  <div className="mt-6 mb-2">
+                    <h3 className="text-xs font-semibold text-amber-500 mb-3 px-2 flex items-center gap-2">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Case Scratchpad
+                    </h3>
+                    <div className="rounded-xl overflow-hidden border border-amber-500/10 bg-black/20">
+                      <NotesAndAssumptions />
+                    </div>
+                  </div>
 
                   {/* AI Advice Card */}
                   {aiAdvice && (

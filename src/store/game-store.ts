@@ -99,8 +99,9 @@ export interface GameState {
   assumptions: string[];
   addAssumption: (assumption: string) => void;
   removeAssumption: (index: number) => void;
-  alternativePowerReflection: string;
-  setAlternativePowerReflection: (value: string) => void;
+  issueEstimates: Record<string, { clientPriority: number, counterpartyPriority: number }>;
+  setIssueEstimates: (estimates: Record<string, { clientPriority: number, counterpartyPriority: number }>) => void;
+  clearIssueEstimates: () => void;
 
   // Challenge Mode
   challengeMode: 'none' | 'speed' | 'limited_choices' | 'ethics_lock';
@@ -857,8 +858,10 @@ export const useGameStore = create<GameState>()(
         set((s) => ({ assumptions: [...s.assumptions, assumption] })),
       removeAssumption: (index) =>
         set((s) => ({ assumptions: s.assumptions.filter((_, i) => i !== index) })),
-      alternativePowerReflection: '',
-      setAlternativePowerReflection: (value) => set({ alternativePowerReflection: value }),
+      
+      issueEstimates: {},
+      setIssueEstimates: (estimates) => set({ issueEstimates: estimates }),
+      clearIssueEstimates: () => set({ issueEstimates: {} }),
 
       tutorialCompleted: false,
       setTutorialCompleted: () => set({ tutorialCompleted: true }),
@@ -911,6 +914,12 @@ export const useGameStore = create<GameState>()(
           aspirationEstimate: 0,
           openingStrategy: '',
           assumptions: [],
+          issueEstimates: {},
+          caseNotes: '',
+          reservationEstimate: 0,
+          aspirationEstimate: 0,
+          openingStrategy: '',
+          assumptions: [],
           unlockedCases: ['case-01', 'case-02', 'case-03'],
           challengeMode: 'none',
           challengeTimer: 0,
@@ -942,6 +951,12 @@ export const useGameStore = create<GameState>()(
           techniquesUsed: [],
           negotiation: { ...defaultNegotiation },
           batnaEstimate: 0,
+          reservationEstimate: 0,
+          aspirationEstimate: 0,
+          openingStrategy: '',
+          assumptions: [],
+          issueEstimates: {},
+          caseNotes: '',
           reservationEstimate: 0,
           aspirationEstimate: 0,
           openingStrategy: '',
@@ -1032,10 +1047,15 @@ export const useGameStore = create<GameState>()(
           aspirationEstimate: 0,
           openingStrategy: '',
           assumptions: [],
+          issueEstimates: {},
+          caseNotes: '',
+          reservationEstimate: 0,
+          aspirationEstimate: 0,
+          openingStrategy: '',
+          assumptions: [],
           caseNotes: '',
           investigationPoints: 5,
           maxInvestigationPoints: 5,
-          alternativePowerReflection: '',
         }),
     }),
     {
@@ -1062,6 +1082,7 @@ export const useGameStore = create<GameState>()(
         aspirationEstimate: state.aspirationEstimate,
         openingStrategy: state.openingStrategy,
         assumptions: state.assumptions,
+        issueEstimates: state.issueEstimates,
         caseNotes: state.caseNotes,
         investigationPoints: state.investigationPoints,
         maxInvestigationPoints: state.maxInvestigationPoints,
