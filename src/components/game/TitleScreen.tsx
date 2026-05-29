@@ -287,7 +287,7 @@ export function TitleScreen() {
         </motion.div>
 
         {/* Auth Interface */}
-        <div className="h-64 flex flex-col items-center justify-center">
+        <div className="min-h-[320px] flex flex-col items-center justify-center w-full">
           {status === 'loading' ? (
              <div className="animate-spin h-6 w-6 border-2 border-amber-500 rounded-full border-t-transparent"></div>
           ) : status === 'unauthenticated' ? (
@@ -356,7 +356,7 @@ export function TitleScreen() {
                   <button 
                     type="button"
                     onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-                    className="text-xs text-amber-500/70 hover:text-amber-500 text-center w-full transition-colors"
+                    className="text-sm font-medium text-amber-400 hover:text-amber-300 text-center w-full transition-colors pt-1"
                   >
                     {authMode === 'login' ? "Don't have an account? Sign up" : "Already have an account? Log in"}
                   </button>
