@@ -5,7 +5,7 @@ import { useGameStore } from '@/store/game-store';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
-import { Briefcase, Play, RotateCcw } from 'lucide-react';
+import { Briefcase, Play, RotateCcw, Lock } from 'lucide-react';
 import { useThemeApplication } from '@/components/game/ThemeSelector';
 
 // Floating negotiation term badges
@@ -37,6 +37,48 @@ export function TitleScreen() {
   const { startNewGame, playerName, casesCompleted, resetGame } = useGameStore();
   const [name, setName] = useState('');
   const hasSave = casesCompleted > 0;
+
+  // Passcode state
+  const [isLocked, setIsLocked] = useState(true);
+  const [passcodeInput, setPasscodeInput] = useState('');
+  const [passcodeError, setPasscodeError] = useState(false);
+  const [hasCheckedLock, setHasCheckedLock] = useState(false);
+
+  // You can change these to whatever you want
+  const VALID_PASSCODES = ['DEAL_MASTER_2026', 'EB_VIP_MEMBER'];
+
+  useEffect(() => {
+    // Check if already unlocked in localStorage
+    const isUnlocked = localStorage.getItem('dealcraft_unlocked') === 'true';
+    if (isUnlocked) {
+      setIsLocked(false);
+      setHasCheckedLock(true);
+      return;
+    }
+
+    // Check URL for passcode (avoids Next.js SSR de-opt by doing it client side)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPasscode = urlParams.get('passcode');
+    
+    if (urlPasscode && VALID_PASSCODES.includes(urlPasscode)) {
+      localStorage.setItem('dealcraft_unlocked', 'true');
+      setIsLocked(false);
+      // Clean up URL without reloading
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    setHasCheckedLock(true);
+  }, []);
+
+  const handleUnlock = () => {
+    if (VALID_PASSCODES.includes(passcodeInput.trim())) {
+      localStorage.setItem('dealcraft_unlocked', 'true');
+      setIsLocked(false);
+      setPasscodeError(false);
+    } else {
+      setPasscodeError(true);
+    }
+  };
 
   // Apply theme
   useThemeApplication();
@@ -201,62 +243,123 @@ export function TitleScreen() {
           <div className="animated-line mx-auto" style={{ maxWidth: '200px' }} />
         </motion.div>
 
-        {/* Name input */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
-          className="space-y-4 max-w-sm mx-auto"
-        >
-          <div className="space-y-2">
-            <label className="text-sm text-muted-foreground text-left block">Welcome, Negotiator.</label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name..."
-              className="text-center bg-card/50 border-border/50 h-11 text-base focus:border-amber-500/50 focus:ring-amber-500/20"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && name.trim()) {
-                  startNewGame(name.trim());
-                }
-              }}
-            />
+        {/* Main Interaction Area (Passcode Gate or Name Input) */}
+        {!hasCheckedLock ? (
+          <div className="h-40 flex items-center justify-center">
+             <div className="animate-spin h-6 w-6 border-2 border-amber-500 rounded-full border-t-transparent"></div>
           </div>
+        ) : isLocked ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-4 max-w-sm mx-auto w-full p-6 glass-card rounded-2xl relative overflow-hidden text-left"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none" />
+            <div className="relative space-y-4">
+              <div className="flex justify-center mb-2">
+                <div className="h-12 w-12 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center dramatic-glow-themed">
+                  <Lock className="h-5 w-5 text-amber-500" />
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-foreground mb-1">Private Beta Access</h3>
+                <p className="text-xs text-muted-foreground">DealCraft is currently in closed beta. Enter your passcode to unlock.</p>
+              </div>
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  value={passcodeInput}
+                  onChange={(e) => { setPasscodeInput(e.target.value); setPasscodeError(false); }}
+                  placeholder="Enter passcode..."
+                  className={`text-center bg-background/50 h-11 ${passcodeError ? 'border-red-500 focus:ring-red-500/20' : 'focus:border-amber-500/50 focus:ring-amber-500/20'}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleUnlock();
+                  }}
+                />
+                {passcodeError && (
+                  <p className="text-xs text-red-500 text-center font-medium">Invalid passcode. Please try again.</p>
+                )}
+              </div>
+              <div className="flex flex-col gap-3 pt-2">
+                <Button onClick={handleUnlock} className="w-full premium-button-themed h-11 text-black font-semibold text-base gap-2 dramatic-glow-themed">
+                  Unlock Access
+                </Button>
+                
+                <div className="relative py-2 flex items-center">
+                  <div className="flex-grow border-t border-border"></div>
+                  <span className="flex-shrink-0 mx-4 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">or</span>
+                  <div className="flex-grow border-t border-border"></div>
+                </div>
 
-          <div className="flex flex-col gap-3">
-            <Button
-              onClick={() => name.trim() && startNewGame(name.trim())}
-              disabled={!name.trim()}
-              className="h-11 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-base gap-2 premium-button-themed dramatic-glow-themed disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"
-            >
-              <Play className="h-4 w-4" />
-              New Career
-            </Button>
-
-            {hasSave && (
-              <Button
-                onClick={() => {
-                  useGameStore.getState().setPhase('dashboard');
+                {/* NOTE TO TIM: Replace this URL with your LemonSqueezy Product checkout link! */}
+                <Button 
+                  onClick={() => window.open('https://englishbreakfast.lemonsqueezy.com/', '_blank')} 
+                  variant="outline" 
+                  className="w-full border-amber-500/30 text-amber-500 hover:bg-amber-500/10 h-11 text-sm font-medium"
+                >
+                  Get Free Instant Access
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-4 max-w-sm mx-auto"
+          >
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground text-left block">Welcome, Negotiator.</label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your name..."
+                className="text-center bg-card/50 border-border/50 h-11 text-base focus:border-amber-500/50 focus:ring-amber-500/20"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && name.trim()) {
+                    startNewGame(name.trim());
+                  }
                 }}
-                variant="outline"
-                className="h-11 font-medium gap-2 border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/50"
-              >
-                Continue as {playerName}
-              </Button>
-            )}
+              />
+            </div>
 
-            {hasSave && (
+            <div className="flex flex-col gap-3">
               <Button
-                onClick={resetGame}
-                variant="ghost"
-                className="h-9 text-muted-foreground text-sm gap-2"
+                onClick={() => name.trim() && startNewGame(name.trim())}
+                disabled={!name.trim()}
+                className="h-11 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-base gap-2 premium-button-themed dramatic-glow-themed disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"
               >
-                <RotateCcw className="h-3 w-3" />
-                Reset Game
+                <Play className="h-4 w-4" />
+                New Career
               </Button>
-            )}
-          </div>
-        </motion.div>
+
+              {hasSave && (
+                <Button
+                  onClick={() => {
+                    useGameStore.getState().setPhase('dashboard');
+                  }}
+                  variant="outline"
+                  className="h-11 font-medium gap-2 border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/50"
+                >
+                  Continue as {playerName}
+                </Button>
+              )}
+
+              {hasSave && (
+                <Button
+                  onClick={resetGame}
+                  variant="ghost"
+                  className="h-9 text-muted-foreground text-sm gap-2"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Reset Game
+                </Button>
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* Feature badges with glass-card style + parallax */}
         <motion.div

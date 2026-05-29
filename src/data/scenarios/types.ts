@@ -350,6 +350,7 @@ export interface NegotiationState {
   patience: number;
   currentDialogueNodeId: string;
   choicesMade: string[];
+  advisorLogs: string[];
   informationRevealed: string[];
   valueClaimed: number;
   valueCreated: number;
@@ -379,6 +380,7 @@ export interface CaseResult {
   scores: EndingScores;
   finalScore: number;
   choicesMade: string[];
+  advisorLogs: string[];
   hiddenFactsFound: string[];
   postmortemRead: boolean;
   transcript?: TranscriptEntry[];

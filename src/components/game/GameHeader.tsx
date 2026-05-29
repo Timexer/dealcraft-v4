@@ -23,6 +23,7 @@ import {
   RotateCcw,
   AlertTriangle,
   Coffee,
+  Lock,
 } from 'lucide-react';
 import { MONETIZATION_CONFIG, getLemonSqueezyLink } from '@/lib/monetization-config';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -243,6 +244,16 @@ export function GameHeader() {
           <TutorialHelpButton />
           {/* Dark/Light mode toggle */}
           <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-emerald-400 opacity-60 hover:opacity-100"
+            onClick={() => { window.location.href = '/admin'; }}
+            title="Trainer Dashboard"
+          >
+            <Lock className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Admin</span>
+          </Button>
           <Button
             variant="ghost"
             size="sm"

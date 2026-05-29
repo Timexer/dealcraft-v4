@@ -12,11 +12,23 @@ export async function POST(request: NextRequest) {
       scores,
       finalScore,
       choicesMade,
+      advisorLogs,
       hiddenFactsFound,
     } = body;
 
     if (!playerId || !scenarioId || !outcome) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Ensure player exists
+    let player = await db.player.findUnique({ where: { id: playerId } });
+    if (!player) {
+      player = await db.player.create({
+        data: {
+          id: playerId,
+          name: playerId,
+        },
+      });
     }
 
     // Create the case result
@@ -25,17 +37,17 @@ export async function POST(request: NextRequest) {
         playerId,
         scenarioId,
         outcome,
-        scores: typeof scores === 'string' ? scores : JSON.stringify(scores),
         finalScore: finalScore || 0,
         choicesMade: typeof choicesMade === 'string' ? choicesMade : JSON.stringify(choicesMade || []),
+        advisorLogs: typeof advisorLogs === 'string' ? advisorLogs : JSON.stringify(advisorLogs || []),
         hiddenFactsFound: typeof hiddenFactsFound === 'string' ? hiddenFactsFound : JSON.stringify(hiddenFactsFound || []),
       },
     });
 
     // Update player's completed scenario IDs and score
-    const player = await db.player.findUnique({ where: { id: playerId } });
-    if (player) {
-      const completedIds: string[] = JSON.parse(player.completedScenarioIds || '[]');
+    const existingPlayer = await db.player.findUnique({ where: { id: playerId } });
+    if (existingPlayer) {
+      const completedIds: string[] = JSON.parse(existingPlayer.completedScenarioIds || '[]');
       if (!completedIds.includes(scenarioId)) {
         completedIds.push(scenarioId);
       }
@@ -44,8 +56,8 @@ export async function POST(request: NextRequest) {
         where: { id: playerId },
         data: {
           completedScenarioIds: JSON.stringify(completedIds),
-          casesCompleted: player.casesCompleted + 1,
-          totalScore: player.totalScore + (finalScore || 0),
+          casesCompleted: existingPlayer.casesCompleted + 1,
+          totalScore: existingPlayer.totalScore + (finalScore || 0),
           currentCaseId: null,
           gamePhase: 'dashboard',
         },

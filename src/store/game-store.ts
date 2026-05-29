@@ -72,6 +72,7 @@ export interface GameState {
   updateNegotiation: (delta: Partial<NegotiationState>) => void;
   applyEffects: (effects: StateEffect) => void;
   makeChoice: (choiceId: string, effects: StateEffect, infoRevealed?: string[]) => void;
+  addAdvisorLog: (log: string) => void;
   resetNegotiation: () => void;
 
   // Case results
@@ -186,6 +187,7 @@ const defaultNegotiation: NegotiationState = {
   patience: 70,
   currentDialogueNodeId: 'start',
   choicesMade: [],
+  advisorLogs: [],
   informationRevealed: [],
   valueClaimed: 0,
   valueCreated: 0,
@@ -336,6 +338,13 @@ export const useGameStore = create<GameState>()(
             },
           };
         }),
+      addAdvisorLog: (log) =>
+        set((s) => ({
+          negotiation: {
+            ...s.negotiation,
+            advisorLogs: [...s.negotiation.advisorLogs, log],
+          }
+        })),
       resetNegotiation: () =>
         set({
           negotiation: { ...defaultNegotiation },

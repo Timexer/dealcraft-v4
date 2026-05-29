@@ -589,6 +589,7 @@ export function NegotiationTable() {
       scores: dynamicScores,
       finalScore,
       choicesMade: negotiation.choicesMade,
+      advisorLogs: negotiation.advisorLogs,
       hiddenFactsFound: negotiation.informationRevealed,
       postmortemRead: false,
       transcript,
@@ -599,6 +600,22 @@ export function NegotiationTable() {
       replayCaseResult(caseResult);
     } else {
       addCaseResult(caseResult);
+
+      // Save to database
+      fetch('/api/game/case-result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playerId: useGameStore.getState().playerName || 'Anonymous',
+          scenarioId: caseResult.scenarioId,
+          outcome: caseResult.outcome,
+          scores: caseResult.scores,
+          finalScore: caseResult.finalScore,
+          choicesMade: caseResult.choicesMade,
+          advisorLogs: caseResult.advisorLogs,
+          hiddenFactsFound: caseResult.hiddenFactsFound,
+        })
+      }).catch(err => console.error("Failed to save case result to DB:", err));
 
       // BUG FIX: Only apply reputation and stats on first play, not on replay
       // (replayCaseResult already handles score adjustments)
