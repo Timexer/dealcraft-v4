@@ -5,8 +5,10 @@ import { useGameStore } from '@/store/game-store';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
-import { Briefcase, Play, RotateCcw, Lock } from 'lucide-react';
+import { Briefcase, Play, RotateCcw, Lock, LogIn, UserPlus, LogOut } from 'lucide-react';
 import { useThemeApplication } from '@/components/game/ThemeSelector';
+import { signIn, signOut, useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 
 // Floating negotiation term badges
 const NEGOTIATION_TERMS = [
@@ -34,51 +36,15 @@ const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
 }));
 
 export function TitleScreen() {
-  const { startNewGame, playerName, casesCompleted, resetGame } = useGameStore();
+  const { startNewGame, resetGame, hydrateFromServer } = useGameStore();
+  const { data: session, status } = useSession();
+
+  // Auth mode: 'login' | 'register'
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const hasSave = casesCompleted > 0;
-
-  // Passcode state
-  const [isLocked, setIsLocked] = useState(true);
-  const [passcodeInput, setPasscodeInput] = useState('');
-  const [passcodeError, setPasscodeError] = useState(false);
-  const [hasCheckedLock, setHasCheckedLock] = useState(false);
-
-  // You can change these to whatever you want
-  const VALID_PASSCODES = ['DEAL_MASTER_2026', 'EB_VIP_MEMBER'];
-
-  useEffect(() => {
-    // Check if already unlocked in localStorage
-    const isUnlocked = localStorage.getItem('dealcraft_unlocked') === 'true';
-    if (isUnlocked) {
-      setIsLocked(false);
-      setHasCheckedLock(true);
-      return;
-    }
-
-    // Check URL for passcode (avoids Next.js SSR de-opt by doing it client side)
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlPasscode = urlParams.get('passcode');
-    
-    if (urlPasscode && VALID_PASSCODES.includes(urlPasscode)) {
-      localStorage.setItem('dealcraft_unlocked', 'true');
-      setIsLocked(false);
-      // Clean up URL without reloading
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-    
-    setHasCheckedLock(true);
-  }, []);
-
-  const handleUnlock = () => {
-    if (VALID_PASSCODES.includes(passcodeInput.trim())) {
-      localStorage.setItem('dealcraft_unlocked', 'true');
-      setIsLocked(false);
-      setPasscodeError(false);
-    } else {
-      setPasscodeError(true);
-    }
-  };
+  const [isLoading, setIsLoading] = useState(false);
 
   // Apply theme
   useThemeApplication();
@@ -115,6 +81,83 @@ export function TitleScreen() {
     const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
     setMousePos({ x, y });
   }, []);
+
+  // Fetch player state from DB when authenticated
+  useEffect(() => {
+    if (status === 'authenticated') {
+      const fetchState = async () => {
+        try {
+          const res = await fetch('/api/player/sync');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.playerState) {
+              hydrateFromServer(data.playerState);
+            }
+          }
+        } catch (e) {
+          console.error("Failed to sync player state:", e);
+        }
+      };
+      fetchState();
+    }
+  }, [status, hydrateFromServer]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+    setIsLoading(true);
+    
+    try {
+      const res = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (res?.error) {
+        toast.error("Invalid credentials");
+      } else {
+        toast.success("Login successful!");
+        // We could fetch user state from API here to hydrate
+      }
+    } catch (err) {
+      toast.error("An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !email || !password) return;
+    setIsLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.message || "Registration failed");
+      } else {
+        toast.success("Account created! Logging you in...");
+        await signIn('credentials', { email, password, redirect: false });
+      }
+    } catch (err) {
+      toast.error("An error occurred during registration");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStartGame = () => {
+    if (session?.user?.name) {
+      startNewGame(session.user.name);
+    }
+  };
 
   return (
     <div
@@ -243,123 +286,120 @@ export function TitleScreen() {
           <div className="animated-line mx-auto" style={{ maxWidth: '200px' }} />
         </motion.div>
 
-        {/* Main Interaction Area (Passcode Gate or Name Input) */}
-        {!hasCheckedLock ? (
-          <div className="h-40 flex items-center justify-center">
+        {/* Auth Interface */}
+        <div className="h-64 flex flex-col items-center justify-center">
+          {status === 'loading' ? (
              <div className="animate-spin h-6 w-6 border-2 border-amber-500 rounded-full border-t-transparent"></div>
-          </div>
-        ) : isLocked ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="space-y-4 max-w-sm mx-auto w-full p-6 glass-card rounded-2xl relative overflow-hidden text-left"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none" />
-            <div className="relative space-y-4">
-              <div className="flex justify-center mb-2">
-                <div className="h-12 w-12 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center dramatic-glow-themed">
-                  <Lock className="h-5 w-5 text-amber-500" />
-                </div>
-              </div>
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-foreground mb-1">Private Beta Access</h3>
-                <p className="text-xs text-muted-foreground">DealCraft is currently in closed beta. Enter your passcode to unlock.</p>
-              </div>
-              <div className="space-y-2">
-                <Input
-                  type="password"
-                  value={passcodeInput}
-                  onChange={(e) => { setPasscodeInput(e.target.value); setPasscodeError(false); }}
-                  placeholder="Enter passcode..."
-                  className={`text-center bg-background/50 h-11 ${passcodeError ? 'border-red-500 focus:ring-red-500/20' : 'focus:border-amber-500/50 focus:ring-amber-500/20'}`}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleUnlock();
-                  }}
-                />
-                {passcodeError && (
-                  <p className="text-xs text-red-500 text-center font-medium">Invalid passcode. Please try again.</p>
-                )}
-              </div>
-              <div className="flex flex-col gap-3 pt-2">
-                <Button onClick={handleUnlock} className="w-full premium-button-themed h-11 text-black font-semibold text-base gap-2 dramatic-glow-themed">
-                  Unlock Access
-                </Button>
-                
-                <div className="relative py-2 flex items-center">
-                  <div className="flex-grow border-t border-border"></div>
-                  <span className="flex-shrink-0 mx-4 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">or</span>
-                  <div className="flex-grow border-t border-border"></div>
+          ) : status === 'unauthenticated' ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="space-y-4 max-w-sm mx-auto w-full p-6 glass-card rounded-2xl relative overflow-hidden text-left"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none" />
+              
+              <form onSubmit={authMode === 'login' ? handleLogin : handleRegister} className="relative space-y-4">
+                <div className="text-center mb-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-1">
+                    {authMode === 'login' ? 'Welcome Back' : 'Create Account'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {authMode === 'login' ? 'Log in to continue your career.' : 'Sign up to start your negotiation journey.'}
+                  </p>
                 </div>
 
-                {/* NOTE TO TIM: Replace this URL with your LemonSqueezy Product checkout link! */}
-                <Button 
-                  onClick={() => window.open('https://englishbreakfast.lemonsqueezy.com/', '_blank')} 
-                  variant="outline" 
-                  className="w-full border-amber-500/30 text-amber-500 hover:bg-amber-500/10 h-11 text-sm font-medium"
-                >
-                  Get Free Instant Access
-                </Button>
+                <div className="space-y-3">
+                  {authMode === 'register' && (
+                    <Input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your Name (e.g., Harvey Specter)"
+                      className="bg-background/50 h-10 focus:border-amber-500/50 focus:ring-amber-500/20"
+                      required
+                    />
+                  )}
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email Address"
+                    className="bg-background/50 h-10 focus:border-amber-500/50 focus:ring-amber-500/20"
+                    required
+                  />
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    className="bg-background/50 h-10 focus:border-amber-500/50 focus:ring-amber-500/20"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-3 pt-2">
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="w-full premium-button-themed h-11 text-black font-semibold text-sm gap-2 dramatic-glow-themed"
+                  >
+                    {isLoading ? (
+                      <div className="animate-spin h-4 w-4 border-2 border-black rounded-full border-t-transparent" />
+                    ) : authMode === 'login' ? (
+                      <><LogIn className="w-4 h-4" /> Sign In</>
+                    ) : (
+                      <><UserPlus className="w-4 h-4" /> Create Account</>
+                    )}
+                  </Button>
+                  
+                  <button 
+                    type="button"
+                    onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+                    className="text-xs text-amber-500/70 hover:text-amber-500 text-center w-full transition-colors"
+                  >
+                    {authMode === 'login' ? "Don't have an account? Sign up" : "Already have an account? Log in"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-4 max-w-sm mx-auto w-full p-6 glass-card rounded-2xl relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none" />
+              <div className="relative text-center space-y-4">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Logged in as</p>
+                  <h3 className="text-xl font-bold text-foreground">{session?.user?.name}</h3>
+                  <p className="text-xs text-amber-500/70">Access Tier: {session?.user?.accessTier}</p>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-4">
+                  <Button
+                    onClick={handleStartGame}
+                    className="h-11 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-base gap-2 premium-button-themed dramatic-glow-themed"
+                  >
+                    <Play className="h-4 w-4" />
+                    Enter Dashboard
+                  </Button>
+
+                  <Button
+                    onClick={() => signOut()}
+                    variant="ghost"
+                    className="h-9 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 text-sm gap-2 mt-2"
+                  >
+                    <LogOut className="h-3 w-3" />
+                    Sign Out
+                  </Button>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="space-y-4 max-w-sm mx-auto"
-          >
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground text-left block">Welcome, Negotiator.</label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your name..."
-                className="text-center bg-card/50 border-border/50 h-11 text-base focus:border-amber-500/50 focus:ring-amber-500/20"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && name.trim()) {
-                    startNewGame(name.trim());
-                  }
-                }}
-              />
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <Button
-                onClick={() => name.trim() && startNewGame(name.trim())}
-                disabled={!name.trim()}
-                className="h-11 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-base gap-2 premium-button-themed dramatic-glow-themed disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"
-              >
-                <Play className="h-4 w-4" />
-                New Career
-              </Button>
-
-              {hasSave && (
-                <Button
-                  onClick={() => {
-                    useGameStore.getState().setPhase('dashboard');
-                  }}
-                  variant="outline"
-                  className="h-11 font-medium gap-2 border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/50"
-                >
-                  Continue as {playerName}
-                </Button>
-              )}
-
-              {hasSave && (
-                <Button
-                  onClick={resetGame}
-                  variant="ghost"
-                  className="h-9 text-muted-foreground text-sm gap-2"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  Reset Game
-                </Button>
-              )}
-            </div>
-          </motion.div>
-        )}
+            </motion.div>
+          )}
+        </div>
 
         {/* Feature badges with glass-card style + parallax */}
         <motion.div

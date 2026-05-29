@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 // POST: Save case result
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+
     const body = await request.json();
     const {
-      playerId,
       scenarioId,
       outcome,
       scores,
@@ -16,53 +25,45 @@ export async function POST(request: NextRequest) {
       hiddenFactsFound,
     } = body;
 
-    if (!playerId || !scenarioId || !outcome) {
+    if (!scenarioId || !outcome) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Ensure player exists
-    let player = await db.player.findUnique({ where: { id: playerId } });
-    if (!player) {
-      player = await db.player.create({
-        data: {
-          id: playerId,
-          name: playerId,
-        },
-      });
+    // Ensure user exists
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Create the case result
+    // Create the case result attached to User
     const caseResult = await db.caseResult.create({
       data: {
-        playerId,
+        userId: userId,
         scenarioId,
         outcome,
         finalScore: finalScore || 0,
+        scores: typeof scores === 'string' ? scores : JSON.stringify(scores || {}),
         choicesMade: typeof choicesMade === 'string' ? choicesMade : JSON.stringify(choicesMade || []),
         advisorLogs: typeof advisorLogs === 'string' ? advisorLogs : JSON.stringify(advisorLogs || []),
         hiddenFactsFound: typeof hiddenFactsFound === 'string' ? hiddenFactsFound : JSON.stringify(hiddenFactsFound || []),
       },
     });
 
-    // Update player's completed scenario IDs and score
-    const existingPlayer = await db.player.findUnique({ where: { id: playerId } });
-    if (existingPlayer) {
-      const completedIds: string[] = JSON.parse(existingPlayer.completedScenarioIds || '[]');
-      if (!completedIds.includes(scenarioId)) {
-        completedIds.push(scenarioId);
-      }
-
-      await db.player.update({
-        where: { id: playerId },
-        data: {
-          completedScenarioIds: JSON.stringify(completedIds),
-          casesCompleted: existingPlayer.casesCompleted + 1,
-          totalScore: existingPlayer.totalScore + (finalScore || 0),
-          currentCaseId: null,
-          gamePhase: 'dashboard',
-        },
-      });
+    // Update user's completed scenario IDs and score
+    const completedIds: string[] = JSON.parse(user.completedScenarioIds || '[]');
+    if (!completedIds.includes(scenarioId)) {
+      completedIds.push(scenarioId);
     }
+
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        completedScenarioIds: JSON.stringify(completedIds),
+        casesCompleted: user.casesCompleted + 1,
+        totalScore: user.totalScore + (finalScore || 0),
+        gamePhase: 'dashboard',
+      },
+    });
 
     return NextResponse.json({ caseResult });
   } catch (error) {

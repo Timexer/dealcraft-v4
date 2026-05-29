@@ -606,7 +606,6 @@ export function NegotiationTable() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          playerId: useGameStore.getState().playerName || 'Anonymous',
           scenarioId: caseResult.scenarioId,
           outcome: caseResult.outcome,
           scores: caseResult.scores,

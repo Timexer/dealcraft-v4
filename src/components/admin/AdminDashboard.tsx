@@ -19,9 +19,11 @@ interface CaseResult {
   createdAt: Date;
 }
 
-interface Player {
+interface User {
   id: string;
   name: string;
+  email: string;
+  accessTier: string;
   careerTier: number;
   casesCompleted: number;
   totalScore: number;
@@ -30,12 +32,12 @@ interface Player {
   caseResults: CaseResult[];
 }
 
-export function AdminDashboard({ initialPlayers }: { initialPlayers: Player[] }) {
+export function AdminDashboard({ initialPlayers }: { initialPlayers: User[] }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<User | null>(null);
   const [selectedCase, setSelectedCase] = useState<CaseResult | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -221,7 +223,9 @@ export function AdminDashboard({ initialPlayers }: { initialPlayers: Player[] })
                 <thead className="text-xs text-zinc-400 bg-black/40 uppercase border-b border-white/5">
                   <tr>
                     <th className="px-6 py-4 font-medium">Player Name</th>
-                    <th className="px-6 py-4 font-medium">Tier</th>
+                    <th className="px-6 py-4 font-medium">Email</th>
+                    <th className="px-6 py-4 font-medium">Career Tier</th>
+                    <th className="px-6 py-4 font-medium">Access Tier</th>
                     <th className="px-6 py-4 font-medium">Cases</th>
                     <th className="px-6 py-4 font-medium">Total Score</th>
                     <th className="px-6 py-4 font-medium">Last Active</th>
@@ -232,10 +236,40 @@ export function AdminDashboard({ initialPlayers }: { initialPlayers: Player[] })
                   {filteredPlayers.map((player) => (
                     <tr key={player.id} className="hover:bg-white/[0.02] transition-colors group">
                       <td className="px-6 py-4 font-medium text-zinc-200">{player.name}</td>
+                      <td className="px-6 py-4 text-zinc-400">{player.email}</td>
                       <td className="px-6 py-4">
                         <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/20">
                           Tier {player.careerTier}
                         </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <select
+                          className="bg-black/50 border border-white/10 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-amber-500"
+                          value={player.accessTier || 'LOCKED'}
+                          onChange={async (e) => {
+                            const newTier = e.target.value;
+                            // Optimistically update UI
+                            const updatedPlayers = initialPlayers.map(p => p.id === player.id ? { ...p, accessTier: newTier } : p);
+                            // Assuming we can update parent component or just rely on state if we managed it, but we use initialPlayers directly here. 
+                            // Let's do a simple page reload for the demo to fetch new state.
+                            try {
+                              const res = await fetch('/api/admin/user-access', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userId: player.id, accessTier: newTier }),
+                              });
+                              if (res.ok) {
+                                window.location.reload();
+                              }
+                            } catch (err) {
+                              console.error(err);
+                            }
+                          }}
+                        >
+                          <option value="LOCKED">LOCKED</option>
+                          <option value="PREMIUM">PREMIUM</option>
+                          <option value="TRIAL">TRIAL</option>
+                        </select>
                       </td>
                       <td className="px-6 py-4 text-zinc-300">{player.casesCompleted}</td>
                       <td className="px-6 py-4 text-emerald-400 font-medium">{player.totalScore}</td>
@@ -254,7 +288,7 @@ export function AdminDashboard({ initialPlayers }: { initialPlayers: Player[] })
                   ))}
                   {filteredPlayers.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
+                      <td colSpan={8} className="px-6 py-8 text-center text-zinc-500">
                         No students found matching "{searchQuery}"
                       </td>
                     </tr>

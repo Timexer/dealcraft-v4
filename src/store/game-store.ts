@@ -132,6 +132,7 @@ export interface GameState {
   // New game
   startNewGame: (name: string) => void;
   resetGame: () => void;
+  hydrateFromServer: (data: Partial<GameState>) => void;
 
   // Available cases (unlocked based on tier)
   unlockedCases: string[];
@@ -966,10 +967,6 @@ export const useGameStore = create<GameState>()(
           assumptions: [],
           issueEstimates: {},
           caseNotes: '',
-          reservationEstimate: 0,
-          aspirationEstimate: 0,
-          openingStrategy: '',
-          assumptions: [],
           unlockedCases: [],
           challengeMode: 'none',
           challengeTimer: 0,
@@ -984,6 +981,13 @@ export const useGameStore = create<GameState>()(
           colorTheme: 'amber',
           discoveredBlackSwans: [],
         }),
+
+      hydrateFromServer: (data) =>
+        set((s) => ({
+          ...s,
+          ...data,
+          phase: data.phase || 'dashboard', // Default to dashboard if hydrating successful auth
+        })),
 
       unlockedCases: ['case-01', 'case-02', 'case-03'],
 

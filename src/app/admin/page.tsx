@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
-  // Fetch all players with their case results
-  const players = await db.player.findMany({
+  // Fetch all users with their case results
+  const users = await db.user.findMany({
     include: {
       caseResults: {
         orderBy: {
@@ -24,5 +24,12 @@ export default async function AdminPage() {
     }
   });
 
-  return <AdminDashboard initialPlayers={players} />;
+  // Map to the format AdminDashboard expects
+  const mappedUsers = users.map(user => ({
+    ...user,
+    name: user.name || 'Anonymous User',
+    email: user.email || 'No Email Provided',
+  }));
+
+  return <AdminDashboard initialPlayers={mappedUsers} />;
 }
